@@ -7,6 +7,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   helperText?: string;
   showPasswordToggle?: boolean;
+  size?: 'sm' | 'md';
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -17,6 +18,7 @@ export const Input: React.FC<InputProps> = ({
   id,
   type,
   showPasswordToggle,
+  size = 'md',
   ...props
 }) => {
   const generatedId = useId();
@@ -25,11 +27,12 @@ export const Input: React.FC<InputProps> = ({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const inputType = isPasswordField ? (isPasswordVisible ? 'text' : 'password') : type;
+  const sizeClasses = size === 'sm' ? 'px-3 py-1.5 text-sm' : 'px-4 py-2';
 
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-[var(--foreground)]">
+        <label htmlFor={inputId} className={classNames('block font-medium text-[var(--foreground)]', size === 'sm' ? 'mb-0.5 text-xs' : 'mb-1 text-sm')}>
           {label}
         </label>
       )}
@@ -39,10 +42,11 @@ export const Input: React.FC<InputProps> = ({
           id={inputId}
           type={inputType}
           className={classNames(
-            'w-full px-4 py-2 border rounded-none focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-colors',
+            'w-full border rounded-none focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-colors',
+            sizeClasses,
             error ? 'border-[var(--error)] focus:ring-red-500' : 'border-[var(--border)]',
             'bg-[var(--input)] text-[var(--foreground)]',
-            isPasswordField ? 'pr-11' : '',
+            isPasswordField ? 'pr-10' : '',
             className
           )}
           {...props}
@@ -60,9 +64,9 @@ export const Input: React.FC<InputProps> = ({
         )}
       </div>
 
-      {error && <p className="mt-1 text-sm text-[var(--error)]">{error}</p>}
+      {error && <p className={classNames('text-[var(--error)]', size === 'sm' ? 'mt-0.5 text-xs' : 'mt-1 text-sm')}>{error}</p>}
       {helperText && !error && (
-        <p className="mt-1 text-sm text-[var(--muted-foreground)]">{helperText}</p>
+        <p className={classNames('text-[var(--muted-foreground)]', size === 'sm' ? 'mt-0.5 text-xs' : 'mt-1 text-sm')}>{helperText}</p>
       )}
     </div>
   );

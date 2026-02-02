@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -78,44 +77,8 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea]">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-10 sm:px-6 lg:flex-row lg:items-center lg:gap-12 lg:py-16">
-        {/* Left side - brand / marketing */}
-        <div className="mb-10 flex flex-1 flex-col items-center text-center lg:mb-0 lg:items-start lg:text-left">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="relative h-14 w-14 rounded-none bg-white shadow-md">
-              <Image
-                src="/sanskar-academy-logo.jpeg"
-                alt="Sanskar Academy"
-                fill
-                className="rounded-none object-contain"
-                sizes="56px"
-                priority
-              />
-            </div>
-            <div>
-              <p className="text-xs font-semibold tracking-[0.2em] text-[#c01e2e]">
-                SANSKAR ACADEMY
-              </p>
-              <p className="text-sm text-gray-600">
-                Scientific Vastu &amp; Modern Numerology
-              </p>
-            </div>
-          </div>
-
-          <h1 className="mb-4 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-            Admin Portal
-            <br className="hidden sm:block" /> Access your{' '}
-            <span className="text-[#c01e2e]">dashboard</span>.
-          </h1>
-          <p className="max-w-xl text-base text-gray-600 sm:text-lg">
-            Sign in with your admin credentials to manage courses, users, finances, and more.
-          </p>
-        </div>
-
-        {/* Right side - form */}
-        <div className="flex-1">
-          <Card className="w-full max-w-md rounded-none border border-gray-200 shadow-lg sm:mx-auto" padding="lg">
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex items-center justify-center px-4 py-10">
+      <Card className="w-full max-w-md rounded-none border border-gray-200 shadow-lg" padding="lg">
             <div className="mb-6 text-center">
               <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Admin Login</h2>
               <p className="mt-2 text-sm text-gray-600">
@@ -173,8 +136,6 @@ export default function AdminLoginPage() {
               </Link>
             </div>
           </Card>
-        </div>
-      </div>
     </div>
   );
 }
