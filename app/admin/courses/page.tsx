@@ -232,7 +232,7 @@ export default function AdminCoursesPage() {
                       {formatPrice(course.price, course.isFree)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                      {course.totalEnrollments || 0}
+                      {course._count?.enrollments ?? course.totalEnrollments ?? 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted-foreground)]">
                       {formatDate(course.createdAt)}

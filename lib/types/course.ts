@@ -92,6 +92,11 @@ export interface Course {
   categoryId?: string;
   instructor?: Instructor;
   category?: Category;
+  _count?: {
+    enrollments?: number;
+    lessons?: number;
+    reviews?: number;
+  };
   rating?: number;
   totalRatings?: number;
   totalEnrollments?: number;
