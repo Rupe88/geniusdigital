@@ -261,7 +261,7 @@ export default function AdminTestimonialsPage() {
                       {testimonial.featured ? (
                         <Badge variant="success">Yes</Badge>
                       ) : (
-                        <Badge variant="secondary">No</Badge>
+                        <Badge variant="default">No</Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted-foreground)]">

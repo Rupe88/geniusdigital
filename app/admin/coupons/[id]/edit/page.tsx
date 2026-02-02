@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { HiArrowLeft } from 'react-icons/hi';
@@ -114,7 +114,7 @@ export default function EditCouponPage() {
     reset,
     formState: { errors },
   } = useForm<CouponFormData>({
-    resolver: zodResolver(couponSchema),
+    resolver: zodResolver(couponSchema) as Resolver<CouponFormData>,
   });
 
   const couponType = watch('couponType');
@@ -242,12 +242,13 @@ export default function EditCouponPage() {
                   <div>
                     <Select
                       label="Coupon Type"
+                      options={[
+                        { value: 'PERCENTAGE', label: 'Percentage' },
+                        { value: 'FIXED_AMOUNT', label: 'Fixed Amount' },
+                      ]}
                       {...register('couponType')}
                       error={errors.couponType?.message}
-                    >
-                      <option value="PERCENTAGE">Percentage</option>
-                      <option value="FIXED_AMOUNT">Fixed Amount</option>
-                    </Select>
+                    />
                   </div>
 
                   <div>
@@ -267,13 +268,14 @@ export default function EditCouponPage() {
                 <div>
                   <Select
                     label="Status"
+                    options={[
+                      { value: 'ACTIVE', label: 'Active' },
+                      { value: 'INACTIVE', label: 'Inactive' },
+                      { value: 'EXPIRED', label: 'Expired' },
+                    ]}
                     {...register('status')}
                     error={errors.status?.message}
-                  >
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                    <option value="EXPIRED">Expired</option>
-                  </Select>
+                  />
                 </div>
               </div>
             </Card>

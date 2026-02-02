@@ -202,42 +202,51 @@ export default function HomePage() {
   const fallbackTestimonials: Testimonial[] = [
     {
       id: 'fallback-1',
-      studentName: 'Sushil Shrestha',
-      courseName: 'Architect',
+      name: 'Sushil Shrestha',
+      designation: 'Architect',
+      company: null,
       content:
         'As an architect, I’ve found each course, taught by the highly knowledgeable Acharya Raja Babu Shah, to provide deep insights and practical knowledge.',
       rating: 4,
-      avatar:
+      image:
         'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
-      isApproved: true,
-      isFeatured: true,
+      isPublished: true,
+      featured: true,
+      order: 0,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: 'fallback-2',
-      studentName: 'Sushil Amatya',
-      courseName: 'Engineer',
-      content:
+      name: 'Sushil Amatya',
+      designation: 'Engineer',
+      company: null,
+      comment:
         'Sanskar Academy is a training institute of knowledge of occult science. It learns people how to live life with full of joy and energy, making good results.',
       rating: 5,
-      avatar:
+      image:
         'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=200&auto=format&fit=crop&q=80',
-      isApproved: true,
-      isFeatured: true,
+      isPublished: true,
+      featured: true,
+      order: 0,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: 'fallback-3',
-      studentName: 'Karuna Shrestha',
-      courseName: 'Vastu Consultant',
-      content:
+      name: 'Karuna Shrestha',
+      designation: 'Vastu Consultant',
+      company: null,
+      comment:
         'Thank you Rajababu Gurudev and Sanskar Academy for giving me a platform to change my life as a Vastu Consultant.',
       rating: 4,
-      avatar:
+      image:
         'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80',
-      isApproved: true,
-      isFeatured: true,
+      isPublished: true,
+      featured: true,
+      order: 0,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ];
 
@@ -384,31 +393,31 @@ export default function HomePage() {
               >
                 <div>
                   <div className="flex items-center mb-4">
-                    {testimonial.avatar ? (
+                    {testimonial.image ? (
                       <div className="mr-4 h-12 w-12 overflow-hidden rounded-none">
                         <img
-                          src={testimonial.avatar}
-                          alt={testimonial.studentName || 'Client'}
+                          src={testimonial.image}
+                          alt={testimonial.name || 'Client'}
                           className="h-full w-full object-cover"
                         />
                       </div>
                     ) : (
                       <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-none bg-[var(--primary-700)] text-white text-lg font-semibold">
-                        {testimonial.studentName?.[0] || 'S'}
+                        {testimonial.name?.[0] || 'S'}
                       </div>
                     )}
                     <div>
                       <p className="text-base font-semibold text-gray-900">
-                        {testimonial.studentName || 'Student'}
+                        {testimonial.name || 'Student'}
                       </p>
                       <p className="text-sm font-medium text-orange-500">
-                        {testimonial.courseName || 'Sanskar Academy Learner'}
+                        {testimonial.designation || testimonial.company || 'Sanskar Academy Learner'}
                       </p>
                     </div>
                   </div>
 
                   <p className="text-sm leading-relaxed text-gray-700">
-                    "{testimonial.content}"
+                    "{testimonial.comment}"
                   </p>
                 </div>
 

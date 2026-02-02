@@ -3,7 +3,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { HiArrowLeft, HiCloudUpload, HiX } from 'react-icons/hi';
@@ -48,7 +48,7 @@ const vastuProductSchema = z.object({
 
   // Product type (Vastu specific) - with default fallback
   productType: z.enum(['VASTU_ITEM', 'CONSULTATION_PACKAGE', 'DIGITAL_PRODUCT', 'PHYSICAL_PRODUCT'], {
-    errorMap: () => ({ message: 'Please select a valid product type' })
+    message: 'Please select a valid product type',
   }),
 
   // Vastu specific fields
@@ -107,7 +107,7 @@ export default function NewProductPage() {
     setValue,
     formState: { errors },
   } = useForm<VastuProductFormData>({
-    resolver: zodResolver(vastuProductSchema),
+    resolver: zodResolver(vastuProductSchema) as Resolver<VastuProductFormData>,
     defaultValues: {
       name: '',
       slug: '',

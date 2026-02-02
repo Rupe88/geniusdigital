@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { HiArrowLeft } from 'react-icons/hi';
@@ -20,7 +20,7 @@ const couponSchema = z.object({
   code: z.string().min(3, 'Code must be at least 3 characters').max(50, 'Code must be at most 50 characters'),
   description: z.string().optional(),
   couponType: z.enum(['PERCENTAGE', 'FIXED_AMOUNT'], {
-    errorMap: () => ({ message: 'Please select a coupon type' })
+    message: 'Please select a coupon type',
   }),
   discountValue: z.coerce
     .number()
@@ -80,7 +80,7 @@ export default function NewCouponPage() {
     watch,
     formState: { errors },
   } = useForm<CouponFormData>({
-    resolver: zodResolver(couponSchema),
+    resolver: zodResolver(couponSchema) as Resolver<CouponFormData>,
     defaultValues: {
       couponType: 'PERCENTAGE',
     },
@@ -151,13 +151,14 @@ export default function NewCouponPage() {
                   <div>
                     <Select
                       label="Coupon Type *"
+                      options={[
+                        { value: 'PERCENTAGE', label: 'Percentage' },
+                        { value: 'FIXED_AMOUNT', label: 'Fixed Amount' },
+                      ]}
                       {...register('couponType')}
                       error={errors.couponType?.message}
                       required
-                    >
-                      <option value="PERCENTAGE">Percentage</option>
-                      <option value="FIXED_AMOUNT">Fixed Amount</option>
-                    </Select>
+                    />
                   </div>
 
                   <div>

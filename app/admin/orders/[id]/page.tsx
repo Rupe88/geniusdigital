@@ -33,7 +33,7 @@ export default function OrderDetailPage() {
   const fetchOrder = async () => {
     try {
       setLoading(true);
-      const orderData = await ordersApi.getOrderById(orderId);
+      const orderData = await ordersApi.getById(orderId);
       
       // Parse JSON addresses if they're strings
       let parsedOrder = { ...orderData };

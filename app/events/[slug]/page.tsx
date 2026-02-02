@@ -74,7 +74,7 @@ export default function EventDetailPage() {
   const handleRegister = async () => {
     if (!isAuthenticated) {
       toast.error('Please login to register for this event');
-      router.push(`${ROUTES.AUTH.LOGIN}?redirect=/events/${slug}`);
+      router.push(`${ROUTES.LOGIN}?redirect=/events/${slug}`);
       return;
     }
 
@@ -88,7 +88,7 @@ export default function EventDetailPage() {
 
     // Check if already registered
     if (event.isRegistered) {
-      toast.info('You are already registered for this event');
+      toast('You are already registered for this event');
       return;
     }
 
