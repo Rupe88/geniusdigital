@@ -81,11 +81,13 @@ export const GalleryForm: React.FC<GalleryFormProps> = React.memo(({
   });
 
   const type = watch('type');
-  const imageUrl = watch('imageUrl');
   const videoUrl = watch('videoUrl');
-  
-  // Check if form is valid for submission - either file or URL is required
-  const isFormValid = file || (imageUrl && imageUrl.trim()) || (videoUrl && videoUrl.trim());
+
+  // Image: file required (or existing imageUrl when editing). Video: file or URL
+  const isFormValid =
+    type === 'IMAGE'
+      ? !!file || !!(galleryItem?.type === 'IMAGE' && galleryItem?.imageUrl)
+      : !!file || !!(videoUrl && videoUrl.trim());
 
   useEffect(() => {
     // Set preview from existing URLs
@@ -144,9 +146,14 @@ export const GalleryForm: React.FC<GalleryFormProps> = React.memo(({
 
   const onFormSubmit = useCallback(async (data: GalleryFormData) => {
     try {
-      // Validate that either file or URL is provided (file preferred, URL optional)
-      if (!file && !data.imageUrl && !data.videoUrl) {
-        alert('Please upload a file or provide an image/video URL');
+      // Image: file required (or keep existing when editing). Video: file or URL
+      if (data.type === 'IMAGE') {
+        if (!file && !(galleryItem?.type === 'IMAGE' && galleryItem?.imageUrl)) {
+          alert('Please upload an image file');
+          return;
+        }
+      } else if (!file && !(data.videoUrl && data.videoUrl.trim())) {
+        alert('Please upload a video file or provide a video URL');
         return;
       }
 
@@ -159,8 +166,7 @@ export const GalleryForm: React.FC<GalleryFormProps> = React.memo(({
         featured: data.featured || false,
         order: data.order || 0,
         file: file || undefined,
-        // URLs are optional - only include if provided
-        imageUrl: data.imageUrl && data.imageUrl.trim() ? data.imageUrl.trim() : undefined,
+        imageUrl: data.type === 'IMAGE' && galleryItem?.imageUrl && !file ? galleryItem.imageUrl : undefined,
         videoUrl: data.videoUrl && data.videoUrl.trim() ? data.videoUrl.trim() : undefined,
       };
 
@@ -230,12 +236,12 @@ export const GalleryForm: React.FC<GalleryFormProps> = React.memo(({
                 )}
               </div>
 
-              {/* URL Inputs (optional alternative to file upload) */}
-              <div className="border-t border-[var(--border)] pt-4">
-                <p className="text-sm text-[var(--muted-foreground)] mb-4">
-                  Or optionally provide a URL instead of uploading a file:
-                </p>
-                {type === 'VIDEO' ? (
+              {/* Video URL (optional alternative to file upload) - only for VIDEO type */}
+              {type === 'VIDEO' && (
+                <div className="border-t border-[var(--border)] pt-4">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                    Or optionally provide a video URL instead of uploading a file:
+                  </p>
                   <Input
                     label="Video URL (Optional)"
                     {...register('videoUrl')}
@@ -243,16 +249,8 @@ export const GalleryForm: React.FC<GalleryFormProps> = React.memo(({
                     placeholder="https://example.com/video.mp4"
                     disabled={!!file}
                   />
-                ) : (
-                  <Input
-                    label="Image URL (Optional)"
-                    {...register('imageUrl')}
-                    error={errors.imageUrl?.message}
-                    placeholder="https://example.com/image.jpg"
-                    disabled={!!file}
-                  />
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Preview */}
               {filePreview && (
