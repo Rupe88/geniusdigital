@@ -69,6 +69,7 @@ export interface UpdateProductRequest {
   category?: string;
   images?: string[];
   imageFiles?: File[];
+  existingImages?: string[];
   featured?: boolean;
   published?: boolean;
   stockQuantity?: number;
@@ -113,7 +114,7 @@ const createFormData = (data: any): FormData => {
           formData.append(key, JSON.stringify(dims));
         }
       }
-    } else if (key === 'tags' || key === 'images') {
+    } else if (key === 'tags' || key === 'images' || key === 'existingImages') {
       if (data[key] !== undefined && data[key] !== null) {
         formData.append(key, JSON.stringify(data[key]));
       }
@@ -172,44 +173,73 @@ export const productsApi = {
   },
 
   /**
-   * Create new product (admin only)
+   * Create new product (admin only). Sends FormData with images when imageFiles present (Cloudinary upload);
+   * otherwise sends JSON.
    */
   create: async (data: CreateProductRequest): Promise<ApiResponse<Product>> => {
     try {
-      const formData = createFormData(data);
-      const imageCount = data.imageFiles?.length || 0;
-      // Calculate timeout: 120 seconds per image, minimum 5 minutes, maximum 15 minutes
-      // This ensures frontend timeout is always higher than backend timeout (2 min min, 10 min max)
-      const timeout = Math.min(Math.max(imageCount * 120000, 300000), 900000);
-      
-      console.log(`Uploading ${imageCount} images with ${timeout / 1000}s timeout`);
-      
-      const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.LIST, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: timeout,
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            const loadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(2);
-            const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(2);
-            console.log(`Upload progress: ${percentCompleted}% (${loadedMB}MB / ${totalMB}MB)`);
-          }
-        },
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const hasImageFiles = data.imageFiles && data.imageFiles.length > 0;
+
+      if (hasImageFiles) {
+        const payload: Record<string, unknown> = {
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          shortDescription: data.shortDescription,
+          price: data.price,
+          comparePrice: data.originalPrice,
+          stock: (data as any).stock ?? data.stockQuantity ?? 0,
+          status: data.status ?? 'ACTIVE',
+          featured: data.featured ?? false,
+          productType: data.productType,
+          vastuPurpose: data.vastuPurpose,
+          energyType: data.energyType,
+          material: data.material,
+          dimensions: data.dimensions,
+          imageFiles: data.imageFiles,
+        };
+        if (data.category && uuidRegex.test(String(data.category))) payload.categoryId = data.category;
+        if (data.sku) payload.sku = data.sku;
+        Object.keys(payload).forEach((k) => {
+          if (payload[k] === undefined || payload[k] === '') delete payload[k];
+        });
+        const formData = createFormData(payload);
+        const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.LIST, formData, {
+          timeout: 120000,
+        });
+        return response.data;
+      }
+
+      const jsonBody: Record<string, unknown> = {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        shortDescription: data.shortDescription,
+        price: data.price,
+        comparePrice: data.originalPrice,
+        stock: (data as any).stock ?? data.stockQuantity ?? 0,
+        status: data.status ?? 'ACTIVE',
+        featured: data.featured ?? false,
+        productType: data.productType,
+        vastuPurpose: data.vastuPurpose,
+        energyType: data.energyType,
+        material: data.material,
+        dimensions: data.dimensions,
+      };
+      if (data.category && uuidRegex.test(String(data.category))) jsonBody.categoryId = data.category;
+      if (data.sku) jsonBody.sku = data.sku;
+      if (data.images && data.images.length) jsonBody.images = data.images;
+      Object.keys(jsonBody).forEach((k) => {
+        if (jsonBody[k] === undefined || jsonBody[k] === '') delete jsonBody[k];
       });
+      const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.LIST, jsonBody, { timeout: 60000 });
       return response.data;
     } catch (error: any) {
       console.error('Product creation error:', error);
-      
-      // Handle timeout errors specifically
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        const imageCount = data.imageFiles?.length || 0;
-        const timeoutMinutes = Math.round((imageCount * 120000 || 300000) / 60000);
-        throw new Error(`Upload timed out after ${timeoutMinutes} minutes. Please try again with smaller images (max 5MB each) or fewer files.`);
+        throw new Error('Request timed out. Please try again.');
       }
-      
-      // Extract error message from response
       if (error.response?.data) {
         const errorData = error.response.data;
         if (errorData.errors && Array.isArray(errorData.errors)) {
@@ -235,9 +265,6 @@ export const productsApi = {
       console.log(`Updating product with ${imageCount} images, timeout: ${timeout / 1000}s`);
       
       const response = await apiClient.put(API_ENDPOINTS.PRODUCTS.BY_ID(id), formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
         timeout: timeout,
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {

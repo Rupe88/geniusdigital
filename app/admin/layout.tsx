@@ -112,33 +112,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isAuthenticated, loading } = useAuth();
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['Dashboard']));
 
-  console.log('AdminLayout render:', { pathname, isAuthenticated, loading });
-
   const toggleCategory = (categoryLabel: string) => {
     setOpenCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(categoryLabel)) {
-        newSet.delete(categoryLabel);
-      } else {
-        newSet.add(categoryLabel);
-      }
-      return newSet;
+      if (prev.has(categoryLabel)) return new Set();
+      return new Set([categoryLabel]);
     });
   };
 
-  // Check if a category should be open based on current path
+  // Check if a category contains the current path
   const isCategoryActive = (category: MenuCategory) => {
     return category.items.some(item =>
       pathname === item.href || pathname?.startsWith(item.href + '/')
     );
   };
 
-  // Simplified category opening logic
+  // Only the active category (current route) is open; others collapsed
   React.useEffect(() => {
     const activeCategory = adminMenuCategories.find(category => isCategoryActive(category));
-    if (activeCategory && !openCategories.has(activeCategory.label)) {
-      setOpenCategories(prev => new Set(prev).add(activeCategory.label));
-    }
+    setOpenCategories(activeCategory ? new Set([activeCategory.label]) : new Set(['Dashboard']));
   }, [pathname]);
 
   // Don't apply auth check to login page
@@ -183,7 +174,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        console.log('Toggling category:', category.label);
                         toggleCategory(category.label);
                       }}
                       className={`flex items-center justify-between w-full px-4 py-2 rounded-none transition-colors ${categoryActive

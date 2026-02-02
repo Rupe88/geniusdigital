@@ -120,11 +120,12 @@ apiClient.interceptors.response.use(
         try {
           console.log(`Attempting to refresh token at: ${API_URL}/auth/refresh-token`);
 
-          // Using axios directly to avoid interceptor issues, with explicit config
+          // Using axios directly to avoid interceptor issues, with explicit config.
+          // Timeout so create/product etc. do not hang forever if refresh hangs.
           const response = await axios.post(
             `${API_URL}/auth/refresh-token`,
             { refreshToken },
-            { withCredentials: true }
+            { withCredentials: true, timeout: 15000 }
           );
 
           if (response.data && response.data.success) {

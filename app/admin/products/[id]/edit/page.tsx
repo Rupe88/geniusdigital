@@ -66,6 +66,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const {
     register,
@@ -128,15 +129,19 @@ export default function EditProductPage() {
     try {
       setLoading(true);
 
-      // Prepare the data for API
-      const productData = {
+      const existingImageUrls = uploadedImages.filter((url) => !url.startsWith('blob:'));
+      const productData: Record<string, unknown> = {
         ...data,
-        images: uploadedImages,
+        images: existingImageUrls,
         price: Number(data.price),
         originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
         stockQuantity: Number(data.stockQuantity),
         status: data.published ? 'ACTIVE' : 'INACTIVE',
       };
+      if (imageFiles.length > 0) {
+        productData.imageFiles = imageFiles;
+        productData.existingImages = existingImageUrls;
+      }
 
       const response = await productsApi.update(productId, productData);
 
@@ -157,30 +162,28 @@ export default function EditProductPage() {
     const files = event.target.files;
     if (!files) return;
 
-    // Validate file sizes (max 5MB each)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    const validFiles = Array.from(files).filter(file => {
+    const validFiles = Array.from(files).filter((file) => {
       if (file.size > maxSize) {
         toast.error(`${file.name} is too large. Maximum size is 5MB.`);
         return false;
       }
       return true;
     });
-
     if (validFiles.length === 0) return;
 
-    // In a real app, you would upload to cloud storage here
-    // For now, we'll just create object URLs for preview
-    const newImages = validFiles.map(file => URL.createObjectURL(file));
-    setUploadedImages(prev => [...prev, ...newImages]);
+    setImageFiles((prev) => [...prev, ...validFiles]);
+    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
+    setUploadedImages((prev) => [...prev, ...newPreviewUrls]);
   }, []);
 
   const removeImage = useCallback((index: number) => {
-    setUploadedImages(prev => {
-      // Clean up object URLs to prevent memory leaks
+    setUploadedImages((prev) => {
       const imageToRemove = prev[index];
       if (imageToRemove && imageToRemove.startsWith('blob:')) {
         URL.revokeObjectURL(imageToRemove);
+        const blobIndex = prev.slice(0, index).filter((u) => u.startsWith('blob:')).length;
+        setImageFiles((files) => files.filter((_, i) => i !== blobIndex));
       }
       return prev.filter((_, i) => i !== index);
     });
@@ -413,13 +416,22 @@ export default function EditProductPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {uploadedImages.map((image, index) => (
                     <div key={index} className="relative">
-                      <Image
-                        src={image}
-                        alt={`Product image ${index + 1}`}
-                        width={200}
-                        height={200}
-                        className="w-full h-32 object-cover rounded-none"
-                      />
+                      {image.startsWith('blob:') ? (
+                        <img
+                          src={image}
+                          alt={`Product image ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-none"
+                        />
+                      ) : (
+                        <Image
+                          src={image}
+                          alt={`Product image ${index + 1}`}
+                          width={200}
+                          height={200}
+                          className="w-full h-32 object-cover rounded-none"
+                          unoptimized={image.includes('cloudinary')}
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() => removeImage(index)}

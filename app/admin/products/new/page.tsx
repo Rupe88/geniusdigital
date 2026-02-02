@@ -263,8 +263,12 @@ export default function NewProductPage() {
   };
 
   const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setUploadedImages((prev) => {
+      const url = prev[index];
+      if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== index);
+    });
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const generateSlug = (name: string) => {
@@ -313,12 +317,8 @@ export default function NewProductPage() {
           }
         });
         
-        console.error('Form validation errors:', {
-          fields: Object.keys(errors),
-          messages: errorMessages,
-        });
-        
         if (errorMessages.length > 0) {
+          console.warn('Form validation failed:', errorMessages.join('; '));
           toast.error(`Please fix the following errors:\n${errorMessages.join('\n')}`, { duration: 8000 });
         } else {
           toast.error('Please check all required fields are filled correctly', { duration: 5000 });
@@ -519,13 +519,22 @@ export default function NewProductPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {uploadedImages.map((image, index) => (
                     <div key={index} className="relative">
-                      <Image
-                        src={image}
-                        alt={`Product image ${index + 1}`}
-                        width={200}
-                        height={200}
-                        className="w-full h-32 object-cover rounded-none"
-                      />
+                      {image.startsWith('blob:') ? (
+                        <img
+                          src={image}
+                          alt={`Product image ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-none"
+                        />
+                      ) : (
+                        <Image
+                          src={image}
+                          alt={`Product image ${index + 1}`}
+                          width={200}
+                          height={200}
+                          className="w-full h-32 object-cover rounded-none"
+                          unoptimized={image.includes('cloudinary')}
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
