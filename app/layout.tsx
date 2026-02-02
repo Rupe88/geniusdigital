@@ -3,8 +3,7 @@ import { Roboto, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { CartProvider } from "@/lib/context/CartContext";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import PromotionalPopup from "@/components/layout/PromotionalPopup";
 
 const roboto = Roboto({
@@ -37,12 +36,9 @@ export default function RootLayout({
             >
                 <AuthProvider>
                     <CartProvider>
-                        <PromotionalPopup />
-                        <Navbar />
-                        <main className="flex-grow">
+                        <LayoutWrapper>
                             {children}
-                        </main>
-                        <Footer />
+                        </LayoutWrapper>
                     </CartProvider>
                 </AuthProvider>
             </body>

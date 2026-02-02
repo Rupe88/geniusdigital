@@ -5,36 +5,30 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiQuestionMarkCircle, HiCalendar, HiVideoCamera, HiChartBar, HiBell, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare } from 'react-icons/hi';
+import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiQuestionMarkCircle, HiCalendar, HiVideoCamera, HiChartBar, HiBell, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
 interface MenuItem {
   href: string;
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 interface MenuCategory {
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   items: MenuItem[];
 }
 
 const adminMenuCategories: MenuCategory[] = [
-  {
-    label: 'Dashboard',
-    icon: HiHome,
-    items: [
-      { href: ROUTES.ADMIN, label: 'Overview', icon: HiHome },
-    ]
-  },
+  { label: 'Dashboard', icon: HiHome, items: [{ href: ROUTES.ADMIN, label: 'Overview', icon: HiHome }] },
   {
     label: 'User Management',
     icon: HiUsers,
     items: [
       { href: `${ROUTES.ADMIN}/users`, label: 'Users', icon: HiUsers },
       { href: `${ROUTES.ADMIN}/instructors`, label: 'Instructors', icon: HiUserGroup },
-    ]
+    ],
   },
   {
     label: 'Course Management',
@@ -43,7 +37,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/courses`, label: 'Courses', icon: HiBookOpen },
       { href: `${ROUTES.ADMIN}/categories`, label: 'Categories', icon: HiFolder },
       { href: `${ROUTES.ADMIN}/enrollments`, label: 'Enrollments', icon: HiBookOpen },
-    ]
+    ],
   },
   {
     label: 'Content Management',
@@ -56,7 +50,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/events`, label: 'Events', icon: HiCalendar },
       { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
       { href: `${ROUTES.ADMIN}/popups`, label: 'Popups', icon: HiPhotograph },
-    ]
+    ],
   },
   {
     label: 'E-commerce',
@@ -65,7 +59,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/products`, label: 'Products', icon: HiShoppingBag },
       { href: `${ROUTES.ADMIN}/orders`, label: 'Orders', icon: HiShoppingBag },
       { href: `${ROUTES.ADMIN}/coupons`, label: 'Coupons', icon: HiTag },
-    ]
+    ],
   },
   {
     label: 'Finance',
@@ -76,7 +70,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/expenses`, label: 'Expenses', icon: HiCash },
       { href: `${ROUTES.ADMIN}/income`, label: 'Income', icon: HiTrendingUp },
       { href: `${ROUTES.ADMIN}/finance/salaries`, label: 'Salaries', icon: HiOfficeBuilding },
-    ]
+    ],
   },
   {
     label: 'Communication',
@@ -86,7 +80,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/contact-submissions`, label: 'Contact Submissions', icon: HiMail },
       { href: `${ROUTES.ADMIN}/newsletter`, label: 'Newsletter', icon: HiMail },
       { href: `${ROUTES.ADMIN}/notifications`, label: 'Notifications', icon: HiBell },
-    ]
+    ],
   },
   {
     label: 'Analytics & Tools',
@@ -96,15 +90,9 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/referrals`, label: 'Referrals', icon: HiShare },
       { href: `${ROUTES.ADMIN}/student-success`, label: 'Student Success', icon: HiStar },
       { href: `${ROUTES.ADMIN}/audit-logs`, label: 'Audit Logs', icon: HiShieldCheck },
-    ]
+    ],
   },
-  {
-    label: 'Account',
-    icon: HiShieldCheck,
-    items: [
-      { href: `${ROUTES.ADMIN}/account`, label: 'Account Settings', icon: HiShieldCheck },
-    ]
-  }
+  { label: 'Account', icon: HiShieldCheck, items: [{ href: `${ROUTES.ADMIN}/account`, label: 'Account Settings', icon: HiShieldCheck }] },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -113,36 +101,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['Dashboard']));
 
   const toggleCategory = (categoryLabel: string) => {
-    setOpenCategories(prev => {
-      if (prev.has(categoryLabel)) return new Set();
-      return new Set([categoryLabel]);
-    });
+    setOpenCategories((prev) => (prev.has(categoryLabel) ? new Set() : new Set([categoryLabel])));
   };
 
-  // Check if a category contains the current path
-  const isCategoryActive = (category: MenuCategory) => {
-    return category.items.some(item =>
-      pathname === item.href || pathname?.startsWith(item.href + '/')
-    );
-  };
+  const isCategoryActive = (category: MenuCategory) =>
+    category.items.some((item) => pathname === item.href || pathname?.startsWith(item.href + '/'));
 
-  // Only the active category (current route) is open; others collapsed
   React.useEffect(() => {
-    const activeCategory = adminMenuCategories.find(category => isCategoryActive(category));
+    const activeCategory = adminMenuCategories.find((c) => isCategoryActive(c));
     setOpenCategories(activeCategory ? new Set([activeCategory.label]) : new Set(['Dashboard']));
   }, [pathname]);
 
-  // Don't apply auth check to login page
   const isLoginPage = pathname === `${ROUTES.ADMIN}/login`;
 
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
+  if (isLoginPage) return <>{children}</>;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div>Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-500">Loading admin panel...</p>
+        </div>
       </div>
     );
   }
@@ -154,47 +134,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <>
-      <div className="flex h-screen overflow-hidden bg-gray-50">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-lg flex-shrink-0 border-r border-gray-200 flex flex-col h-full">
-          <div className="p-6 border-b border-gray-200 flex-shrink-0">
-            <h2 className="text-xl font-bold text-gray-900">Admin Panel</h2>
-            <p className="text-sm text-gray-600 mt-1">{user?.fullName}</p>
+      <div className="flex h-screen overflow-hidden bg-slate-50">
+        <aside className="w-60 flex-shrink-0 flex flex-col bg-white border-r border-slate-200">
+          <div className="h-14 flex items-center px-5 border-b border-slate-200 flex-shrink-0">
+            <span className="text-base font-semibold text-slate-800 tracking-tight">Admin</span>
           </div>
-          <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            <ul className="space-y-1">
+          <nav className="flex-1 overflow-y-auto py-3 px-2">
+            <ul className="space-y-0.5">
               {adminMenuCategories.map((category) => {
                 const CategoryIcon = category.icon;
                 const isOpen = openCategories.has(category.label);
                 const categoryActive = isCategoryActive(category);
-
                 return (
-                  <li key={category.label} className="mb-2">
-                    {/* Category Header */}
+                  <li key={category.label}>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleCategory(category.label);
-                      }}
-                      className={`flex items-center justify-between w-full px-4 py-2 rounded-none transition-colors ${categoryActive
-                        ? 'text-red-600 bg-red-50 border-l-4 border-red-600'
-                        : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
-                        }`}
+                      type="button"
+                      onClick={() => toggleCategory(category.label)}
+                      className={`flex items-center justify-between w-full px-3 py-2 text-left rounded-md transition-colors ${
+                        categoryActive ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <CategoryIcon className="h-5 w-5" />
+                      <span className="flex items-center gap-2.5">
+                        <CategoryIcon className="h-4 w-4 flex-shrink-0 opacity-80" />
                         <span className="text-sm font-medium">{category.label}</span>
-                      </div>
-                      {isOpen ? (
-                        <HiChevronDown className="h-4 w-4" />
-                      ) : (
-                        <HiChevronRight className="h-4 w-4" />
-                      )}
+                      </span>
+                      {isOpen ? <HiChevronDown className="h-4 w-4 text-slate-400" /> : <HiChevronRight className="h-4 w-4 text-slate-400" />}
                     </button>
-
-                    {/* Category Items */}
                     {isOpen && (
-                      <ul className="ml-4 mt-1 space-y-1">
+                      <ul className="mt-0.5 ml-2 pl-4 border-l border-slate-200 space-y-0.5">
                         {category.items.map((item) => {
                           const ItemIcon = item.icon;
                           const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
@@ -202,13 +169,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <li key={item.href}>
                               <Link
                                 href={item.href}
-                                className={`flex items-center space-x-3 px-4 py-2 rounded-none transition-colors ${isActive
-                                  ? 'text-red-600 bg-red-50 border-l-4 border-red-600'
-                                  : 'text-gray-700 hover:bg-gray-50 hover:text-red-600'
-                                  }`}
+                                className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
+                                  isActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
                               >
-                                <ItemIcon className="h-4 w-4" />
-                                <span className="text-sm">{item.label}</span>
+                                <ItemIcon className="h-4 w-4 flex-shrink-0 opacity-80" />
+                                {item.label}
                               </Link>
                             </li>
                           );
@@ -220,12 +186,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               })}
             </ul>
           </nav>
+          <div className="p-3 border-t border-slate-200 flex-shrink-0">
+            <Link
+              href={ROUTES.HOME}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-primary-600 hover:bg-slate-50 rounded-md transition-colors"
+            >
+              <HiExternalLink className="h-4 w-4" />
+              Back to site
+            </Link>
+          </div>
         </aside>
 
-        {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <main className="flex-1 overflow-y-auto bg-white p-8 custom-scrollbar">
-            {children}
+          <header className="h-14 flex-shrink-0 flex items-center justify-between px-6 bg-white border-b border-slate-200">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-slate-500 truncate max-w-[200px] sm:max-w-none">
+                {user?.fullName ?? user?.email ?? 'Admin'}
+              </span>
+            </div>
+            <Link
+              href={ROUTES.HOME}
+              className="text-sm text-slate-500 hover:text-primary-600 transition-colors hidden sm:inline-flex items-center gap-1"
+            >
+              <HiExternalLink className="h-4 w-4" />
+              View site
+            </Link>
+          </header>
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-[1600px] mx-auto">{children}</div>
           </main>
         </div>
       </div>
@@ -238,21 +226,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             color: 'var(--foreground)',
             border: '1px solid var(--border)',
           },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
+          success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
         }}
       />
     </>
   );
 }
-
