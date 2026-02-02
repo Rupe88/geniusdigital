@@ -2,7 +2,7 @@ import React, { useState, useId } from 'react';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { classNames } from '@/lib/utils/helpers';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
   helperText?: string;
