@@ -205,7 +205,7 @@ export default function HomePage() {
       name: 'Sushil Shrestha',
       designation: 'Architect',
       company: null,
-      content:
+      comment:
         'As an architect, I’ve found each course, taught by the highly knowledgeable Acharya Raja Babu Shah, to provide deep insights and practical knowledge.',
       rating: 4,
       image:

@@ -20,6 +20,6 @@ export interface PaginatedResponse<T> {
 export interface ApiError {
   success: false;
   message: string;
-  errors?: Array<{ field: string; message: string }>;
+  errors?: Array<{ field?: string; message?: string; param?: string; msg?: string }>;
 }
 
