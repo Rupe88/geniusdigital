@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiQuestionMarkCircle, HiCalendar, HiVideoCamera, HiChartBar, HiBell, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink } from 'react-icons/hi';
+import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiQuestionMarkCircle, HiCalendar, HiVideoCamera, HiChartBar, HiBell, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
 interface MenuItem {
@@ -96,7 +96,7 @@ const adminMenuCategories: MenuCategory[] = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['Dashboard']));
 
   const toggleCategory = (categoryLabel: string) => {
@@ -196,7 +196,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               })}
             </ul>
           </nav>
-          <div className="p-3 border-t border-slate-200 flex-shrink-0">
+          <div className="p-3 border-t border-slate-200 flex-shrink-0 space-y-0.5">
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+            >
+              <HiLogout className="h-4 w-4" />
+              Logout
+            </button>
             <Link
               href={ROUTES.HOME}
               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-primary-600 hover:bg-slate-50 rounded-md transition-colors"
