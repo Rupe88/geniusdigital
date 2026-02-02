@@ -283,6 +283,10 @@ export const handleApiError = (error: unknown): string => {
     }
     return error.message;
   }
+  // Interceptor may reject with plain API error object { success, message, errors }
+  if (error && typeof error === 'object' && 'message' in error && typeof (error as Record<string, unknown>).message === 'string') {
+    return (error as { message: string }).message;
+  }
   return 'An unexpected error occurred';
 };
 
