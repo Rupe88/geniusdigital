@@ -3,12 +3,22 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { ApiError, ApiResponse } from '@/lib/types/api';
 import { shouldRefreshToken, isTokenExpired } from '@/lib/utils/tokenUtils';
 
-// Use environment variable for API URL, with smart fallbacks
-const API_URL = process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== 'undefined' && window.location.hostname === 'aacharyarajbabu.vercel.app'
-    ? 'https://goldfish-app-d9t4j.ondigitalocean.app/api'  // Replace with your actual production backend URL
-    : 'http://localhost:4000/api'
-  );
+// Production backend URL (DigitalOcean)
+const PRODUCTION_API_URL = 'https://goldfish-app-d9t4j.ondigitalocean.app/api';
+
+// Use environment variable for API URL, with smart fallbacks for production domains
+const getApiUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'sanskarvastu.com' || host === 'www.sanskarvastu.com' || host.endsWith('.vercel.app')) {
+      return PRODUCTION_API_URL;
+    }
+  }
+  return 'http://localhost:4000/api';
+};
+
+const API_URL = getApiUrl();
 
 // Flag to prevent multiple simultaneous refresh requests
 let isRefreshing = false;
