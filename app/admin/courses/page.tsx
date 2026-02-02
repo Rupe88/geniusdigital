@@ -10,16 +10,19 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import * as courseApi from '@/lib/api/courses';
 import * as categoryApi from '@/lib/api/categories';
 import * as instructorApi from '@/lib/api/instructors';
+import * as enrollmentApi from '@/lib/api/enrollments';
 import { Course } from '@/lib/types/course';
 import { Category } from '@/lib/types/course';
 import { Instructor } from '@/lib/api/instructors';
+import { Enrollment } from '@/lib/types/course';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatPrice, formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiPencil, HiTrash, HiEye } from 'react-icons/hi';
+import { HiPencil, HiTrash, HiEye, HiUserGroup } from 'react-icons/hi';
 
 export default function AdminCoursesPage() {
   const router = useRouter();
@@ -32,6 +35,9 @@ export default function AdminCoursesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [instructorFilter, setInstructorFilter] = useState<string>('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [studentsModalCourse, setStudentsModalCourse] = useState<{ id: string; title: string; enrollmentCount: number } | null>(null);
+  const [studentsList, setStudentsList] = useState<Enrollment[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -81,6 +87,26 @@ export default function AdminCoursesPage() {
       setInstructors(response.data || []);
     } catch (error) {
       console.error('Error fetching instructors:', error);
+    }
+  };
+
+  const openStudentsModal = async (course: Course) => {
+    const count = course._count?.enrollments ?? course.totalEnrollments ?? 0;
+    setStudentsModalCourse({ id: course.id, title: course.title, enrollmentCount: count });
+    setStudentsList([]);
+    setStudentsLoading(true);
+    try {
+      const res = await enrollmentApi.getAllEnrollments({
+        courseId: course.id,
+        limit: 500,
+      });
+      setStudentsList(res.data || []);
+    } catch (err) {
+      console.error('Error fetching enrollments:', err);
+      showError(Object(err).message || 'Failed to load students');
+      setStudentsList([]);
+    } finally {
+      setStudentsLoading(false);
     }
   };
 
@@ -239,6 +265,15 @@ export default function AdminCoursesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="View enrolled students"
+                          onClick={() => openStudentsModal(course)}
+                          className="text-[var(--primary-600)] hover:text-[var(--primary-700)]"
+                        >
+                          <HiUserGroup className="h-4 w-4" />
+                        </Button>
                         <Link href={`/admin/courses/${course.id}`}>
                           <Button variant="ghost" size="sm" title="View" className="text-[var(--primary-600)] hover:text-[var(--primary-700)]">
                             <HiEye className="h-4 w-4" />
@@ -297,6 +332,55 @@ export default function AdminCoursesPage() {
           </div>
         )}
       </Card>
+
+      <Modal
+        isOpen={!!studentsModalCourse}
+        onClose={() => setStudentsModalCourse(null)}
+        title={studentsModalCourse ? `Enrolled students – ${studentsModalCourse.title}` : ''}
+        size="xl"
+      >
+        {studentsModalCourse && (
+          <>
+            <p className="text-sm text-[var(--muted-foreground)] mb-4">
+              Total enrolled: <strong>{studentsModalCourse.enrollmentCount}</strong> student{studentsModalCourse.enrollmentCount !== 1 ? 's' : ''}
+            </p>
+            {studentsLoading ? (
+              <div className="py-8 text-center text-[var(--muted-foreground)]">Loading students...</div>
+            ) : studentsList.length === 0 ? (
+              <div className="py-8 text-center text-[var(--muted-foreground)]">No students enrolled in this course.</div>
+            ) : (
+              <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-[var(--muted)] sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium text-[var(--foreground)]">#</th>
+                      <th className="px-4 py-2 text-left font-medium text-[var(--foreground)]">Student name</th>
+                      <th className="px-4 py-2 text-left font-medium text-[var(--foreground)]">Email</th>
+                      <th className="px-4 py-2 text-left font-medium text-[var(--foreground)]">Status</th>
+                      <th className="px-4 py-2 text-left font-medium text-[var(--foreground)]">Enrolled</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {studentsList.map((enrollment, index) => (
+                      <tr key={enrollment.id}>
+                        <td className="px-4 py-2 text-[var(--muted-foreground)]">{index + 1}</td>
+                        <td className="px-4 py-2 font-medium text-[var(--foreground)]">{enrollment.user?.fullName ?? '–'}</td>
+                        <td className="px-4 py-2 text-[var(--foreground)]">{enrollment.user?.email ?? '–'}</td>
+                        <td className="px-4 py-2">
+                          <Badge variant={enrollment.status === 'ACTIVE' ? 'success' : enrollment.status === 'COMPLETED' ? 'info' : 'default'} size="sm">
+                            {enrollment.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2 text-[var(--muted-foreground)]">{formatDate(enrollment.createdAt ?? enrollment.enrolledAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
