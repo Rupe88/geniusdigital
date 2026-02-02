@@ -21,7 +21,6 @@ interface MenuCategory {
 }
 
 const adminMenuCategories: MenuCategory[] = [
-  { label: 'Dashboard', icon: HiHome, items: [{ href: ROUTES.ADMIN, label: 'Overview', icon: HiHome }] },
   {
     label: 'User Management',
     icon: HiUsers,
@@ -109,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   React.useEffect(() => {
     const activeCategory = adminMenuCategories.find((c) => isCategoryActive(c));
-    setOpenCategories(activeCategory ? new Set([activeCategory.label]) : new Set(['Dashboard']));
+    setOpenCategories(activeCategory ? new Set([activeCategory.label]) : new Set());
   }, [pathname]);
 
   const isLoginPage = pathname === `${ROUTES.ADMIN}/login`;
@@ -141,6 +140,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <nav className="flex-1 overflow-y-auto py-3 px-2">
             <ul className="space-y-0.5">
+              <li>
+                <Link
+                  href={ROUTES.ADMIN}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === ROUTES.ADMIN ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <HiHome className="h-4 w-4 flex-shrink-0 opacity-80" />
+                  Overview
+                </Link>
+              </li>
               {adminMenuCategories.map((category) => {
                 const CategoryIcon = category.icon;
                 const isOpen = openCategories.has(category.label);
