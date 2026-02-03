@@ -414,33 +414,40 @@ export default function EditProductPage() {
 
               {uploadedImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {uploadedImages.map((image, index) => (
-                    <div key={index} className="relative">
-                      {image.startsWith('blob:') ? (
-                        <img
-                          src={image}
-                          alt={`Product image ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-none"
-                        />
-                      ) : (
-                        <Image
-                          src={image}
-                          alt={`Product image ${index + 1}`}
-                          width={200}
-                          height={200}
-                          className="w-full h-32 object-cover rounded-none"
-                          unoptimized={image.includes('cloudinary')}
-                        />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-none p-1 hover:bg-red-600"
-                      >
-                        <HiX className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
+                  {uploadedImages.map((image, index) => {
+                    // Ensure image is a string (handle both string URLs and objects)
+                    const imageUrl = typeof image === 'string' ? image : (image as any)?.url || '';
+
+                    if (!imageUrl) return null;
+
+                    return (
+                      <div key={index} className="relative">
+                        {imageUrl.startsWith('blob:') ? (
+                          <img
+                            src={imageUrl}
+                            alt={`Product image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-none"
+                          />
+                        ) : (
+                          <Image
+                            src={imageUrl}
+                            alt={`Product image ${index + 1}`}
+                            width={200}
+                            height={200}
+                            className="w-full h-32 object-cover rounded-none"
+                            unoptimized={imageUrl.includes('cloudinary')}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-none p-1 hover:bg-red-600"
+                        >
+                          <HiX className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

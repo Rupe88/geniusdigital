@@ -86,11 +86,11 @@ export default function AdminEventsPage() {
   };
 
   const getStatusBadge = (status: Event['status']) => {
-    const map: Record<Event['status'], { variant: 'success' | 'warning' | 'default' | 'error'; label: string }> = {
+    const map: Record<Event['status'], { variant: 'success' | 'warning' | 'default' | 'danger'; label: string }> = {
       UPCOMING: { variant: 'default', label: 'Upcoming' },
       ONGOING: { variant: 'success', label: 'Ongoing' },
       COMPLETED: { variant: 'default', label: 'Completed' },
-      CANCELLED: { variant: 'error', label: 'Cancelled' },
+      CANCELLED: { variant: 'danger', label: 'Cancelled' },
     };
     const c = map[status] || { variant: 'default', label: status };
     return <Badge variant={c.variant}>{c.label}</Badge>;

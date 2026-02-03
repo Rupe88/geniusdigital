@@ -41,7 +41,7 @@ export const apiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Keep enabled for authenticated requests
-  timeout: 60000, // 60 seconds default timeout (increased for file uploads)
+  timeout: 90000, // 90 seconds timeout for operations involving external services (Zoom, etc.)
 });
 
 // Request interceptor - Add auth token
@@ -225,20 +225,25 @@ export const handleApiResponse = <T>(response: { data: unknown }): T => {
 // Helper function to handle API errors
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
+    // Timeout error
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      return 'The request took too long to complete. Please try again. If the issue persists, the operation may be processing in the background.';
+    }
+
     // Network error (backend not running, CORS, etc.)
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || error.message === 'Failed to fetch') {
       return 'Unable to connect to the server. Please check if the backend is running and the API URL is correct.';
     }
-    
+
     // Request was made but no response received
     if (!error.response) {
       return 'No response from server. Please check your connection and try again.';
     }
 
-    const apiError = error.response?.data as ApiError & { 
-      errors?: Array<{ msg?: string; param?: string; field?: string; message?: string }> 
+    const apiError = error.response?.data as ApiError & {
+      errors?: Array<{ msg?: string; param?: string; field?: string; message?: string }>
     };
-    
+
     // Handle validation errors (400 Bad Request with errors array)
     // express-validator uses { msg, param }, but we also support { field, message }
     if (error.response.status === 400) {
@@ -258,11 +263,11 @@ export const handleApiError = (error: unknown): string => {
       // Fallback for 400 errors
       return 'Invalid request. Please check your input and try again.';
     }
-    
+
     if (apiError?.message) {
       return apiError.message;
     }
-    
+
     // Handle specific HTTP status codes
     if (error.response.status === 404) {
       return 'The requested resource was not found.';
@@ -270,7 +275,7 @@ export const handleApiError = (error: unknown): string => {
     if (error.response.status === 500) {
       return 'Server error. Please try again later.';
     }
-    
+
     if (error.message) {
       return error.message;
     }
