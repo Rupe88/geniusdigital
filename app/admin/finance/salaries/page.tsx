@@ -33,6 +33,7 @@ interface FinancialSummary {
 export default function SalaryManagementPage() {
   const [earnings, setEarnings] = useState<InstructorEarning[]>([]);
   const [salarySummary, setSalarySummary] = useState<adminApi.SalarySummary | null>(null);
+  const [salarySummaryLoading, setSalarySummaryLoading] = useState(true);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary>({
     totalIncome: 0,
@@ -40,6 +41,7 @@ export default function SalaryManagementPage() {
     netProfit: 0,
     profitMargin: 0,
   });
+  const [financialLoading, setFinancialLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -70,6 +72,13 @@ export default function SalaryManagementPage() {
   }, []);
 
   useEffect(() => {
+    // Recalculate financial summary whenever salary summary changes
+    if (salarySummary) {
+      fetchFinancialSummary();
+    }
+  }, [salarySummary]);
+
+  useEffect(() => {
     fetchEarnings();
   }, [filters]);
 
@@ -77,7 +86,6 @@ export default function SalaryManagementPage() {
     await Promise.all([
       fetchInstructors(),
       fetchSalarySummary(),
-      fetchFinancialSummary(),
       fetchEarnings(),
     ]);
   };
@@ -107,17 +115,22 @@ export default function SalaryManagementPage() {
 
   const fetchSalarySummary = async () => {
     try {
+      setSalarySummaryLoading(true);
       const data = await adminApi.getSalarySummary();
       setSalarySummary(data);
     } catch (error) {
       console.error('Error fetching salary summary:', error);
+      toast.error('Failed to load salary summary');
+    } finally {
+      setSalarySummaryLoading(false);
     }
   };
 
   const fetchFinancialSummary = async () => {
     try {
+      setFinancialLoading(true);
       const dashboard = await adminApi.getDashboardStats();
-      const income = dashboard.totalRevenue || 0;
+      const income = dashboard.revenue?.total || dashboard.totalRevenue || 0;
       const expense = (salarySummary?.totalSalaries || 0);
       const netProfit = income - expense;
       const profitMargin = income > 0 ? (netProfit / income) * 100 : 0;
@@ -130,6 +143,9 @@ export default function SalaryManagementPage() {
       });
     } catch (error) {
       console.error('Error fetching financial summary:', error);
+      toast.error('Failed to load financial summary');
+    } finally {
+      setFinancialLoading(false);
     }
   };
 
