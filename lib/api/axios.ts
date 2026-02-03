@@ -207,8 +207,7 @@ const handleLogout = () => {
       pathname.includes('/reset-password');
 
     if (!isAuthPage) {
-      const isAdminRoute = pathname.startsWith('/admin');
-      window.location.href = isAdminRoute ? '/admin/login' : '/login';
+      window.location.href = '/login';
     }
   }
 };

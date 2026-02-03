@@ -34,14 +34,15 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('Login form submitted with data:', { email: data.email, password: '***' });
     try {
       setError('');
       setIsLoading(true);
-      console.log('Calling login function...');
-      await login(data);
-      console.log('Login successful, redirecting to dashboard...');
-      router.push(ROUTES.DASHBOARD);
+      const user = await login(data);
+      if (user?.role === 'ADMIN') {
+        router.push(ROUTES.ADMIN);
+      } else {
+        router.push(ROUTES.DASHBOARD);
+      }
     } catch (err: any) {
       console.error('Login failed:', err);
       setError((err instanceof Error ? err.message : 'An error occurred') || 'Login failed. Please try again.');

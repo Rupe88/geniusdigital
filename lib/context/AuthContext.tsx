@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<User | null>;
   register: (data: RegisterRequest) => Promise<void>;
   verifyOtp: (data: VerifyOtpRequest) => Promise<void>;
   resendOtp: (email: string) => Promise<void>;
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Redirect to login if not already there (prevent loop)
         const isAdminRoute = pathname.startsWith('/admin');
         if (!isAuthPage) {
-          window.location.href = isAdminRoute ? '/admin/login' : '/login';
+          window.location.href = '/login';
         }
       }
     }
@@ -161,16 +161,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, [refreshUser]);
 
-  const login = async (credentials: LoginRequest) => {
-    console.log('AuthContext.login called with:', { email: credentials.email, password: '***' });
+  const login = async (credentials: LoginRequest): Promise<User | null> => {
     const response = await authApi.login(credentials);
-    console.log('AuthContext.login response received:', response);
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', response.accessToken);
       localStorage.setItem('refreshToken', response.refreshToken);
     }
     setUser(response.user);
-    console.log('AuthContext.login completed, user set');
+    return response.user ?? null;
   };
 
   const register = async (data: RegisterRequest) => {

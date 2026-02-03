@@ -110,9 +110,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setOpenCategories(activeCategory ? new Set([activeCategory.label]) : new Set());
   }, [pathname]);
 
-  const isLoginPage = pathname === `${ROUTES.ADMIN}/login`;
-
-  if (isLoginPage) return <>{children}</>;
+  if (pathname === `${ROUTES.ADMIN}/login`) {
+    if (typeof window !== 'undefined') window.location.href = '/login';
+    return null;
+  }
 
   if (loading) {
     return (
@@ -126,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!isAuthenticated || user?.role !== 'ADMIN') {
-    window.location.href = `${ROUTES.ADMIN}/login`;
+    window.location.href = '/login';
     return null;
   }
 

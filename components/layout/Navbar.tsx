@@ -145,11 +145,6 @@ export const Navbar: React.FC = () => {
                       Register
                     </button>
                   </Link>
-                  <Link href={ROUTES.ADMIN_LOGIN}>
-                    <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-none hover:bg-gray-200 transition-colors whitespace-nowrap">
-                      Login as Admin
-                    </button>
-                  </Link>
                 </>
               )}
             </div>
@@ -220,13 +215,6 @@ export const Navbar: React.FC = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Register
-                </Link>
-                <Link
-                  href={ROUTES.ADMIN_LOGIN}
-                  className="block px-3 py-2 text-center text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-none hover:bg-gray-200 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login as Admin
                 </Link>
                 <Link
                   href={ROUTES.AFFILIATE}

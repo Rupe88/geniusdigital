@@ -32,6 +32,7 @@ export interface CreateEventRequest {
   description?: string;
   shortDescription?: string;
   image?: string;
+  imageFile?: File;
   venue?: string;
   location?: string;
   startDate: string;
@@ -48,6 +49,7 @@ export interface UpdateEventRequest {
   description?: string;
   shortDescription?: string;
   image?: string;
+  imageFile?: File;
   venue?: string;
   location?: string;
   startDate?: string;
@@ -132,16 +134,42 @@ export const getEventById = async (id: string): Promise<Event> => {
   }
 };
 
+function buildEventFormData(data: CreateEventRequest | (UpdateEventRequest & { startDate?: string }), isUpdate = false): FormData {
+  const formData = new FormData();
+  if (data.title) formData.append('title', data.title.trim());
+  if (data.slug) formData.append('slug', data.slug.trim());
+  if (data.startDate) formData.append('startDate', data.startDate);
+  if (data.endDate) formData.append('endDate', data.endDate);
+  if (data.description !== undefined) formData.append('description', data.description);
+  if (data.shortDescription !== undefined) formData.append('shortDescription', data.shortDescription);
+  if (data.venue !== undefined) formData.append('venue', data.venue);
+  if (data.location !== undefined) formData.append('location', data.location);
+  if (data.price !== undefined) formData.append('price', String(data.price));
+  if (data.isFree !== undefined) formData.append('isFree', String(data.isFree));
+  if (data.maxAttendees !== undefined) formData.append('maxAttendees', String(data.maxAttendees));
+  if (data.featured !== undefined) formData.append('featured', String(data.featured));
+  if ('imageFile' in data && data.imageFile) formData.append('image', data.imageFile);
+  formData.append('folder', 'lms/events');
+  if (isUpdate && 'status' in data && data.status) formData.append('status', data.status);
+  return formData;
+}
+
 /**
  * Create new event (admin only)
  */
 export const createEvent = async (data: CreateEventRequest): Promise<Event> => {
   try {
+    const hasFile = !!data.imageFile;
+    if (hasFile) {
+      const formData = buildEventFormData(data, false);
+      const response = await apiClient.post<ApiResponse<Event>>(API_ENDPOINTS.EVENTS.LIST, formData, { timeout: 60000 });
+      const responseData = response.data;
+      if (responseData.success && responseData.data) return responseData.data;
+      throw new Error(responseData.message || 'Failed to create event');
+    }
     const response = await apiClient.post<ApiResponse<Event>>(API_ENDPOINTS.EVENTS.LIST, data);
     const responseData = response.data;
-    if (responseData.success && responseData.data) {
-      return responseData.data;
-    }
+    if (responseData.success && responseData.data) return responseData.data;
     throw new Error(responseData.message || 'Failed to create event');
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -153,11 +181,17 @@ export const createEvent = async (data: CreateEventRequest): Promise<Event> => {
  */
 export const updateEvent = async (id: string, data: UpdateEventRequest): Promise<Event> => {
   try {
+    const hasFile = !!data.imageFile;
+    if (hasFile) {
+      const formData = buildEventFormData({ ...data, startDate: data.startDate }, true);
+      const response = await apiClient.put<ApiResponse<Event>>(API_ENDPOINTS.EVENTS.BY_ID(id), formData, { timeout: 60000 });
+      const responseData = response.data;
+      if (responseData.success && responseData.data) return responseData.data;
+      throw new Error(responseData.message || 'Failed to update event');
+    }
     const response = await apiClient.put<ApiResponse<Event>>(API_ENDPOINTS.EVENTS.BY_ID(id), data);
     const responseData = response.data;
-    if (responseData.success && responseData.data) {
-      return responseData.data;
-    }
+    if (responseData.success && responseData.data) return responseData.data;
     throw new Error(responseData.message || 'Failed to update event');
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -235,6 +269,66 @@ export const unregisterFromEvent = async (id: string): Promise<void> => {
   }
 };
 
+export interface EventRegistration {
+  id: string;
+  eventId: string;
+  userId?: string;
+  name: string;
+  email: string;
+  phone: string;
+  attended: boolean;
+  createdAt: string;
+  user?: { id: string; fullName?: string; email: string; profileImage?: string };
+}
+
+/**
+ * Get event registrations (admin only)
+ */
+export const getEventRegistrations = async (
+  eventId: string,
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<EventRegistration>> => {
+  try {
+    const response = await apiClient.get<ApiResponse<EventRegistration[]>>(
+      `${API_ENDPOINTS.EVENTS.BY_ID(eventId)}/registrations`,
+      { params }
+    );
+    const responseData = response.data;
+    if (responseData.success && responseData.data) {
+      return {
+        data: responseData.data,
+        pagination: (responseData as any).pagination || {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          total: responseData.data.length,
+          pages: 1,
+        },
+      };
+    }
+    throw new Error(responseData.message || 'Failed to fetch registrations');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/**
+ * Mark event attendance (admin only)
+ */
+export const markEventAttendance = async (eventId: string, registrationId: string): Promise<EventRegistration> => {
+  try {
+    const response = await apiClient.post<ApiResponse<EventRegistration>>(
+      `${API_ENDPOINTS.EVENTS.BY_ID(eventId)}/attendance/${registrationId}`
+    );
+    const responseData = response.data;
+    if (responseData.success && responseData.data) {
+      return responseData.data;
+    }
+    throw new Error(responseData.message || 'Failed to mark attendance');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 // For backward compatibility
 export const eventsApi = {
   getAllEvents,
@@ -246,4 +340,6 @@ export const eventsApi = {
   delete: deleteEvent,
   register: registerForEvent,
   unregister: unregisterFromEvent,
+  getEventRegistrations,
+  markEventAttendance,
 };
