@@ -43,7 +43,7 @@ export default function SalaryManagementPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filters, setFilters] = useState({
-    status: 'PENDANT',
+    status: 'PENDING',
     page: 1,
     limit: 20,
   });
@@ -388,10 +388,10 @@ export default function SalaryManagementPage() {
                     <td className="py-3 px-4">
                       <span
                         className={`px-2 py-1 rounded text-xs ${earning.status === 'PAID'
-                            ? 'bg-green-100 text-green-800'
-                            : earning.status === 'PENDING'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800'
+                          : earning.status === 'PENDING'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
                           }`}
                       >
                         {earning.status}
