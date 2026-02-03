@@ -233,10 +233,11 @@ export default function AdminProductsPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        {product.images && product.images.length > 0 && product.images[0] && 
-                         product.images[0].trim() !== '' && 
-                         !product.images[0].includes('example.com') &&
-                         (product.images[0].startsWith('http') || product.images[0].startsWith('/')) ? (
+                        {product.images && product.images.length > 0 &&
+                          typeof product.images[0] === 'string' &&
+                          product.images[0].trim() !== '' &&
+                          !product.images[0].includes('example.com') &&
+                          (product.images[0].startsWith('http') || product.images[0].startsWith('/')) ? (
                           <Image
                             src={product.images[0]}
                             alt={product.name}

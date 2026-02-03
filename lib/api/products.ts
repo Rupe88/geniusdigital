@@ -86,6 +86,8 @@ export interface UpdateProductRequest {
   vastuPurpose?: string;
   energyType?: string;
   material?: string;
+  sku?: string;
+  status?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -114,9 +116,17 @@ const createFormData = (data: any): FormData => {
           formData.append(key, JSON.stringify(dims));
         }
       }
-    } else if (key === 'tags' || key === 'images' || key === 'existingImages') {
+    } else if (key === 'tags' || key === 'existingImages') {
       if (data[key] !== undefined && data[key] !== null) {
         formData.append(key, JSON.stringify(data[key]));
+      }
+    } else if (key === 'images') {
+      // Only append 'images' as JSON if there are NO imageFiles being sent.
+      // If there are imageFiles, they will use the 'images' field name for the actual files.
+      if (!data.imageFiles || data.imageFiles.length === 0) {
+        if (data.images !== undefined && data.images !== null) {
+          formData.append('images', JSON.stringify(data.images));
+        }
       }
     } else if (key === 'featured') {
       // Convert boolean to string
@@ -306,14 +316,14 @@ export const productsApi = {
       return response.data;
     } catch (error: any) {
       console.error('Product update error:', error);
-      
+
       // Handle timeout errors specifically
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         const imageCount = data.imageFiles?.length || 0;
         const timeoutMinutes = Math.round((imageCount * 120000 || 300000) / 60000);
         throw new Error(`Upload timed out after ${timeoutMinutes} minutes. Please try again with smaller images (max 5MB each) or fewer files.`);
       }
-      
+
       // Extract error message from response
       if (error.response?.data) {
         const errorData = error.response.data;

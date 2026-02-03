@@ -207,7 +207,7 @@ export default function ViewProductPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Product Images</h3>
             {product.images && product.images.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {product.images.map((image, index) => (
+                {product.images.filter(image => typeof image === 'string').map((image, index) => (
                   <div key={index} className="aspect-square relative rounded-none overflow-hidden">
                     <Image
                       src={image}

@@ -416,13 +416,13 @@ export default function EditProductPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {uploadedImages.map((image, index) => (
                     <div key={index} className="relative">
-                      {image.startsWith('blob:') ? (
+                      {typeof image === 'string' && image.startsWith('blob:') ? (
                         <img
                           src={image}
                           alt={`Product image ${index + 1}`}
                           className="w-full h-32 object-cover rounded-none"
                         />
-                      ) : (
+                      ) : typeof image === 'string' ? (
                         <Image
                           src={image}
                           alt={`Product image ${index + 1}`}
@@ -431,6 +431,10 @@ export default function EditProductPage() {
                           className="w-full h-32 object-cover rounded-none"
                           unoptimized={image.includes('cloudinary')}
                         />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500 text-xs">Invalid Image</span>
+                        </div>
                       )}
                       <button
                         type="button"
