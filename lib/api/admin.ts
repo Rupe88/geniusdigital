@@ -9,6 +9,7 @@ export interface AdminStats {
     thisMonth: number;
     total: number;
   };
+  totalRevenue?: number; // For P/L calculations
   expenses: number;
   profit: number;
   pendingSalaries: number;
@@ -426,6 +427,21 @@ export const updateInstructorCommissionRate = async (
       commissionRate,
     });
     handleApiResponse<void>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const createManualSalaryPayment = async (data: {
+  instructorId: string;
+  amount: number;
+  paymentDate: string;
+  description?: string;
+  paymentMethod?: string;
+}): Promise<any> => {
+  try {
+    const response = await apiClient.post<ApiResponse<unknown>>(API_ENDPOINTS.ADMIN.CREATE_MANUAL_SALARY, data);
+    return handleApiResponse<unknown>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }

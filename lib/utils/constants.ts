@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
     INSTRUCTOR_EARNINGS_SUMMARY: (id: string) => `/admin/instructors/${id}/earnings-summary`,
     INSTRUCTOR_EARNINGS_MARK_PAID: '/admin/instructors/earnings/mark-paid',
     INSTRUCTOR_COMMISSION_RATE: (id: string) => `/admin/instructors/${id}/commission-rate`,
+    CREATE_MANUAL_SALARY: '/admin/instructors/salaries/create',
     // Account Management
     ACCOUNT_OVERVIEW: '/admin/account/overview',
     ACCOUNT_TRANSACTIONS: '/admin/account/transactions',
