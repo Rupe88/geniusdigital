@@ -114,7 +114,11 @@ export default function AdminPaymentsPage() {
         setAnalytics(response.data.data);
       }
     } catch (error: any) {
-      console.error('Error fetching analytics:', error);
+      // Silently fail if analytics endpoint is not available
+      // This prevents UI errors when database is down
+      if (error.response?.status !== 404) {
+        console.error('Analytics unavailable:', error.response?.data?.message || 'Service unavailable');
+      }
     }
   }, []);
 
@@ -154,7 +158,7 @@ export default function AdminPaymentsPage() {
         [
           p.transactionId,
           p.user?.email || 'N/A',
-          p.finalAmount,
+          Number(p.finalAmount || 0).toFixed(2),
           p.paymentMethod,
           p.status,
           new Date(p.createdAt).toLocaleDateString(),
@@ -198,7 +202,7 @@ export default function AdminPaymentsPage() {
               <div>
                 <p className="text-sm text-gray-600">Total Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${analytics.overview.totalRevenue.toFixed(2)}
+                  ${Number(analytics.overview.totalRevenue || 0).toFixed(2)}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
@@ -226,7 +230,7 @@ export default function AdminPaymentsPage() {
               <div>
                 <p className="text-sm text-gray-600">Success Rate</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {analytics.overview.successRate.toFixed(1)}%
+                  {Number(analytics.overview.successRate || 0).toFixed(1)}%
                 </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">
@@ -240,7 +244,7 @@ export default function AdminPaymentsPage() {
               <div>
                 <p className="text-sm text-gray-600">Avg Transaction</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${analytics.overview.avgTransactionValue.toFixed(2)}
+                  ${Number(analytics.overview.avgTransactionValue || 0).toFixed(2)}
                 </p>
               </div>
               <div className="p-3 bg-orange-100 rounded-lg">
@@ -351,11 +355,11 @@ export default function AdminPaymentsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          ${payment.finalAmount.toFixed(2)}
+                          ${Number(payment.finalAmount || 0).toFixed(2)}
                         </div>
-                        {payment.discount > 0 && (
+                        {Number(payment.discount || 0) > 0 && (
                           <div className="text-xs text-gray-500">
-                            -${payment.discount.toFixed(2)} discount
+                            -${Number(payment.discount || 0).toFixed(2)} discount
                           </div>
                         )}
                       </td>
