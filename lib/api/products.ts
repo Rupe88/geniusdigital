@@ -253,17 +253,45 @@ export const productsApi = {
   },
 
   /**
-   * Update product (admin only)
+   * Update product (admin only). Sends JSON when no new image files (works reliably locally);
+   * sends FormData when imageFiles present (Cloudinary upload).
    */
   update: async (id: string, data: UpdateProductRequest): Promise<ApiResponse<Product>> => {
     try {
+      const hasImageFiles = data.imageFiles && data.imageFiles.length > 0;
+
+      if (!hasImageFiles) {
+        const jsonBody: Record<string, unknown> = {
+          name: data.name,
+          slug: (data as any).slug,
+          description: data.description,
+          shortDescription: (data as any).shortDescription,
+          price: data.price,
+          comparePrice: data.originalPrice,
+          stock: data.stockQuantity ?? (data as any).stockQuantity,
+          status: data.status ?? (data.published !== undefined ? (data.published ? 'ACTIVE' : 'INACTIVE') : undefined),
+          featured: data.featured,
+          images: data.images,
+          dimensions: data.dimensions,
+          productType: data.productType,
+          vastuPurpose: data.vastuPurpose,
+          energyType: data.energyType,
+          material: data.material,
+        };
+        if (data.sku !== undefined) jsonBody.sku = data.sku;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (data.category !== undefined && data.category !== '' && uuidRegex.test(String(data.category))) jsonBody.categoryId = data.category;
+        Object.keys(jsonBody).forEach((k) => {
+          if (jsonBody[k] === undefined || jsonBody[k] === '') delete jsonBody[k];
+        });
+        const response = await apiClient.put(API_ENDPOINTS.PRODUCTS.BY_ID(id), jsonBody, { timeout: 60000 });
+        return response.data;
+      }
+
       const formData = createFormData(data);
       const imageCount = data.imageFiles?.length || 0;
-      // Calculate timeout: 120 seconds per image, minimum 5 minutes, maximum 15 minutes
       const timeout = Math.min(Math.max(imageCount * 120000, 300000), 900000);
-      
-      console.log(`Updating product with ${imageCount} images, timeout: ${timeout / 1000}s`);
-      
+
       const response = await apiClient.put(API_ENDPOINTS.PRODUCTS.BY_ID(id), formData, {
         timeout: timeout,
         onUploadProgress: (progressEvent) => {
