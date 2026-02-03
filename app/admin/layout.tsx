@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiQuestionMarkCircle, HiCalendar, HiVideoCamera, HiChartBar, HiBell, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout } from 'react-icons/hi';
+import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiCalendar, HiVideoCamera, HiChartBar, HiBell, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
 interface MenuItem {
@@ -45,7 +45,6 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/blogs`, label: 'Blog', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/testimonials`, label: 'Testimonials', icon: HiStar },
       { href: `${ROUTES.ADMIN}/gallery`, label: 'Gallery', icon: HiPhotograph },
-      { href: `${ROUTES.ADMIN}/faqs`, label: 'FAQs', icon: HiQuestionMarkCircle },
       { href: `${ROUTES.ADMIN}/events`, label: 'Events', icon: HiCalendar },
       { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
       { href: `${ROUTES.ADMIN}/popups`, label: 'Popups', icon: HiPhotograph },
