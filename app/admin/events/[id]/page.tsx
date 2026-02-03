@@ -102,11 +102,11 @@ export default function AdminEventDetailPage() {
     );
   }
 
-  const statusVariant: Record<Event['status'], 'success' | 'warning' | 'default' | 'error'> = {
+  const statusVariant: Record<Event['status'], 'success' | 'warning' | 'default' | 'danger'> = {
     UPCOMING: 'default',
     ONGOING: 'success',
     COMPLETED: 'default',
-    CANCELLED: 'error',
+    CANCELLED: 'danger',
   };
 
   return (
