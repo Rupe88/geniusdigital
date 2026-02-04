@@ -10,6 +10,7 @@ import { HeroCarousel } from '@/components/HeroCarousel';
 import { UpcomingEvents } from '@/components/UpcomingEvents';
 import { SuccessStories } from '@/components/SuccessStories';
 import { Gallery } from '@/components/Gallery';
+import { CourseCard } from '@/components/CourseCard';
 import { ROUTES } from '@/lib/utils/constants';
 import * as courseApi from '@/lib/api/courses';
 import * as testimonialApi from '@/lib/api/testimonials';
@@ -121,6 +122,24 @@ export default function HomePage() {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   const testimonialsScrollRef = useRef<HTMLDivElement | null>(null);
+  const ongoingCoursesRef = useRef<HTMLDivElement>(null);
+  const popularCoursesRef = useRef<HTMLDivElement>(null);
+  const clientSayRef = useRef<HTMLDivElement>(null);
+
+  // Ongoing Courses drag state
+  const [ongoingIsDragging, setOngoingIsDragging] = useState(false);
+  const [ongoingStartX, setOngoingStartX] = useState(0);
+  const [ongoingScrollLeft, setOngoingScrollLeft] = useState(0);
+
+  // Popular Courses drag state
+  const [popularIsDragging, setPopularIsDragging] = useState(false);
+  const [popularStartX, setPopularStartX] = useState(0);
+  const [popularScrollLeft, setPopularScrollLeft] = useState(0);
+
+  // Client Say drag state
+  const [clientSayIsDragging, setClientSayIsDragging] = useState(false);
+  const [clientSayStartX, setClientSayStartX] = useState(0);
+  const [clientSayScrollLeft, setClientSayScrollLeft] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -176,6 +195,153 @@ export default function HomePage() {
       left: next,
       behavior: 'smooth',
     });
+  };
+
+  // Ongoing Courses scroll function
+  const scrollOngoingCourses = (direction: 'left' | 'right') => {
+    if (!ongoingCoursesRef.current) return;
+    const scrollAmount = 404; // Card width (400) + gap (24)
+    const currentScroll = ongoingCoursesRef.current.scrollLeft;
+    const newScroll = direction === 'left' 
+      ? currentScroll - scrollAmount 
+      : currentScroll + scrollAmount;
+    
+    ongoingCoursesRef.current.scrollTo({
+      left: newScroll,
+      behavior: 'smooth',
+    });
+  };
+
+  // Popular Courses scroll function
+  const scrollPopularCourses = (direction: 'left' | 'right') => {
+    if (!popularCoursesRef.current) return;
+    const scrollAmount = 404; // Card width (400) + gap (24)
+    const currentScroll = popularCoursesRef.current.scrollLeft;
+    const newScroll = direction === 'left' 
+      ? currentScroll - scrollAmount 
+      : currentScroll + scrollAmount;
+    
+    popularCoursesRef.current.scrollTo({
+      left: newScroll,
+      behavior: 'smooth',
+    });
+  };
+
+  // Ongoing Courses mouse handlers
+  const handleOngoingMouseDown = (e: React.MouseEvent) => {
+    if (!ongoingCoursesRef.current) return;
+    setOngoingIsDragging(true);
+    setOngoingStartX(e.pageX - ongoingCoursesRef.current.offsetLeft);
+    setOngoingScrollLeft(ongoingCoursesRef.current.scrollLeft);
+    ongoingCoursesRef.current.style.cursor = 'grabbing';
+    ongoingCoursesRef.current.style.userSelect = 'none';
+  };
+
+  const handleOngoingMouseMove = (e: React.MouseEvent) => {
+    if (!ongoingIsDragging || !ongoingCoursesRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - ongoingCoursesRef.current.offsetLeft;
+    const walk = (x - ongoingStartX) * 2;
+    ongoingCoursesRef.current.scrollLeft = ongoingScrollLeft - walk;
+  };
+
+  const handleOngoingMouseUp = () => {
+    setOngoingIsDragging(false);
+    if (ongoingCoursesRef.current) {
+      ongoingCoursesRef.current.style.cursor = 'grab';
+      ongoingCoursesRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  const handleOngoingMouseLeave = () => {
+    setOngoingIsDragging(false);
+    if (ongoingCoursesRef.current) {
+      ongoingCoursesRef.current.style.cursor = 'grab';
+      ongoingCoursesRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  // Popular Courses mouse handlers
+  const handlePopularMouseDown = (e: React.MouseEvent) => {
+    if (!popularCoursesRef.current) return;
+    setPopularIsDragging(true);
+    setPopularStartX(e.pageX - popularCoursesRef.current.offsetLeft);
+    setPopularScrollLeft(popularCoursesRef.current.scrollLeft);
+    popularCoursesRef.current.style.cursor = 'grabbing';
+    popularCoursesRef.current.style.userSelect = 'none';
+  };
+
+  const handlePopularMouseMove = (e: React.MouseEvent) => {
+    if (!popularIsDragging || !popularCoursesRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - popularCoursesRef.current.offsetLeft;
+    const walk = (x - popularStartX) * 2;
+    popularCoursesRef.current.scrollLeft = popularScrollLeft - walk;
+  };
+
+  const handlePopularMouseUp = () => {
+    setPopularIsDragging(false);
+    if (popularCoursesRef.current) {
+      popularCoursesRef.current.style.cursor = 'grab';
+      popularCoursesRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  const handlePopularMouseLeave = () => {
+    setPopularIsDragging(false);
+    if (popularCoursesRef.current) {
+      popularCoursesRef.current.style.cursor = 'grab';
+      popularCoursesRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  // Client Say scroll function
+  const scrollClientSay = (direction: 'left' | 'right') => {
+    if (!clientSayRef.current) return;
+    const scrollAmount = 404; // Card width (400) + gap (24)
+    const currentScroll = clientSayRef.current.scrollLeft;
+    const newScroll = direction === 'left' 
+      ? currentScroll - scrollAmount 
+      : currentScroll + scrollAmount;
+    
+    clientSayRef.current.scrollTo({
+      left: newScroll,
+      behavior: 'smooth',
+    });
+  };
+
+  // Client Say mouse handlers
+  const handleClientSayMouseDown = (e: React.MouseEvent) => {
+    if (!clientSayRef.current) return;
+    setClientSayIsDragging(true);
+    setClientSayStartX(e.pageX - clientSayRef.current.offsetLeft);
+    setClientSayScrollLeft(clientSayRef.current.scrollLeft);
+    clientSayRef.current.style.cursor = 'grabbing';
+    clientSayRef.current.style.userSelect = 'none';
+  };
+
+  const handleClientSayMouseMove = (e: React.MouseEvent) => {
+    if (!clientSayIsDragging || !clientSayRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - clientSayRef.current.offsetLeft;
+    const walk = (x - clientSayStartX) * 2;
+    clientSayRef.current.scrollLeft = clientSayScrollLeft - walk;
+  };
+
+  const handleClientSayMouseUp = () => {
+    setClientSayIsDragging(false);
+    if (clientSayRef.current) {
+      clientSayRef.current.style.cursor = 'grab';
+      clientSayRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  const handleClientSayMouseLeave = () => {
+    setClientSayIsDragging(false);
+    if (clientSayRef.current) {
+      clientSayRef.current.style.cursor = 'grab';
+      clientSayRef.current.style.userSelect = 'auto';
+    }
   };
 
   useEffect(() => {
@@ -265,118 +431,155 @@ export default function HomePage() {
         <UpcomingEvents />
       </section>
 
-      {/* Ongoing Courses - grid layout like Popular Courses */}
-      <section className="py-16 bg-white">
+      {/* Ongoing Courses - horizontal scrollable carousel */}
+      <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Ongoing Courses
             </h2>
-            <p className="text-lg text-[var(--muted-foreground)]">
+            <p className="text-lg text-gray-600">
               Continue learning with the courses you&apos;re currently enrolled in. Track your
               progress, revisit lessons, and stay on top of your studies with ease.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {ongoingCourses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white border border-gray-200 shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-200"
-              >
-                <div className="relative w-full h-52">
-                  <Image
-                    src={course.thumbnail}
-                    alt={course.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-5">
-                  {/* Rating stars */}
-                  <div className="mb-2 text-yellow-400 text-lg">
-                    {'★★★★★'}
-                  </div>
-                  <h3 className="text-base md:text-lg font-semibold text-[var(--foreground)] mb-3">
-                    {course.title}
-                  </h3>
-                  <div className="flex items-baseline space-x-2">
-                    {course.price && (
-                      <span className="text-lg font-bold text-[var(--primary-700)]">
-                        {course.price}
-                      </span>
-                    )}
-                    {course.oldPrice && (
-                      <span className="text-sm text-gray-500 line-through">
-                        {course.oldPrice}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="relative">
+            {/* Navigation Arrows - Only show if more than 3 courses */}
+            {ongoingCourses.length > 3 && (
+              <>
+                <button
+                  onClick={() => scrollOngoingCourses('left')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  aria-label="Previous courses"
+                >
+                  <HiChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => scrollOngoingCourses('right')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  aria-label="Next courses"
+                >
+                  <HiChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
+            {/* Scrollable Container */}
+            <div
+              ref={ongoingCoursesRef}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
+                ongoingCourses.length > 3 ? 'scroll-smooth' : 'justify-center'
+              } ${ongoingIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              onMouseDown={handleOngoingMouseDown}
+              onMouseMove={handleOngoingMouseMove}
+              onMouseUp={handleOngoingMouseUp}
+              onMouseLeave={handleOngoingMouseLeave}
+            >
+              {ongoingCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.title}
+                  thumbnail={course.thumbnail}
+                  price={course.price}
+                  oldPrice={course.oldPrice}
+                  className="flex-shrink-0 w-[400px]"
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Popular Courses - grid like design */}
-      <section className="py-16 bg-white">
+      {/* Popular Courses - horizontal scrollable carousel */}
+      <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-4">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Popular Courses
             </h2>
-            <p className="text-lg text-[var(--muted-foreground)]">
+            <p className="text-lg text-gray-600">
               Explore our most sought-after courses, loved by students across Nepal for their
               comprehensive content and practical approach. Start your journey to success today!
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularCourses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white border border-gray-200 shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-200"
-              >
-                <div className="relative w-full h-52">
-                  <Image
-                    src={course.thumbnail}
-                    alt={course.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-5">
-                  {/* Rating stars */}
-                  <div className="mb-2 text-yellow-400 text-lg">
-                    {'★★★★★'}
+          <div className="relative">
+            {/* Navigation Arrows - Only show if more than 3 courses */}
+            {popularCourses.length > 3 && (
+              <>
+                <button
+                  onClick={() => scrollPopularCourses('left')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  aria-label="Previous courses"
+                >
+                  <HiChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => scrollPopularCourses('right')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  aria-label="Next courses"
+                >
+                  <HiChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
+            {/* Scrollable Container */}
+            <div
+              ref={popularCoursesRef}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
+                popularCourses.length > 3 ? 'scroll-smooth' : 'justify-center'
+              } ${popularIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              onMouseDown={handlePopularMouseDown}
+              onMouseMove={handlePopularMouseMove}
+              onMouseUp={handlePopularMouseUp}
+              onMouseLeave={handlePopularMouseLeave}
+            >
+              {popularCourses.map((course) => (
+                <div
+                  key={course.id}
+                  className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative w-full h-52 p-2">
+                    <img
+                      src={course.thumbnail}
+                      alt={course.title}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-[var(--foreground)] mb-3">
-                    {course.title}
-                  </h3>
-                  <div className="flex items-baseline space-x-2">
-                    {course.price && (
-                      <span className="text-lg font-bold text-[var(--primary-700)]">
-                        {course.price}
-                      </span>
-                    )}
-                    {course.oldPrice && (
-                      <span className="text-sm text-gray-500 line-through">
-                        {course.oldPrice}
-                      </span>
-                    )}
+
+                  {/* Content */}
+                  <div className="px-5 pt-0 pb-0">
+                    <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
+                      {course.title}
+                    </h3>
+                    <div className="flex items-baseline space-x-2">
+                      {course.price && (
+                        <span className="text-lg font-bold text-[var(--primary-700)]">
+                          {course.price}
+                        </span>
+                      )}
+                      {course.oldPrice && (
+                        <span className="text-sm text-gray-500 line-through">
+                          {course.oldPrice}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* What Our Client Say - cards layout */}
-      <section className="py-16 bg-white">
+      {/* What Our Client Say - horizontal scrollable carousel */}
+      <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               What Our Client Say
             </h2>
@@ -385,47 +588,81 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonialsToShow.map((testimonial: Testimonial) => (
-              <div
-                key={testimonial.id}
-                className="bg-white border border-gray-200 shadow-lg px-6 py-5 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center mb-4">
-                    {testimonial.image ? (
-                      <div className="mr-4 h-12 w-12 overflow-hidden rounded-none">
-                        <img
-                          src={testimonial.image}
-                          alt={testimonial.name || 'Client'}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-none bg-[var(--primary-700)] text-white text-lg font-semibold">
-                        {testimonial.name?.[0] || 'S'}
-                      </div>
-                    )}
+          <div className="relative">
+            {/* Navigation Arrows - Only show if more than 1 testimonial */}
+            {testimonialsToShow.length > 1 && (
+              <>
+                <button
+                  onClick={() => scrollClientSay('left')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  aria-label="Previous testimonial"
+                >
+                  <HiChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => scrollClientSay('right')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  aria-label="Next testimonial"
+                >
+                  <HiChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
+            {/* Scrollable Container */}
+            <div
+              ref={clientSayRef}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
+                testimonialsToShow.length > 1 ? 'scroll-smooth' : 'justify-center'
+              } ${clientSayIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              onMouseDown={handleClientSayMouseDown}
+              onMouseMove={handleClientSayMouseMove}
+              onMouseUp={handleClientSayMouseUp}
+              onMouseLeave={handleClientSayMouseLeave}
+            >
+              {testimonialsToShow.map((testimonial: Testimonial) => (
+                <div
+                  key={testimonial.id}
+                  className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
+                >
+                  <div className="px-5 pt-3 pb-0">
                     <div>
-                      <p className="text-base font-semibold text-gray-900">
-                        {testimonial.name || 'Student'}
+                      <div className="flex items-center mb-4">
+                        {testimonial.image ? (
+                          <div className="mr-4 h-12 w-12 overflow-hidden rounded-lg">
+                            <img
+                              src={testimonial.image}
+                              alt={testimonial.name || 'Client'}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--primary-700)] text-white text-lg font-semibold">
+                            {testimonial.name?.[0] || 'S'}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-base font-semibold text-gray-900">
+                            {testimonial.name || 'Student'}
+                          </p>
+                          <p className="text-sm font-medium text-orange-500">
+                            {testimonial.designation || testimonial.company || 'Sanskar Academy Learner'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-sm leading-relaxed text-gray-700 mb-1">
+                        "{testimonial.comment}"
                       </p>
-                      <p className="text-sm font-medium text-orange-500">
-                        {testimonial.designation || testimonial.company || 'Sanskar Academy Learner'}
-                      </p>
+
+                      <div className="flex items-center space-x-1 text-yellow-400 text-lg">
+                        {'★'.repeat(testimonial.rating || 5)}
+                      </div>
                     </div>
                   </div>
-
-                  <p className="text-sm leading-relaxed text-gray-700">
-                    "{testimonial.comment}"
-                  </p>
                 </div>
-
-                <div className="mt-4 flex items-center space-x-1 text-yellow-400 text-lg">
-                  {'★'.repeat(testimonial.rating || 5)}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>

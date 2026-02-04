@@ -371,19 +371,19 @@ export default function CourseDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {/* Title and Description - Above both columns */}
+        <div className="space-y-4 mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            {course.title}
+          </h1>
+          <p className="text-lg text-gray-600 leading-relaxed max-w-3xl">
+            {course.shortDescription}
+          </p>
+        </div>
 
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* LEFT COLUMN - Scrollable Content */}
           <div className="flex-1 w-full lg:w-2/3 space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-                {course.title}
-              </h1>
-              <p className="text-lg text-gray-600 leading-relaxed max-w-3xl">
-                {course.shortDescription}
-              </p>
-            </div>
-
             {/* Main Course Media */}
             <div className={`relative aspect-video shadow-2xl bg-black group ${!demoVideoPlaying ? 'cursor-pointer' : ''}`}
               onClick={() => !demoVideoPlaying && setDemoVideoPlaying(true)}>
@@ -701,7 +701,7 @@ export default function CourseDetailPage() {
           <div className="w-full lg:w-1/3 lg:sticky lg:top-8">
             <div className="bg-white rounded-none shadow-2xl border border-gray-100 overflow-hidden transform transition-all hover:translate-y-[-4px]">
               {/* Card Thumbnail */}
-              <div className="relative aspect-[16/10] overflow-hidden">
+              <div className="relative aspect-[16/9] overflow-hidden">
                 {course.thumbnail && (
                   <Image src={course.thumbnail} alt={course.title} fill className="object-cover" />
                 )}

@@ -34,7 +34,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Roboto', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['var(--font-rubik)', 'Rubik', 'sans-serif'],
         mono: ['Courier New', 'monospace'],
       },
     },

@@ -4,32 +4,7 @@ import { AuthProvider } from "@/lib/context/AuthContext";
 import { CartProvider } from "@/lib/context/CartContext";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import PromotionalPopup from "@/components/layout/PromotionalPopup";
-
-// Use system fonts as fallback when Google Fonts is unavailable
-let fontClasses = "";
-
-try {
-    const { Roboto, Inter } = require("next/font/google");
-
-    const roboto = Roboto({
-        weight: ['300', '400', '500', '700'],
-        subsets: ["latin"],
-        variable: "--font-roboto",
-        display: 'swap',
-    });
-
-    const inter = Inter({
-        weight: ['300', '400', '500', '600', '700'],
-        subsets: ["latin"],
-        variable: "--font-inter",
-        display: 'swap',
-    });
-
-    fontClasses = `${roboto.variable} ${inter.variable}`;
-} catch (error) {
-    // Fallback to system fonts if Google Fonts fails
-    console.warn('Google Fonts unavailable, using system fonts');
-}
+import ContentProtection from "@/components/ContentProtection";
 
 export const metadata: Metadata = {
     title: "Sanskar Academy - Master in Scientific Vastu & Modern Numerology",
@@ -44,9 +19,10 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${fontClasses} antialiased min-h-screen flex flex-col`}
+                className="antialiased min-h-screen flex flex-col"
                 suppressHydrationWarning
             >
+                {/* <ContentProtection /> */}
                 <AuthProvider>
                     <CartProvider>
                         <LayoutWrapper>

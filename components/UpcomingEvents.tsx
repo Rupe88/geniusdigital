@@ -1,8 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import React, { useRef, useState } from 'react';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
 interface Event {
@@ -48,6 +46,9 @@ const dummyEvents: Event[] = [
 export const UpcomingEvents: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const showCarousel = dummyEvents.length > 3;
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -64,11 +65,41 @@ export const UpcomingEvents: React.FC = () => {
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    scrollContainerRef.current.style.cursor = 'grabbing';
+    scrollContainerRef.current.style.userSelect = 'none';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = 'grab';
+      scrollContainerRef.current.style.userSelect = 'auto';
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = 'grab';
+      scrollContainerRef.current.style.userSelect = 'auto';
+    }
+  };
+
   return (
-    <section
-      className="py-16"
-      style={{ backgroundColor: 'rgba(192, 30, 46, 0.04)' }}
-    >
+    <section className="pt-16 pb-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
@@ -87,14 +118,14 @@ export const UpcomingEvents: React.FC = () => {
             <>
               <button
                 onClick={() => scroll('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-none hover:bg-gray-800 transition-all shadow-lg"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
                 aria-label="Previous events"
               >
                 <HiChevronLeft className="h-6 w-6" />
               </button>
               <button
                 onClick={() => scroll('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-none hover:bg-gray-800 transition-all shadow-lg"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
                 aria-label="Next events"
               >
                 <HiChevronRight className="h-6 w-6" />
@@ -107,44 +138,39 @@ export const UpcomingEvents: React.FC = () => {
             ref={scrollContainerRef}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
               showCarousel ? 'scroll-smooth' : 'justify-center'
-            }`}
+            } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
           >
             {dummyEvents.map((event) => (
               <div
                 key={event.id}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-200"
+                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
               >
                 {/* Thumbnail */}
-                <div className="relative w-full h-52">
+                <div className="relative w-full h-52 p-2">
                   <img
                     src={event.thumbnail}
                     alt={event.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
 
                 {/* Content */}
-                <div className="p-5">
+                <div className="px-5 pt-0 pb-0">
                   {/* Date */}
-                  <div className="mb-3">
-                    <span className="inline-block px-3 py-1 rounded-none bg-gray-100 text-xs font-medium text-gray-700">
+                  <div className="mb-1">
+                    <span className="inline-block pl-0 pr-3 py-0 rounded-none bg-white text-xs font-medium text-gray-700">
                       {event.date}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-3 line-clamp-2 uppercase">
+                  <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
                     {event.title}
                   </h3>
-
-                  {/* Book Now Button - match register button size */}
-                  <div className="flex justify-start">
-                    <Link href={`/events/${event.id}`}>
-                      <button className="bg-red-600 text-white px-4 py-2 text-sm font-medium hover:bg-red-700 transition-colors">
-                        Book Now
-                      </button>
-                    </Link>
-                  </div>
                 </div>
               </div>
             ))}

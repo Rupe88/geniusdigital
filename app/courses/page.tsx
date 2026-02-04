@@ -1,20 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ShareButton } from '@/components/referrals/ShareButton';
+import { CourseCard } from '@/components/CourseCard';
 import * as courseApi from '@/lib/api/courses';
 import { Course } from '@/lib/types/course';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatCurrency } from '@/lib/utils/helpers';
-import { useAuth } from '@/lib/context/AuthContext';
 
 export default function CoursesPage() {
-  const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -71,52 +66,15 @@ export default function CoursesPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {courses.map((course) => (
-                <Card key={course.id} hover className="overflow-hidden">
-                  <Link href={`/courses/${course.slug || course.id}`}>
-                    {course.thumbnail && (
-                      <div className="relative h-48 w-full">
-                        <Image
-                          src={course.thumbnail}
-                          alt={course.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <h3 className="text-xl font-semibold text-[var(--foreground)] mb-2">
-                        {course.title}
-                      </h3>
-                      <p className="text-sm text-[var(--muted-foreground)] mb-4 line-clamp-2">
-                        {course.shortDescription || course.description}
-                      </p>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold text-[var(--primary-700)]">
-                          {course.isFree ? 'Free' : formatCurrency(course.price)}
-                        </span>
-                        <Link href={`/courses/${course.slug || course.id}`}>
-                          <Button variant="primary" size="sm">View Details</Button>
-                        </Link>
-                      </div>
-
-                      {user && (
-                        <div className="flex gap-2">
-                          <ShareButton
-                            courseId={course.id}
-                            course={{
-                              id: course.id,
-                              title: course.title,
-                              thumbnail: course.thumbnail
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                </Card>
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.title}
+                  thumbnail={course.thumbnail || undefined}
+                  price={course.isFree ? 'Free' : formatCurrency(course.price)}
+                  oldPrice={course.originalPrice ? formatCurrency(course.originalPrice) : undefined}
+                  slug={course.slug}
+                />
               ))}
             </div>
 
