@@ -35,43 +35,46 @@ function LoginForm() {
   const [callbackProcessing, setCallbackProcessing] = useState(false);
   const callbackHandled = useRef(false);
 
-  // Handle Google OAuth callback: tokens in URL -> store and redirect to dashboard
+  // Handle Google OAuth callback: tokens in hash or query -> store and redirect to dashboard
   useEffect(() => {
-    const accessToken = searchParams.get('accessToken');
-    const refreshToken = searchParams.get('refreshToken');
+    if (typeof window === 'undefined') return;
+
     const err = searchParams.get('error');
     if (err) {
       setError(decodeURIComponent(err));
-      if (typeof window !== 'undefined') {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
+      window.history.replaceState({}, '', window.location.pathname);
       return;
     }
+
+    // Prefer hash (backend sends tokens in hash to avoid URL length limits); fallback to query
+    const hashParams = window.location.hash
+      ? new URLSearchParams(window.location.hash.replace(/^#/, ''))
+      : null;
+    const accessToken = hashParams?.get('accessToken') ?? searchParams.get('accessToken');
+    const refreshToken = hashParams?.get('refreshToken') ?? searchParams.get('refreshToken');
+
     if (!accessToken || !refreshToken || callbackHandled.current) return;
     callbackHandled.current = true;
     setCallbackProcessing(true);
 
-    const apply = async () => {
-      if (typeof window === 'undefined') return;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      window.history.replaceState({}, '', window.location.pathname);
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    window.history.replaceState({}, '', window.location.pathname);
 
-      try {
-        const user = await authApi.getMe();
-        await refreshUser();
-        if (user?.role === 'ADMIN') {
-          window.location.replace(ROUTES.ADMIN);
-        } else {
-          window.location.replace(ROUTES.DASHBOARD);
-        }
-      } catch {
-        await refreshUser();
-        window.location.replace(ROUTES.DASHBOARD);
-      }
+    const goTo = (path: string) => {
+      window.location.replace(path);
     };
-    apply();
-  }, [searchParams, refreshUser]);
+
+    authApi
+      .getMe()
+      .then((user) => {
+        if (user?.role === 'ADMIN') goTo(ROUTES.ADMIN);
+        else goTo(ROUTES.DASHBOARD);
+      })
+      .catch(() => {
+        goTo(ROUTES.DASHBOARD);
+      });
+  }, [searchParams]);
 
   const {
     register,
