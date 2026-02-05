@@ -47,7 +47,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {/* Content */}
-        <div className="px-5 pt-0 pb-3">
+        <div className="px-5 pt-0 pb-1">
           <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
             {title}
           </h3>

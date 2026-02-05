@@ -47,9 +47,16 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 90000, // 90 seconds timeout for operations involving external services (Zoom, etc.)
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and handle FormData
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // If FormData is being sent, remove Content-Type to let browser set it with boundary
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+      }
+    }
+
     if (typeof window !== 'undefined') {
       // Skip token for auth endpoints (they don't need tokens)
       const isAuthEndpoint = config.url?.includes('/auth/register') ||

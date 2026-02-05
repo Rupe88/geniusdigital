@@ -7,8 +7,6 @@ import type { GalleryItem } from '@/lib/api/gallery';
 
 const PER_PAGE = 24;
 
-const getDisplayUrl = (item: GalleryItem): string => item.imageUrl || item.videoUrl || '';
-
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +37,7 @@ export default function GalleryPage() {
     return () => { cancelled = true; };
   }, [page]);
 
-  const displayItems = items.filter((item) => getDisplayUrl(item));
+  const displayItems = items.filter((item) => item.imageUrl);
 
   return (
     <main className="min-h-screen bg-white">
@@ -79,29 +77,16 @@ export default function GalleryPage() {
                   className="rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                 >
                   <div className="aspect-[4/3] relative bg-gray-100">
-                    {item.type === 'VIDEO' && item.videoUrl ? (
-                      <video
-                        src={item.videoUrl}
-                        poster={item.imageUrl}
-                        className="w-full h-full object-cover"
-                        controls
-                        preload="metadata"
-                      />
-                    ) : (
-                      <img
-                        src={getDisplayUrl(item)}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    )}
+                <img
+                  src={item.imageUrl}
+                  alt={item.title || 'Gallery image'}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
                   </div>
                   {item.title && (
                     <div className="p-3">
                       <p className="font-medium text-gray-900 line-clamp-2">{item.title}</p>
-                      {item.category && (
-                        <p className="text-sm text-gray-500 mt-0.5">{item.category}</p>
-                      )}
                     </div>
                   )}
                 </div>

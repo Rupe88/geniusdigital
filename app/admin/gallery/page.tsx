@@ -7,39 +7,26 @@ import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import * as galleryApi from '@/lib/api/gallery';
-import { GalleryItem, GalleryType } from '@/lib/api/gallery';
+import { GalleryItem } from '@/lib/api/gallery';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiPencil, HiTrash, HiPlus, HiVideoCamera, HiPhotograph, HiExclamation } from 'react-icons/hi';
+import { HiPencil, HiTrash, HiPlus, HiPhotograph, HiExclamation } from 'react-icons/hi';
 
 export default function AdminGalleryPage() {
   const router = useRouter();
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [featuredFilter, setFeaturedFilter] = useState<string>('');
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 0 });
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     fetchGalleryItems();
-  }, [pagination.page, search, typeFilter, categoryFilter, statusFilter, featuredFilter]);
-
-  useEffect(() => {
-    // Extract unique categories from gallery items
-    const uniqueCategories = Array.from(new Set(galleryItems.map(item => item.category).filter(Boolean))) as string[];
-    setCategories(uniqueCategories);
-  }, [galleryItems]);
+  }, [pagination.page, search]);
 
   const fetchGalleryItems = async () => {
     try {
@@ -48,14 +35,6 @@ export default function AdminGalleryPage() {
         page: pagination.page,
         limit: pagination.limit,
       };
-      if (typeFilter) params.type = typeFilter;
-      if (categoryFilter) params.category = categoryFilter;
-      if (statusFilter === 'published') {
-        params.isPublished = 'true';
-      } else if (statusFilter === 'draft') {
-        params.isPublished = 'false';
-      }
-      if (featuredFilter) params.featured = featuredFilter === 'true';
 
       const response: PaginatedResponse<GalleryItem> = await galleryApi.getAllGalleryItems(params);
       setGalleryItems(response.data || []);
@@ -93,17 +72,8 @@ export default function AdminGalleryPage() {
     setDeleteConfirm(null);
   };
 
-  const getStatusBadge = (isPublished: boolean) => {
-    if (isPublished) {
-      return <Badge variant="success">Published</Badge>;
-    }
-    return <Badge variant="warning">Draft</Badge>;
-  };
-
   const filteredItems = galleryItems.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
-      (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
-    return matchesSearch;
+    return (item.title || '').toLowerCase().includes(search.toLowerCase());
   });
 
   return (
@@ -123,7 +93,7 @@ export default function AdminGalleryPage() {
 
       {/* Filters */}
       <Card padding="md" className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             placeholder="Search by title..."
             value={search}
@@ -131,56 +101,6 @@ export default function AdminGalleryPage() {
               setSearch(e.target.value);
               setPagination({ ...pagination, page: 1 });
             }}
-          />
-          <Select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              setPagination({ ...pagination, page: 1 });
-            }}
-            options={[
-              { value: '', label: 'All Types' },
-              { value: 'IMAGE', label: 'Images' },
-              { value: 'VIDEO', label: 'Videos' },
-            ]}
-          />
-          <Select
-            value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value);
-              setPagination({ ...pagination, page: 1 });
-            }}
-            options={[
-              { value: '', label: 'All Categories' },
-              ...categories.map((cat) => ({
-                value: cat,
-                label: cat,
-              })),
-            ]}
-          />
-          <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPagination({ ...pagination, page: 1 });
-            }}
-            options={[
-              { value: '', label: 'All Status' },
-              { value: 'published', label: 'Published' },
-              { value: 'draft', label: 'Draft' },
-            ]}
-          />
-          <Select
-            value={featuredFilter}
-            onChange={(e) => {
-              setFeaturedFilter(e.target.value);
-              setPagination({ ...pagination, page: 1 });
-            }}
-            options={[
-              { value: '', label: 'All Featured' },
-              { value: 'true', label: 'Featured' },
-              { value: 'false', label: 'Not Featured' },
-            ]}
           />
         </div>
       </Card>
@@ -195,42 +115,19 @@ export default function AdminGalleryPage() {
           {filteredItems.map((item) => (
             <Card key={item.id} padding="none" className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative aspect-video bg-gray-100">
-                {item.type === 'VIDEO' ? (
-                  item.videoUrl ? (
-                    <video
-                      src={item.videoUrl}
-                      className="w-full h-full object-cover"
-                      controls={false}
-                      muted
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <HiVideoCamera className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.title || 'Gallery image'}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
                 ) : (
-                  item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <HiPhotograph className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )
-                )}
-                {item.featured && (
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="success">Featured</Badge>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <HiPhotograph className="h-12 w-12 text-gray-400" />
                   </div>
                 )}
-                <div className="absolute top-2 left-2">
-                  {getStatusBadge(item.isPublished)}
-                </div>
               </div>
               <div className="p-4">
                 <h3 className="font-semibold text-[var(--foreground)] mb-1 truncate">{item.title}</h3>

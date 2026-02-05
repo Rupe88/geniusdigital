@@ -14,15 +14,11 @@ export default function NewGalleryPage() {
     try {
       console.log('Creating gallery item with data:', {
         title: data.title,
-        type: data.type,
-        hasFile: !!data.file,
-        fileSize: data.file ? `${(data.file.size / (1024 * 1024)).toFixed(2)}MB` : 'N/A',
-        imageUrl: data.imageUrl,
-        videoUrl: data.videoUrl,
+        fileCount: data.files?.length || 0,
       });
       
       await galleryApi.createGalleryItem(data);
-      showSuccess('Gallery item created successfully!');
+      showSuccess('Gallery items created successfully!');
       router.push('/admin/gallery');
     } catch (error: any) {
       console.error('Error creating gallery item:', error);
@@ -49,7 +45,7 @@ export default function NewGalleryPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[var(--foreground)]">Create New Gallery Item</h1>
-        <p className="text-[var(--muted-foreground)] mt-2">Add a new image or video to the gallery</p>
+        <p className="text-[var(--muted-foreground)] mt-2">Add one or many images to the gallery</p>
       </div>
 
       <GalleryForm

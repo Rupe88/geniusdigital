@@ -20,6 +20,7 @@ export default function AdminPopupsPage() {
     const [popups, setPopups] = useState<Popup[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function AdminPopupsPage() {
 
     const onSubmit = async (data: PopupForm) => {
         try {
+            setIsSubmitting(true);
             const formData = new FormData();
             formData.append('title', data.title);
             formData.append('linkUrl', data.linkUrl || '');
@@ -67,6 +69,7 @@ export default function AdminPopupsPage() {
                 formData.append('image', selectedFile);
             } else if (!editingId) {
                 toast.error('Please select an image');
+                setIsSubmitting(false);
                 return;
             }
 
@@ -87,6 +90,8 @@ export default function AdminPopupsPage() {
         } catch (error) {
             console.error(error);
             toast.error(editingId ? 'Failed to update popup' : 'Failed to create popup');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -185,8 +190,30 @@ export default function AdminPopupsPage() {
                         </div>
 
                         <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setIsCreating(false)}>Cancel</Button>
-                            <Button type="submit" disabled={loading}>{loading ? 'Saving...' : (editingId ? 'Update' : 'Create')}</Button>
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setIsCreating(false)}
+                                disabled={isSubmitting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                disabled={isSubmitting || loading}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        {editingId ? 'Updating...' : 'Uploading...'}
+                                    </>
+                                ) : (
+                                    editingId ? 'Update' : 'Create'
+                                )}
+                            </Button>
                         </div>
                     </form>
                 </Card>

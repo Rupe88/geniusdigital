@@ -2,7 +2,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
@@ -15,10 +14,6 @@ const getRowItems = <T,>(items: T[], rowIndex: number, itemsPerRow: number): T[]
   return items.slice(startIndex, startIndex + itemsPerRow);
 };
 
-const getDisplayUrl = (item: GalleryItem): string => {
-  return item.imageUrl || item.videoUrl || '';
-};
-
 export const Gallery: React.FC = () => {
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
@@ -29,6 +24,7 @@ export const Gallery: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLefts, setScrollLefts] = useState({ row1: 0, row2: 0, row3: 0 });
+  const [windowWidth, setWindowWidth] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,14 +41,53 @@ export const Gallery: React.FC = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const displayItems = items.filter((item) => getDisplayUrl(item));
-  const withSeeMore = [...displayItems, { id: 'see-more', isMore: true } as GalleryItem & { isMore?: boolean }];
+  // Track window width to calculate scrollable content
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    // Set initial width
+    if (typeof window !== 'undefined') {
+      setWindowWidth(window.innerWidth);
+      window.addEventListener('resize', handleResize);
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  }, []);
+
+  const displayItems = items.filter((item) => item.imageUrl);
+  
+  // Add "See More" if we have items
+  const withSeeMore = displayItems.length > 0 
+    ? [...displayItems, { id: 'see-more', isMore: true } as GalleryItem & { isMore?: boolean }]
+    : [];
+  
   const itemsPerRow = ITEMS_PER_ROW;
   const row1Items = getRowItems(withSeeMore, 0, itemsPerRow);
   const row2Items = getRowItems(withSeeMore, 1, itemsPerRow);
   const row3Items = getRowItems(withSeeMore, 2, itemsPerRow);
 
+  // Calculate if any row can scroll
+  // Card width: 400px (lg) or min(400px, calc(100vw - 2rem)) on smaller screens
+  // Gap: 24px (gap-6)
+  // On typical screens: ~2-3 cards fit without scrolling
+  const cardWidth = windowWidth >= 1024 ? 400 : Math.min(400, windowWidth - 32);
+  const gap = 24;
+  const cardsPerScreen = windowWidth > 0 ? Math.floor((windowWidth - 64) / (cardWidth + gap)) : 2; // 64px for container padding
+  const hasScrollableContent = withSeeMore.length > cardsPerScreen;
+  
+  // Always show buttons if we have items
+  const showButtons = withSeeMore.length > 0;
+
   const scrollGallery = (direction: 'left' | 'right') => {
+    // Only scroll if there's scrollable content
+    if (!hasScrollableContent) return;
+    
     const scrollAmount = 404;
     [row1Ref, row2Ref, row3Ref].forEach((ref) => {
       if (ref.current) {
@@ -111,7 +146,6 @@ export const Gallery: React.FC = () => {
     });
   };
 
-  const hasMultipleItems = withSeeMore.length > itemsPerRow;
 
   const cardClass =
     'flex-shrink-0 w-[min(400px,calc(100vw-2rem))] lg:w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg';
@@ -122,7 +156,7 @@ export const Gallery: React.FC = () => {
     index: number
   ) => {
     const isSeeMore = 'isMore' in item && item.isMore;
-    const src = isSeeMore ? '' : getDisplayUrl(item as GalleryItem);
+    const src = isSeeMore ? '' : (item as GalleryItem).imageUrl;
     const alt = isSeeMore ? 'See more' : (item as GalleryItem).title || `Gallery ${index + 1}`;
 
     const content = (
@@ -180,18 +214,24 @@ export const Gallery: React.FC = () => {
         </div>
 
         <div className="relative space-y-6">
-          {hasMultipleItems && (
+          {showButtons && (
             <>
               <button
                 onClick={() => scrollGallery('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                disabled={!hasScrollableContent}
+                className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg ${
+                  !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 aria-label="Previous gallery"
               >
                 <HiChevronLeft className="h-6 w-6" />
               </button>
               <button
                 onClick={() => scrollGallery('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                disabled={!hasScrollableContent}
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg ${
+                  !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 aria-label="Next gallery"
               >
                 <HiChevronRight className="h-6 w-6" />
@@ -202,8 +242,8 @@ export const Gallery: React.FC = () => {
           <div
             ref={row1Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasMultipleItems ? 'scroll-smooth' : 'justify-center'
-            } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              hasScrollableContent ? 'scroll-smooth' : 'justify-center'
+            } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -214,8 +254,8 @@ export const Gallery: React.FC = () => {
           <div
             ref={row2Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasMultipleItems ? 'scroll-smooth' : 'justify-center'
-            } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              hasScrollableContent ? 'scroll-smooth' : 'justify-center'
+            } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -226,8 +266,8 @@ export const Gallery: React.FC = () => {
           <div
             ref={row3Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasMultipleItems ? 'scroll-smooth' : 'justify-center'
-            } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              hasScrollableContent ? 'scroll-smooth' : 'justify-center'
+            } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

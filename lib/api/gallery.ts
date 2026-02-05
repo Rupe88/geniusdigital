@@ -3,34 +3,17 @@ import { apiClient, handleApiResponse, handleApiError } from './axios';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
 import { PaginatedResponse, ApiResponse, Pagination } from '@/lib/types/api';
 
-export type GalleryType = 'IMAGE' | 'VIDEO';
-
 export interface GalleryItem {
   id: string;
-  title: string;
-  description?: string | null;
+  title?: string | null;
   imageUrl: string;
-  videoUrl?: string | null;
-  type: GalleryType;
-  category?: string | null;
-  isPublished: boolean;
-  featured: boolean;
-  order: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateGalleryItemData {
-  title: string;
-  description?: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  type?: GalleryType;
-  category?: string;
-  isPublished?: boolean;
-  featured?: boolean;
-  order?: number;
-  file?: File; // For file upload
+  title?: string;
+  files?: File[]; // For file upload (multiple)
 }
 
 export interface UpdateGalleryItemData extends Partial<CreateGalleryItemData> {}
@@ -39,9 +22,6 @@ export interface UpdateGalleryItemData extends Partial<CreateGalleryItemData> {}
 export const getGalleryItems = async (params?: {
   page?: number;
   limit?: number;
-  type?: GalleryType;
-  category?: string;
-  featured?: boolean;
 }): Promise<PaginatedResponse<GalleryItem>> => {
   try {
     const response = await apiClient.get<ApiResponse<GalleryItem[]> & { pagination: Pagination }>(API_ENDPOINTS.GALLERY.LIST, {
@@ -70,10 +50,6 @@ export const getGalleryItems = async (params?: {
 export const getAllGalleryItems = async (params?: {
   page?: number;
   limit?: number;
-  type?: GalleryType;
-  category?: string;
-  featured?: boolean;
-  isPublished?: boolean;
 }): Promise<PaginatedResponse<GalleryItem>> => {
   try {
     const response = await apiClient.get<ApiResponse<GalleryItem[]> & { pagination: Pagination }>(API_ENDPOINTS.GALLERY.LIST, {
@@ -111,37 +87,21 @@ export const getGalleryItemById = async (id: string): Promise<GalleryItem> => {
 };
 
 // Admin: Create gallery item
-export const createGalleryItem = async (data: CreateGalleryItemData): Promise<GalleryItem> => {
+export const createGalleryItem = async (data: CreateGalleryItemData): Promise<GalleryItem[]> => {
   try {
     // Either file or URL must be provided
-    if (!data.file && !data.imageUrl && !data.videoUrl) {
-      throw new Error('Please upload a file or provide an image/video URL');
+    if (!data.files || data.files.length === 0) {
+      throw new Error('Please upload at least one image file');
     }
 
     const formData = new FormData();
 
-    formData.append('title', data.title.trim());
-    if (data.description) formData.append('description', data.description);
-    if (data.type) formData.append('type', data.type);
-    if (data.category) formData.append('category', data.category.trim());
-    if (data.isPublished !== undefined) formData.append('isPublished', data.isPublished.toString());
-    if (data.featured !== undefined) formData.append('featured', data.featured.toString());
-    if (data.order !== undefined) formData.append('order', data.order.toString());
-    
-    // Handle file upload (priority) or URL (optional alternative)
-    if (data.file) {
-      formData.append('file', data.file);
-    } else {
-      // URLs are optional - only use if no file is uploaded
-      if (data.imageUrl) {
-        formData.append('imageUrl', data.imageUrl);
-      }
-      if (data.videoUrl) {
-        formData.append('videoUrl', data.videoUrl);
-      }
-    }
+    if (data.title) formData.append('title', data.title.trim());
+    data.files.forEach((file) => {
+      formData.append('files', file);
+    });
 
-    const response = await apiClient.post<ApiResponse<GalleryItem>>(API_ENDPOINTS.GALLERY.LIST, formData, {
+    const response = await apiClient.post<ApiResponse<GalleryItem[]>>(API_ENDPOINTS.GALLERY.LIST, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -173,21 +133,12 @@ export const updateGalleryItem = async (id: string, data: UpdateGalleryItemData)
   try {
     const formData = new FormData();
 
-    if (data.title) formData.append('title', data.title.trim());
-    if (data.description !== undefined) formData.append('description', data.description);
-    if (data.type) formData.append('type', data.type);
-    if (data.category !== undefined) formData.append('category', data.category?.trim() || '');
-    if (data.isPublished !== undefined) formData.append('isPublished', data.isPublished.toString());
-    if (data.featured !== undefined) formData.append('featured', data.featured.toString());
-    if (data.order !== undefined) formData.append('order', data.order.toString());
-    
-    // Handle file upload or URL
-    if (data.file) {
-      formData.append('file', data.file);
-    } else if (data.imageUrl !== undefined) {
-      formData.append('imageUrl', data.imageUrl || '');
-    } else if (data.videoUrl !== undefined) {
-      formData.append('videoUrl', data.videoUrl || '');
+    if (data.title !== undefined) formData.append('title', data.title.trim());
+
+    // Handle file upload
+    if (data.files && data.files.length > 0) {
+      // Only first file used for update
+      formData.append('file', data.files[0]);
     }
 
     const response = await apiClient.put<ApiResponse<GalleryItem>>(API_ENDPOINTS.GALLERY.BY_ID(id), formData, {
