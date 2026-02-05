@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     ME: '/auth/me',
     PROFILE: '/auth/profile',
     UPDATE_PAYMENT_PREFERENCE: '/auth/profile/payment-preference',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
   // Admin
   ADMIN: {

@@ -28,6 +28,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
+  const [registeredPhone, setRegisteredPhone] = useState<string>('');
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string>('');
 
@@ -64,6 +65,7 @@ export default function RegisterPage() {
         phone: data.phone,
       });
       setRegisteredEmail(data.email);
+      setRegisteredPhone(data.phone?.trim() || '');
       setShowOtpVerification(true);
     } catch (err: any) {
       setError((err instanceof Error ? err.message : 'An error occurred') || 'Registration failed. Please try again.');
@@ -94,7 +96,9 @@ export default function RegisterPage() {
       <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex items-start justify-center px-4 pt-16 pb-10">
         <Card className="w-full max-w-sm rounded-none border border-gray-200 shadow-md" padding="md">
           <h2 className="text-xl font-semibold text-gray-900 mb-1 text-center">Verify email</h2>
-          <p className="text-xs text-gray-600 mb-4">Enter the 6-digit code sent to {registeredEmail}</p>
+          <p className="text-xs text-gray-600 mb-4">
+            Enter the 6-digit code sent to your email{registeredPhone ? ' and phone' : ''}.
+          </p>
 
           {error && (
             <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">

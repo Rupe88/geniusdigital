@@ -2,10 +2,12 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  phone?: string;
+  phone?: string | null;
+  profileImage?: string | null;
   role: 'USER' | 'ADMIN' | 'INSTRUCTOR';
   isEmailVerified: boolean;
   isActive: boolean;
+  preferredPaymentMethod?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,8 +44,9 @@ export interface ForgotPasswordRequest {
 }
 
 export interface ResetPasswordRequest {
-  token: string;
-  password: string;
+  email: string;
+  otp: string;
+  newPassword: string;
 }
 
 export interface RefreshTokenRequest {

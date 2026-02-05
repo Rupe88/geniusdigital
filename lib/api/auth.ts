@@ -91,9 +91,23 @@ export const getMe = async (): Promise<User> => {
 
 export const getProfile = async (): Promise<User> => {
   try {
-    const response = await apiClient.get<ApiResponse<{ user: User }>>(API_ENDPOINTS.AUTH.PROFILE);
-    const data = handleApiResponse<{ user: User }>(response);
-    return data.user;
+    const response = await apiClient.get<ApiResponse<User>>(API_ENDPOINTS.AUTH.PROFILE);
+    return handleApiResponse<User>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export interface UpdateProfileRequest {
+  fullName?: string;
+  phone?: string | null;
+}
+
+export const updateProfile = async (data: UpdateProfileRequest): Promise<User> => {
+  try {
+    const response = await apiClient.put<ApiResponse<User>>(API_ENDPOINTS.AUTH.PROFILE, data);
+    const result = handleApiResponse<User>(response);
+    return result;
   } catch (error) {
     throw new Error(handleApiError(error));
   }
@@ -102,6 +116,19 @@ export const getProfile = async (): Promise<User> => {
 export const updatePaymentPreference = async (preferredPaymentMethod: string): Promise<void> => {
   try {
     await apiClient.put(API_ENDPOINTS.AUTH.UPDATE_PAYMENT_PREFERENCE, { preferredPaymentMethod });
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const changePassword = async (data: ChangePasswordRequest): Promise<void> => {
+  try {
+    await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
   } catch (error) {
     throw new Error(handleApiError(error));
   }

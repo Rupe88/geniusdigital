@@ -20,6 +20,9 @@ const getApiUrl = (): string => {
 
 const API_URL = getApiUrl();
 
+/** Base URL for API (e.g. for OAuth redirects). Use when building full backend URLs. */
+export const getApiBaseUrl = (): string => getApiUrl();
+
 // Flag to prevent multiple simultaneous refresh requests
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
