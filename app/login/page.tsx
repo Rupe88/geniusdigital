@@ -35,7 +35,7 @@ function LoginForm() {
   const [callbackProcessing, setCallbackProcessing] = useState(false);
   const callbackHandled = useRef(false);
 
-  // Handle Google OAuth callback: tokens in URL -> store and redirect
+  // Handle Google OAuth callback: tokens in URL -> store and redirect to dashboard
   useEffect(() => {
     const accessToken = searchParams.get('accessToken');
     const refreshToken = searchParams.get('refreshToken');
@@ -56,6 +56,7 @@ function LoginForm() {
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       window.history.replaceState({}, '', window.location.pathname);
+
       try {
         const user = await authApi.getMe();
         await refreshUser();
@@ -65,11 +66,8 @@ function LoginForm() {
           window.location.replace(ROUTES.DASHBOARD);
         }
       } catch {
-        setError('Session could not be restored. Please try again.');
-        setCallbackProcessing(false);
-        callbackHandled.current = false;
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        await refreshUser();
+        window.location.replace(ROUTES.DASHBOARD);
       }
     };
     apply();
@@ -160,10 +158,9 @@ function LoginForm() {
             </span>
           </div>
 
-          <Button
+          <button
             type="button"
-            variant="secondary"
-            className="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm py-2"
+            className="w-full flex items-center justify-center gap-2 rounded-none border-2 border-gray-300 bg-white py-2.5 px-4 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             disabled={googleLoading}
             onClick={() => {
               setGoogleLoading(true);
@@ -171,10 +168,10 @@ function LoginForm() {
             }}
           >
             {googleLoading ? (
-              'Redirecting…'
+              <span className="text-gray-900">Redirecting…</span>
             ) : (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="h-4 w-4" viewBox="0 0 24 24">
+              <>
+                <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -192,10 +189,10 @@ function LoginForm() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Continue with Google
-              </span>
+                <span className="text-gray-900">Continue with Google</span>
+              </>
             )}
-          </Button>
+          </button>
         </form>
 
         <p className="mt-4 text-center text-xs text-gray-600">

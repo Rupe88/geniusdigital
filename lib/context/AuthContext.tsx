@@ -86,9 +86,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setUser(null);
-        // Redirect to login if not already there (prevent loop)
-        const isAdminRoute = pathname.startsWith('/admin');
-        if (!isAuthPage) {
+        // Only redirect if on a protected route (so reload on home stays on home)
+        const isProtected =
+          pathname.startsWith('/dashboard') ||
+          (pathname.startsWith('/admin') && !pathname.includes('/admin/login')) ||
+          pathname.includes('/learn') ||
+          pathname.startsWith('/payment');
+        if (isProtected) {
           window.location.href = '/login';
         }
       }

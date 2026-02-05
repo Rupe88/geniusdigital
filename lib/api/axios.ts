@@ -201,13 +201,19 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Helper function to handle logout and redirection
+// Routes that require auth – only redirect to login when we're on one of these (reload on home stays on home)
+const isProtectedRoute = (pathname: string) =>
+  pathname.startsWith('/dashboard') ||
+  (pathname.startsWith('/admin') && !pathname.includes('/admin/login')) ||
+  pathname.includes('/learn') ||
+  pathname.startsWith('/payment');
+
+// Helper: clear tokens and optionally redirect. Redirect only on protected routes so reload on home stays on home.
 const handleLogout = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 
-    // Only redirect if not already on a login page (prevent loop)
     const pathname = window.location.pathname;
     const isAuthPage =
       pathname.includes('/login') ||
@@ -216,7 +222,7 @@ const handleLogout = () => {
       pathname.includes('/forgot-password') ||
       pathname.includes('/reset-password');
 
-    if (!isAuthPage) {
+    if (!isAuthPage && isProtectedRoute(pathname)) {
       window.location.href = '/login';
     }
   }
