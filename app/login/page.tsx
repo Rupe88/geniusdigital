@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -32,6 +32,8 @@ function LoginForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [callbackProcessing, setCallbackProcessing] = useState(false);
+  const callbackHandled = useRef(false);
 
   // Handle Google OAuth callback: tokens in URL -> store and redirect
   useEffect(() => {
@@ -40,14 +42,20 @@ function LoginForm() {
     const err = searchParams.get('error');
     if (err) {
       setError(decodeURIComponent(err));
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
       return;
     }
-    if (!accessToken || !refreshToken) return;
+    if (!accessToken || !refreshToken || callbackHandled.current) return;
+    callbackHandled.current = true;
+    setCallbackProcessing(true);
 
     const apply = async () => {
       if (typeof window === 'undefined') return;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      window.history.replaceState({}, '', window.location.pathname);
       try {
         const user = await authApi.getMe();
         await refreshUser();
@@ -58,6 +66,8 @@ function LoginForm() {
         }
       } catch {
         setError('Session could not be restored. Please try again.');
+        setCallbackProcessing(false);
+        callbackHandled.current = false;
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
       }
@@ -90,6 +100,16 @@ function LoginForm() {
       setIsLoading(false);
     }
   };
+
+  if (callbackProcessing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex items-center justify-center px-4">
+        <Card className="w-full max-w-sm rounded-none border border-gray-200 shadow-md" padding="md">
+          <p className="text-center text-gray-600">Signing you in…</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex items-start justify-center px-4 pt-16 pb-10">
