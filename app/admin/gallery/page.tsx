@@ -130,17 +130,7 @@ export default function AdminGalleryPage() {
                 )}
               </div>
               <div className="p-4">
-                <h3 className="font-semibold text-[var(--foreground)] mb-1 truncate">{item.title}</h3>
-                {item.description && (
-                  <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-2">
-                    {item.description}
-                  </p>
-                )}
-                {item.category && (
-                  <p className="text-xs text-[var(--muted-foreground)] mb-2">
-                    Category: {item.category}
-                  </p>
-                )}
+                <h3 className="font-semibold text-[var(--foreground)] mb-1 truncate">{item.title || 'Untitled'}</h3>
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-xs text-[var(--muted-foreground)]">
                     {formatDate(item.createdAt)}
@@ -154,7 +144,7 @@ export default function AdminGalleryPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteClick(item.id, item.title)}
+                      onClick={() => handleDeleteClick(item.id, item.title ?? 'Untitled')}
                       disabled={deletingId === item.id}
                     >
                       <HiTrash className="h-4 w-4 text-red-600" />
