@@ -37,14 +37,18 @@ export const getAllCourses = async (params?: {
 };
 
 export const filterCourses = async (filters: {
-  categoryId?: string;
-  instructorId?: string;
+  category?: string;
+  instructor?: string;
   level?: string;
-  priceMin?: number;
-  priceMax?: number;
+  minPrice?: number;
+  maxPrice?: number;
   isFree?: boolean;
   featured?: boolean;
   isOngoing?: boolean;
+  search?: string;
+  searchRegex?: string;
+  sortBy?: 'newest' | 'oldest' | 'price' | 'rating' | 'popularity' | 'enrollments';
+  order?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }): Promise<PaginatedResponse<Course>> => {

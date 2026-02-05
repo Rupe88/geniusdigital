@@ -5,28 +5,80 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CourseCard } from '@/components/CourseCard';
 import * as courseApi from '@/lib/api/courses';
-import { Course } from '@/lib/types/course';
+import * as categoryApi from '@/lib/api/categories';
+import { Course, Category } from '@/lib/types/course';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatCurrency } from '@/lib/utils/helpers';
+import { HiSearch } from 'react-icons/hi';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 0 });
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    pages: 0,
+  });
 
+  // Load course categories once
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCategories = async () => {
+      try {
+        const data = await categoryApi.getAllCategories({ type: 'COURSE' });
+        if (!cancelled) {
+          setCategories(data || []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error fetching course categories:', error);
+          setCategories([]);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load courses when filters or page change
   useEffect(() => {
     fetchCourses();
-  }, [pagination.page, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, search, selectedCategory]);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const data: PaginatedResponse<Course> = await courseApi.getAllCourses({
+
+      const params: any = {
         page: pagination.page,
         limit: pagination.limit,
-        search: search || undefined,
-      });
+      };
+
+      if (search) {
+        // If search looks like /regex/, treat inner content as regex pattern
+        if (search.startsWith('/') && search.endsWith('/') && search.length > 2) {
+          params.searchRegex = search.slice(1, -1);
+        } else {
+          params.search = search;
+        }
+      }
+
+      if (selectedCategory) {
+        params.category = selectedCategory;
+      }
+
+      const data: PaginatedResponse<Course> = await courseApi.filterCourses(params);
       setCourses(data.data || []);
       setPagination({
         page: data.pagination?.page || pagination.page,
@@ -36,28 +88,90 @@ export default function CoursesPage() {
       });
     } catch (error) {
       console.error('Error fetching courses:', error);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPagination({ ...pagination, page: 1 });
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSearch(searchInput.trim());
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleCategoryClick = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   return (
     <div className="min-h-screen bg-[var(--muted)] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[var(--foreground)] mb-4">All Courses</h1>
-          <Input
-            type="text"
-            placeholder="Search courses..."
-            value={search}
-            onChange={handleSearch}
-            className="max-w-md"
-          />
+        <div className="mb-8 space-y-4">
+          <h1 className="text-4xl font-bold text-[var(--foreground)]">All Courses</h1>
+
+          {/* Search bar */}
+          <form onSubmit={handleSearchSubmit} className="max-w-lg">
+            <div className="inline-flex p-2 h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
+              <div className="flex items-center px-2 text-[#ae8c94]">
+                <HiSearch className="h-6 w-6" />
+              </div>
+              <div className="w-[320px]">
+                <Input
+                  type="text"
+                  placeholder="search your course...."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full ring-0 ring-offset-0 border-none rounded-none bg-[var(--muted)] focus:ring-0 focus:ring-offset-0 focus:border-transparent"
+                />
+              </div>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                className="rounded-none px-5 focus:ring-0 focus:ring-offset-0"
+                style={{ borderRadius: '8px' }}
+              >
+                Search
+              </Button>
+            </div>
+          </form>
+
+          {/* Category buttons */}
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className={
+                  selectedCategory === null
+                    ? 'rounded-full border border-[var(--primary-700)] hover:bg-transparent focus:ring-0 focus:ring-offset-0'
+                    : 'border-none hover:bg-transparent focus:ring-0 focus:ring-offset-0'
+                }
+                style={selectedCategory === null ? { borderRadius: '9999px' } : undefined}
+                onClick={() => handleCategoryClick(null)}
+              >
+                All
+              </Button>
+              {categories.map((cat) => (
+                <Button
+                  key={cat.id}
+                  type="button"
+                  variant="ghost"
+                  className={
+                    selectedCategory === cat.id
+                      ? 'rounded-full border border-[var(--primary-700)] hover:bg-transparent focus:ring-0 focus:ring-offset-0'
+                      : 'border-none hover:bg-transparent focus:ring-0 focus:ring-offset-0'
+                  }
+                  style={selectedCategory === cat.id ? { borderRadius: '9999px' } : undefined}
+                  onClick={() => handleCategoryClick(cat.id)}
+                >
+                  {cat.name}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -72,7 +186,9 @@ export default function CoursesPage() {
                   title={course.title}
                   thumbnail={course.thumbnail || undefined}
                   price={course.isFree ? 'Free' : formatCurrency(course.price)}
-                  oldPrice={course.originalPrice ? formatCurrency(course.originalPrice) : undefined}
+                  oldPrice={
+                    course.originalPrice ? formatCurrency(course.originalPrice) : undefined
+                  }
                   slug={course.slug}
                 />
               ))}
@@ -82,7 +198,9 @@ export default function CoursesPage() {
               <div className="flex justify-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+                  }
                   disabled={pagination.page === 1}
                 >
                   Previous
@@ -92,7 +210,9 @@ export default function CoursesPage() {
                 </span>
                 <Button
                   variant="outline"
-                  onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+                  }
                   disabled={pagination.page >= pagination.pages}
                 >
                   Next

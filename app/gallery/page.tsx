@@ -1,32 +1,48 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { HiPhotograph } from 'react-icons/hi';
 import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
+import { ImageLightbox } from '@/components/gallery/ImageLightbox';
 
-const PER_PAGE = 24;
+const LOAD_STEP = 16;
+
+// Helper function to determine card size for asymmetric collage layout
+const getCardSize = (index: number) => {
+  // Every 5th item: large featured card (2x2)
+  if (index % 5 === 0) {
+    return 'col-span-2 row-span-2';
+  }
+  // Every 3rd item: tall card (1x2)
+  if (index % 3 === 0) {
+    return 'col-span-1 row-span-2';
+  }
+  // Others: regular card (1x1)
+  return 'col-span-1 row-span-1';
+};
 
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [displayCount, setDisplayCount] = useState(LOAD_STEP);
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getGalleryItems({ page, limit: PER_PAGE })
+
+    // Fetch all items in one go with a high limit
+    getGalleryItems({ page: 1, limit: 1000 })
       .then((res) => {
         if (cancelled) return;
-        setItems(res.data || []);
-        if (res.pagination) {
-          setPagination({
-            page: res.pagination.page,
-            pages: res.pagination.pages || 1,
-            total: res.pagination.total || 0,
-          });
-        }
+        const data = res.data || [];
+        setItems(data);
+        const withImages = data.filter((item) => item.imageUrl);
+        setDisplayCount(Math.min(LOAD_STEP, withImages.length || LOAD_STEP));
       })
       .catch(() => {
         if (!cancelled) setItems([]);
@@ -34,14 +50,54 @@ export default function GalleryPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
-  }, [page]);
 
-  const displayItems = items.filter((item) => item.imageUrl);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const displayItems = useMemo(
+    () => items.filter((item) => item.imageUrl),
+    [items]
+  );
+
+  const visibleItems = useMemo(
+    () => displayItems.slice(0, Math.min(displayCount, displayItems.length)),
+    [displayItems, displayCount]
+  );
+
+  const canLoadMore = displayCount < displayItems.length;
+  const remaining = displayItems.length - displayCount;
+
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => Math.min(prev + LOAD_STEP, displayItems.length));
+  };
+
+  const openLightbox = (indexInVisible: number) => {
+    const item = visibleItems[indexInVisible];
+    const globalIndex = displayItems.findIndex((i) => i.id === item.id);
+    setLightboxIndex(globalIndex === -1 ? 0 : globalIndex);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => setLightboxOpen(false);
+
+  const nextImage = () => {
+    setLightboxIndex((prev) =>
+      prev + 1 >= displayItems.length ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setLightboxIndex((prev) =>
+      prev - 1 < 0 ? displayItems.length - 1 : prev - 1
+    );
+  };
 
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Our Gallery</h1>
@@ -55,68 +111,90 @@ export default function GalleryPage() {
           </Link>
         </div>
 
+        {/* Loading */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[4/3] rounded-lg bg-gray-200 animate-pulse" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div
+                key={i}
+                className={`rounded-xl border border-gray-200 shadow-sm overflow-hidden bg-gray-100 ${getCardSize(
+                  i
+                )}`}
+              >
+                <div className="w-full h-full animate-pulse" />
+              </div>
             ))}
           </div>
         ) : displayItems.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-lg">No gallery items yet.</p>
-            <Link href="/" className="text-[#c01e2e] hover:underline mt-2 inline-block">
-              Back to Home
+          // Empty state
+          <div className="text-center py-16 text-gray-500 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <HiPhotograph className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-lg font-medium text-gray-900 mb-1">
+              No gallery items yet.
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
+              Once images are added, they will appear here.
+            </p>
+            <Link
+              href="/"
+              className="text-[#c01e2e] hover:underline font-medium"
+            >
+              ← Back to Home
             </Link>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayItems.map((item) => (
-                <div
+            {/* Asymmetric collage grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
+              {visibleItems.map((item, index) => (
+                <button
                   key={item.id}
-                  className="rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                  type="button"
+                  onClick={() => openLightbox(index)}
+                  className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
+                    index
+                  )}`}
                 >
-                  <div className="aspect-[4/3] relative bg-gray-100">
-                <img
-                  src={item.imageUrl}
-                  alt={item.title || 'Gallery image'}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                  </div>
-                  {item.title && (
-                    <div className="p-3">
-                      <p className="font-medium text-gray-900 line-clamp-2">{item.title}</p>
-                    </div>
-                  )}
-                </div>
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title || 'Gallery image'}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-300" />
+                </button>
               ))}
             </div>
 
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-10">
+            {/* Load More */}
+            {canLoadMore && (
+              <div className="flex items-center justify-center mt-10">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  type="button"
+                  onClick={handleLoadMore}
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium transition-colors"
                 >
-                  Previous
-                </button>
-                <span className="px-4 text-gray-600">
-                  Page {pagination.page} of {pagination.pages}
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
-                  disabled={page >= pagination.pages}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  Next
+                  Load {remaining > LOAD_STEP ? LOAD_STEP : remaining} More
+                  {remaining > 1 ? ' Images' : ' Image'}
                 </button>
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Lightbox */}
+      <ImageLightbox
+        images={displayItems}
+        currentIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={closeLightbox}
+        onNext={nextImage}
+        onPrevious={prevImage}
+      />
     </main>
   );
 }
+

@@ -190,13 +190,19 @@ export const Footer: React.FC = () => {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10 bg-[#0a111d]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 px-4 py-4 text-xs text-gray-300 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
-          <p className="text-center sm:text-left">
-            &copy; {year} sanskar academy. All rights reserved
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 px-4 py-4 text-[18px] text-gray-300 sm:flex-row sm:justify-center sm:gap-4 sm:px-6 lg:px-8">
+          <p className="text-center">
+            &copy; {year} Sanskar Academy. All rights reserved
           </p>
-          <p className="text-center sm:text-right">
+          <span className="text-center">|</span>
+          <a
+            href="https://digitalpathshalanepal.com/dp-lms"
+            target="_blank"
+            rel="noreferrer"
+            className="text-center"
+          >
             Powered By floSoftwares
-          </p>
+          </a>
         </div>
       </div>
     </footer>

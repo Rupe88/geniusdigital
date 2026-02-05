@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ROUTES } from '@/lib/utils/constants';
-import { HiMenu, HiX, HiUser, HiLogout, HiCog } from 'react-icons/hi';
+import { HiMenu, HiX, HiUser, HiLogout, HiCog, HiChevronDown } from 'react-icons/hi';
 
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
   const handleLogout = async () => {
     await logout();
@@ -25,8 +28,12 @@ export const Navbar: React.FC = () => {
     { label: 'Courses', href: ROUTES.COURSES },
     { label: 'Live Classes', href: ROUTES.LIVE_CLASSES },
     { label: 'Vastu Product', href: ROUTES.VASTU_PRODUCT },
+  ];
+
+  const moreMenuItems = [
     { label: 'Events', href: ROUTES.EVENTS },
     { label: 'Blogs', href: ROUTES.BLOGS },
+    { label: 'Gallery', href: ROUTES.GALLERY },
   ];
 
   const isActive = (href: string) => {
@@ -37,6 +44,34 @@ export const Navbar: React.FC = () => {
     // Other routes match exactly or if pathname starts with the route
     return pathname === href || pathname?.startsWith(href + '/');
   };
+
+  const isMoreMenuActive = () => {
+    return moreMenuItems.some((item) => isActive(item.href));
+  };
+
+  // Close desktop More dropdown when clicking outside
+  useEffect(() => {
+    if (!isMoreMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMoreMenuOpen]);
+
+  // Close dropdowns on route change
+  useEffect(() => {
+    setIsMoreMenuOpen(false);
+    setIsMobileMoreOpen(false);
+    setIsMobileMenuOpen(false);
+    setIsUserMenuOpen(false);
+  }, [pathname]);
 
   return (
     <nav className="bg-white sticky top-0 z-50">
@@ -74,6 +109,48 @@ export const Navbar: React.FC = () => {
                 </Link>
               );
             })}
+
+            {/* More dropdown */}
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                className={`flex items-center gap-1 transition-colors font-medium text-base whitespace-nowrap ${
+                  isMoreMenuActive() || isMoreMenuOpen
+                    ? 'text-red-600'
+                    : 'text-gray-700 hover:text-red-600'
+                }`}
+              >
+                <span>More</span>
+                <HiChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    isMoreMenuOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {isMoreMenuOpen && (
+                <div className="absolute left-0 mt-2 w-40 bg-white rounded-none shadow-lg py-1 z-50 border border-gray-200">
+                  {moreMenuItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-4 py-2 text-sm whitespace-nowrap ${
+                          active
+                            ? 'text-red-600 bg-red-50'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setIsMoreMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Section - Auth */}
@@ -182,6 +259,48 @@ export const Navbar: React.FC = () => {
                 </Link>
               );
             })}
+
+            {/* Mobile More section */}
+            <div className="pt-2 mt-2 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => setIsMobileMoreOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between px-3 py-2 rounded-none font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <span>More</span>
+                <HiChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    isMobileMoreOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {isMobileMoreOpen && (
+                <div className="mt-1 space-y-1 pl-4">
+                  {moreMenuItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-3 py-2 rounded-none text-sm ${
+                          active
+                            ? 'text-red-600 bg-red-50'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setIsMobileMoreOpen(false);
+                        }}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {isAuthenticated ? (
               <>
                 <Link
