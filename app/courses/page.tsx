@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { CourseCard } from '@/components/CourseCard';
 import * as courseApi from '@/lib/api/courses';
 import * as categoryApi from '@/lib/api/categories';
@@ -118,12 +117,12 @@ export default function CoursesPage() {
                 <HiSearch className="h-6 w-6" />
               </div>
               <div className="w-[320px]">
-                <Input
+                <input
                   type="text"
                   placeholder="search your course...."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-full ring-0 ring-offset-0 border-none rounded-none bg-[var(--muted)] focus:ring-0 focus:ring-offset-0 focus:border-transparent"
+                  className="w-full h-full px-4 py-2 bg-[var(--muted)] text-[var(--foreground)] border-none outline-none focus:outline-none focus:ring-0"
                 />
               </div>
               <Button
@@ -141,34 +140,30 @@ export default function CoursesPage() {
           {/* Category buttons */}
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                className={
+                className={`px-4 py-2 text-base font-medium inline-flex items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 ${
                   selectedCategory === null
-                    ? 'rounded-full border border-[var(--primary-700)] hover:bg-transparent focus:ring-0 focus:ring-offset-0'
-                    : 'border-none hover:bg-transparent focus:ring-0 focus:ring-offset-0'
-                }
-                style={selectedCategory === null ? { borderRadius: '9999px' } : undefined}
+                    ? 'border-[var(--primary-700)] text-[var(--primary-700)] bg-transparent'
+                    : 'border-transparent text-[var(--foreground)] bg-transparent'
+                }`}
                 onClick={() => handleCategoryClick(null)}
               >
                 All
-              </Button>
+              </button>
               {categories.map((cat) => (
-                <Button
+                <button
                   key={cat.id}
                   type="button"
-                  variant="ghost"
-                  className={
+                  className={`px-4 py-2 text-base font-medium inline-flex items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 ${
                     selectedCategory === cat.id
-                      ? 'rounded-full border border-[var(--primary-700)] hover:bg-transparent focus:ring-0 focus:ring-offset-0'
-                      : 'border-none hover:bg-transparent focus:ring-0 focus:ring-offset-0'
-                  }
-                  style={selectedCategory === cat.id ? { borderRadius: '9999px' } : undefined}
+                      ? 'border-[var(--primary-700)] text-[var(--primary-700)] bg-transparent'
+                      : 'border-transparent text-[var(--foreground)] bg-transparent'
+                  }`}
                   onClick={() => handleCategoryClick(cat.id)}
                 >
                   {cat.name}
-                </Button>
+                </button>
               ))}
             </div>
           )}

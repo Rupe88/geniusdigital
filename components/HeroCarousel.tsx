@@ -304,10 +304,10 @@ export const HeroCarousel: React.FC = () => {
           width: 44px;
           height: 44px;
           border-radius: 50%;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(190, 18, 60, 0.95); /* primary-700 red */
           backdrop-filter: blur(4px);
           color: white;
-          border: 2px solid rgba(255, 255, 255, 0.2);
+          border: 2px solid rgba(190, 18, 60, 1);
           cursor: pointer;
           transition: all 0.3s ease;
         }
@@ -334,8 +334,8 @@ export const HeroCarousel: React.FC = () => {
         }
 
         .hero-nav-btn:hover:not(:disabled) {
-          background: rgba(192, 30, 46, 0.9);
-          border-color: rgba(192, 30, 46, 1);
+          background: rgba(224, 36, 72, 1);
+          border-color: rgba(224, 36, 72, 1);
           transform: translateY(-50%) scale(1.1);
         }
 

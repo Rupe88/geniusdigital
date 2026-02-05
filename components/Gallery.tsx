@@ -195,7 +195,7 @@ export const Gallery: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Our Gallery</h2>
             <p className="text-lg text-gray-600">Moments from our events, trainings, and community gatherings.</p>
           </div>
-          <div className="flex justify-center py-12">
+        <div className="flex justify-start py-12">
             <div className="animate-pulse rounded-lg bg-gray-200 h-64 w-full max-w-4xl" />
           </div>
         </div>
@@ -206,43 +206,40 @@ export const Gallery: React.FC = () => {
   return (
     <section className="pt-8 pb-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Our Gallery</h2>
-          <p className="text-lg text-gray-600">
-            Moments from our events, trainings, and community gatherings.
-          </p>
+        <div className="mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Our Gallery</h2>
         </div>
 
         <div className="relative space-y-6">
-          {showButtons && (
-            <>
-              <button
-                onClick={() => scrollGallery('left')}
-                disabled={!hasScrollableContent}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg ${
-                  !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                aria-label="Previous gallery"
-              >
-                <HiChevronLeft className="h-6 w-6" />
-              </button>
-              <button
-                onClick={() => scrollGallery('right')}
-                disabled={!hasScrollableContent}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg ${
-                  !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                aria-label="Next gallery"
-              >
-                <HiChevronRight className="h-6 w-6" />
-              </button>
-            </>
-          )}
+        {showButtons && (
+          <>
+            <button
+              onClick={() => scrollGallery('left')}
+              disabled={!hasScrollableContent}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg ${
+                !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              aria-label="Previous gallery"
+            >
+              <HiChevronLeft className="h-6 w-6" />
+            </button>
+            <button
+              onClick={() => scrollGallery('right')}
+              disabled={!hasScrollableContent}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg ${
+                !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              aria-label="Next gallery"
+            >
+              <HiChevronRight className="h-6 w-6" />
+            </button>
+          </>
+        )}
 
           <div
             ref={row1Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasScrollableContent ? 'scroll-smooth' : 'justify-center'
+              hasScrollableContent ? 'scroll-smooth' : 'justify-start'
             } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -254,7 +251,7 @@ export const Gallery: React.FC = () => {
           <div
             ref={row2Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasScrollableContent ? 'scroll-smooth' : 'justify-center'
+              hasScrollableContent ? 'scroll-smooth' : 'justify-start'
             } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -266,7 +263,7 @@ export const Gallery: React.FC = () => {
           <div
             ref={row3Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasScrollableContent ? 'scroll-smooth' : 'justify-center'
+              hasScrollableContent ? 'scroll-smooth' : 'justify-start'
             } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}

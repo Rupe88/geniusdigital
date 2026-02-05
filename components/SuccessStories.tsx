@@ -49,14 +49,10 @@ export const SuccessStories: React.FC = () => {
     <section className="pt-8 pb-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <div className="mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
             Success Stories
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Find all the resources and guidance you need to stay on track. Organized,
-            accessible, and tailored to your journey.
-          </p>
         </div>
 
         {/* Stories Carousel with YouTube videos */}
@@ -66,14 +62,14 @@ export const SuccessStories: React.FC = () => {
             <>
               <button
                 onClick={() => scroll('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                 aria-label="Previous success story"
               >
                 <HiChevronLeft className="h-6 w-6" />
               </button>
               <button
                 onClick={() => scroll('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                 aria-label="Next success story"
               >
                 <HiChevronRight className="h-6 w-6" />
@@ -85,7 +81,7 @@ export const SuccessStories: React.FC = () => {
           <div
             ref={scrollContainerRef}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasCarousel ? 'scroll-smooth' : 'justify-center'
+              hasCarousel ? 'scroll-smooth' : 'justify-start'
             }`}
           >
             {successStories.map((story) => (

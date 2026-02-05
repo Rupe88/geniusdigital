@@ -376,14 +376,10 @@ export default function HomePage() {
       {/* Ongoing Courses - horizontal scrollable carousel */}
       <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
               Ongoing Courses
             </h2>
-            <p className="text-lg text-gray-600">
-              Continue learning with the courses you&apos;re currently enrolled in. Track your
-              progress, revisit lessons, and stay on top of your studies with ease.
-            </p>
           </div>
 
           <div className="relative">
@@ -392,14 +388,14 @@ export default function HomePage() {
               <>
                 <button
                   onClick={() => scrollOngoingCourses('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                   aria-label="Previous courses"
                 >
                   <HiChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={() => scrollOngoingCourses('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                   aria-label="Next courses"
                 >
                   <HiChevronRight className="h-6 w-6" />
@@ -411,7 +407,7 @@ export default function HomePage() {
             <div
               ref={ongoingCoursesRef}
               className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-                ongoingCourses.length > 3 ? 'scroll-smooth' : 'justify-center'
+                ongoingCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
               } ${ongoingIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleOngoingMouseDown}
               onMouseMove={handleOngoingMouseMove}
@@ -454,14 +450,10 @@ export default function HomePage() {
       {/* Popular Courses - dynamic from API (featured courses) */}
       <section className="pt-8 pb-8 bg-white" data-section="popular-courses">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
               Popular Courses
             </h2>
-            <p className="text-lg text-gray-600">
-              Explore our most sought-after courses, loved by students across Nepal for their
-              comprehensive content and practical approach. Start your journey to success today!
-            </p>
           </div>
 
           <div className="relative min-h-[320px]">
@@ -470,14 +462,14 @@ export default function HomePage() {
               <>
                 <button
                   onClick={() => scrollPopularCourses('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                   aria-label="Previous courses"
                 >
                   <HiChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={() => scrollPopularCourses('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                   aria-label="Next courses"
                 >
                   <HiChevronRight className="h-6 w-6" />
@@ -489,7 +481,7 @@ export default function HomePage() {
             <div
               ref={popularCoursesRef}
               className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-                popularCourses.length > 3 ? 'scroll-smooth' : 'justify-center'
+                popularCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
               } ${popularIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handlePopularMouseDown}
               onMouseMove={handlePopularMouseMove}
@@ -533,13 +525,10 @@ export default function HomePage() {
       {/* What Our Client Say - horizontal scrollable carousel */}
       <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
               What Our Client Say
             </h2>
-            <p className="text-lg text-gray-600">
-              Hear from those who have experienced the accuracy and guidance of Sanskar Academy.
-            </p>
           </div>
 
           <div className="relative">
@@ -548,14 +537,14 @@ export default function HomePage() {
               <>
                 <button
                   onClick={() => scrollClientSay('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                   aria-label="Previous testimonial"
                 >
                   <HiChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={() => scrollClientSay('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all shadow-lg"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
                   aria-label="Next testimonial"
                 >
                   <HiChevronRight className="h-6 w-6" />
@@ -567,7 +556,7 @@ export default function HomePage() {
             <div
               ref={clientSayRef}
               className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-                testimonialsToShow.length > 1 ? 'scroll-smooth' : 'justify-center'
+                testimonialsToShow.length > 1 ? 'scroll-smooth' : 'justify-start'
               } ${clientSayIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleClientSayMouseDown}
               onMouseMove={handleClientSayMouseMove}
