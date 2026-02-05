@@ -23,100 +23,14 @@ type SimpleCourse = {
   thumbnail: string;
   price?: string;
   oldPrice?: string;
+  slug?: string;
 };
 
-const dummyOngoingCourses: SimpleCourse[] = [
-  {
-    id: 'ongoing-1',
-    title: 'VASTU GURU COURSE',
-    thumbnail: '/hero1.png',
-    price: 'Rs. 2999',
-    oldPrice: 'Rs. 6000',
-  },
-  {
-    id: 'ongoing-2',
-    title: 'MEDICAL ASTROLOGY ADVANCE COURSE',
-    thumbnail: '/hero2.png',
-    price: 'Rs. 1999',
-    oldPrice: 'Rs. 5000',
-  },
-  {
-    id: 'ongoing-3',
-    title: 'VEDIC ASTROLOGY ADVANCE COURSE',
-    thumbnail: '/hero1.png',
-    price: 'Rs. 3999',
-    oldPrice: 'Rs. 8000',
-  },
-  {
-    id: 'ongoing-4',
-    title: 'PALMISTRY BASIC COURSE',
-    thumbnail: '/hero2.png',
-    price: 'Rs. 999',
-    oldPrice: 'Rs. 3000',
-  },
-  {
-    id: 'ongoing-5',
-    title: 'FENG SHUI PRACTICAL COURSE',
-    thumbnail: '/hero1.png',
-    price: 'Rs. 1499',
-    oldPrice: 'Rs. 4000',
-  },
-  {
-    id: 'ongoing-6',
-    title: 'NUMEROLOGY MASTER COURSE',
-    thumbnail: '/hero2.png',
-    price: 'Rs. 2499',
-    oldPrice: 'Rs. 5500',
-  },
-];
-
-const dummyPopularCourses: SimpleCourse[] = [
-  {
-    id: 'popular-1',
-    title: '7 DAYS BASIC VASTU COURSE',
-    thumbnail: '/hero1.png',
-    price: 'Rs. 399',
-    oldPrice: 'Rs. 4000',
-  },
-  {
-    id: 'popular-2',
-    title: '9 DAYS BASIC VEDIC ASTROLOGY COURSE',
-    thumbnail: '/hero2.png',
-    price: 'Rs. 999',
-    oldPrice: 'Rs. 4000',
-  },
-  {
-    id: 'popular-3',
-    title: 'MOBILE NUMEROLOGY 4 DAYS BASIC COURSE',
-    thumbnail: '/hero1.png',
-    price: 'Rs. 99',
-    oldPrice: 'Rs. 3000',
-  },
-  {
-    id: 'popular-4',
-    title: 'VEDIC ASTROLOGY ADVANCE COURSE',
-    thumbnail: '/hero2.png',
-    price: 'Rs. 3999',
-    oldPrice: 'Rs. 8000',
-  },
-  {
-    id: 'popular-5',
-    title: 'MOBILE NUMEROLOGY 15 DAYS ADVANCE COURSE',
-    thumbnail: '/hero1.png',
-    price: 'Rs. 2999',
-    oldPrice: 'Rs. 6000',
-  },
-  {
-    id: 'popular-6',
-    title: 'BUSINESS SUCCESS BLUEPRINT 7 DAYS COURSE',
-    thumbnail: '/hero2.png',
-    price: 'Rs. 399',
-    oldPrice: 'Rs. 6000',
-  },
-];
-
 export default function HomePage() {
-  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+  const [popularCoursesList, setPopularCoursesList] = useState<Course[]>([]);
+  const [popularCoursesLoading, setPopularCoursesLoading] = useState(true);
+  const [ongoingCoursesList, setOngoingCoursesList] = useState<Course[]>([]);
+  const [ongoingCoursesLoading, setOngoingCoursesLoading] = useState(true);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -144,11 +58,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [coursesData, testimonialsData] = await Promise.all([
-          courseApi.filterCourses({ featured: true, limit: 6 }).catch(() => ({ data: [] })),
-          testimonialApi.getTestimonials({ limit: 3, featured: true }).catch(() => ({ data: [] })),
-        ]);
-        setFeaturedCourses(coursesData.data || []);
+        const testimonialsData = await testimonialApi.getTestimonials({ limit: 3, featured: true }).catch(() => ({ data: [] }));
         setTestimonials(testimonialsData.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -160,27 +70,59 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  const ongoingCourses: SimpleCourse[] =
-    featuredCourses.length > 0
-      ? featuredCourses.slice(0, 6).map((course) => ({
-        id: course.id,
-        title: course.title,
-        thumbnail: course.thumbnail || '/hero1.png',
-        price: course.isFree ? 'Free' : `Rs. ${course.price}`,
-        oldPrice: course.originalPrice ? `Rs. ${course.originalPrice}` : undefined,
-      }))
-      : dummyOngoingCourses;
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPopular = async () => {
+      setPopularCoursesLoading(true);
+      try {
+        const data = await courseApi.getFeaturedCourses();
+        if (!cancelled && Array.isArray(data)) setPopularCoursesList(data);
+        else if (!cancelled) setPopularCoursesList([]);
+      } catch (e) {
+        if (!cancelled) setPopularCoursesList([]);
+      } finally {
+        if (!cancelled) setPopularCoursesLoading(false);
+      }
+    };
+    fetchPopular();
+    return () => { cancelled = true; };
+  }, []);
 
-  const popularCourses: SimpleCourse[] =
-    featuredCourses.length > 0
-      ? featuredCourses.slice(0, 6).map((course) => ({
-        id: course.id,
-        title: course.title,
-        thumbnail: course.thumbnail || '/hero1.png',
-        price: course.isFree ? 'Free' : `Rs. ${course.price}`,
-      }))
-      : dummyPopularCourses;
+  useEffect(() => {
+    let cancelled = false;
+    const fetchOngoing = async () => {
+      try {
+        setOngoingCoursesLoading(true);
+        const data = await courseApi.getOngoingCourses();
+        if (!cancelled) setOngoingCoursesList(data || []);
+      } catch (error) {
+        console.error('Error fetching ongoing courses:', error);
+        if (!cancelled) setOngoingCoursesList([]);
+      } finally {
+        if (!cancelled) setOngoingCoursesLoading(false);
+      }
+    };
+    fetchOngoing();
+    return () => { cancelled = true; };
+  }, []);
 
+  const ongoingCourses: SimpleCourse[] = ongoingCoursesList.map((course) => ({
+    id: course.id,
+    title: course.title,
+    thumbnail: course.thumbnail || '/hero1.png',
+    price: course.isFree ? 'Free' : `Rs. ${course.price}`,
+    oldPrice: course.originalPrice ? `Rs. ${course.originalPrice}` : undefined,
+    slug: course.slug,
+  }));
+
+  const popularCourses: SimpleCourse[] = (popularCoursesList || []).map((course) => ({
+    id: course.id ?? '',
+    title: course.title ?? '',
+    thumbnail: course.thumbnail || '/hero1.png',
+    price: course.isFree ? 'Free' : `Rs. ${course.price ?? 0}`,
+    oldPrice: course.originalPrice != null ? `Rs. ${course.originalPrice}` : undefined,
+    slug: course.slug ?? '',
+  }));
 
   const hasTestimonialsCarousel = testimonials.length > 1;
 
@@ -476,24 +418,41 @@ export default function HomePage() {
               onMouseUp={handleOngoingMouseUp}
               onMouseLeave={handleOngoingMouseLeave}
             >
-              {ongoingCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  thumbnail={course.thumbnail}
-                  price={course.price}
-                  oldPrice={course.oldPrice}
-                  className="flex-shrink-0 w-[400px]"
-                />
-              ))}
+              {ongoingCoursesLoading && (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 w-[400px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                    />
+                  ))}
+                </>
+              )}
+              {!ongoingCoursesLoading && ongoingCourses.length === 0 && (
+                <div className="w-full py-12 text-center text-gray-600">
+                  <p>No ongoing courses at the moment. Check back soon!</p>
+                </div>
+              )}
+              {!ongoingCoursesLoading &&
+                ongoingCourses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    thumbnail={course.thumbnail}
+                    price={course.price}
+                    oldPrice={course.oldPrice}
+                    slug={course.slug}
+                    className="flex-shrink-0 w-[400px]"
+                  />
+                ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Popular Courses - horizontal scrollable carousel */}
-      <section className="pt-8 pb-8 bg-white">
+      {/* Popular Courses - dynamic from API (featured courses) */}
+      <section className="pt-8 pb-8 bg-white" data-section="popular-courses">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -505,7 +464,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="relative">
+          <div className="relative min-h-[320px]">
             {/* Navigation Arrows - Only show if more than 3 courses */}
             {popularCourses.length > 3 && (
               <>
@@ -537,40 +496,35 @@ export default function HomePage() {
               onMouseUp={handlePopularMouseUp}
               onMouseLeave={handlePopularMouseLeave}
             >
-              {popularCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
-                >
-                  {/* Thumbnail */}
-                  <div className="relative w-full h-52 p-2">
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-full h-full object-cover rounded-lg"
+              {popularCoursesLoading && (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 w-[400px] h-72 bg-gray-100 animate-pulse rounded-lg"
                     />
-                  </div>
-
-                  {/* Content */}
-                  <div className="px-5 pt-0 pb-0">
-                    <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
-                      {course.title}
-                    </h3>
-                    <div className="flex items-baseline space-x-2">
-                      {course.price && (
-                        <span className="text-lg font-bold text-[var(--primary-700)]">
-                          {course.price}
-                        </span>
-                      )}
-                      {course.oldPrice && (
-                        <span className="text-sm text-gray-500 line-through">
-                          {course.oldPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  ))}
+                </>
+              )}
+              {!popularCoursesLoading && popularCourses.length === 0 && (
+                <div className="w-full py-12 text-center text-gray-600">
+                  <p>No popular courses at the moment. Mark courses as Popular in admin to show them here.</p>
                 </div>
-              ))}
+              )}
+              {!popularCoursesLoading &&
+                popularCourses.length > 0 &&
+                popularCourses.map((course) => (
+                  <CourseCard
+                    key={String(course.id)}
+                    id={course.id}
+                    title={course.title}
+                    thumbnail={course.thumbnail}
+                    price={course.price}
+                    oldPrice={course.oldPrice}
+                    slug={course.slug}
+                    className="flex-shrink-0 w-[400px]"
+                  />
+                ))}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { apiClient, handleApiResponse, handleApiError } from './axios';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
-import { PaginatedResponse, ApiResponse } from '@/lib/types/api';
+import { PaginatedResponse, ApiResponse, Pagination } from '@/lib/types/api';
 
 export interface LiveClass {
   id: string;
@@ -30,9 +30,12 @@ export interface LiveClass {
   course?: {
     id: string;
     title: string;
+    slug?: string;
   };
+  _count?: { enrollments: number };
 }
 
+/** Backend returns { success, data: LiveClass[], pagination } */
 export const getAllLiveClasses = async (params?: {
   status?: string;
   instructorId?: string;
@@ -42,8 +45,18 @@ export const getAllLiveClasses = async (params?: {
   limit?: number;
 }): Promise<PaginatedResponse<LiveClass>> => {
   try {
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<LiveClass>>>(API_ENDPOINTS.LIVE_CLASSES.LIST, { params });
-    return handleApiResponse<PaginatedResponse<LiveClass>>(response);
+    const response = await apiClient.get<{ success: boolean; data: LiveClass[]; pagination: Pagination }>(
+      API_ENDPOINTS.LIVE_CLASSES.LIST,
+      { params }
+    );
+    const payload = response.data;
+    if (payload?.success) {
+      return {
+        data: payload.data ?? [],
+        pagination: payload.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+      };
+    }
+    throw new Error('Failed to fetch live classes');
   } catch (error) {
     throw new Error(handleApiError(error));
   }
@@ -82,6 +95,51 @@ export const updateLiveClass = async (id: string, liveClassData: Partial<LiveCla
 export const deleteLiveClass = async (id: string): Promise<void> => {
   try {
     await apiClient.delete(API_ENDPOINTS.LIVE_CLASSES.BY_ID(id));
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export interface LiveClassEnrollment {
+  id: string;
+  userId: string;
+  liveClassId: string;
+  attended?: boolean;
+  joinedAt?: string;
+  createdAt: string;
+  liveClass: LiveClass;
+}
+
+/** Get current user's live class enrollments (requires auth) */
+export const getMyLiveClassEnrollments = async (params?: {
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<LiveClassEnrollment>> => {
+  try {
+    const response = await apiClient.get<{ success: boolean; data: LiveClassEnrollment[]; pagination: Pagination }>(
+      '/live-classes/me/enrollments',
+      { params }
+    );
+    const payload = response.data;
+    if (payload?.success) {
+      return {
+        data: payload.data ?? [],
+        pagination: payload.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+      };
+    }
+    throw new Error('Failed to fetch enrollments');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/** Enroll in a live class (requires auth) */
+export const enrollInLiveClass = async (liveClassId: string): Promise<LiveClassEnrollment> => {
+  try {
+    const response = await apiClient.post<ApiResponse<LiveClassEnrollment>>(
+      `${API_ENDPOINTS.LIVE_CLASSES.LIST}/${liveClassId}/enroll`
+    );
+    return handleApiResponse<LiveClassEnrollment>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }

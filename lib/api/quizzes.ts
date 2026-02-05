@@ -75,7 +75,7 @@ export interface QuizSubmissionData {
   answers: {
     questionId: string;
     answer: string | string[];
-  }[];
+  }[] | Record<string, string | string[]>;
 }
 
 export interface QuizResult {
@@ -94,12 +94,32 @@ export interface QuizResult {
   }[];
 }
 
-export const submitQuiz = async (id: string, answers: QuizSubmissionData['answers']): Promise<QuizResult> => {
+/** Backend expects answers as object { [questionId]: answer } */
+export const submitQuiz = async (
+  id: string,
+  answers: Record<string, string | string[]>
+): Promise<QuizResult> => {
   try {
-    const response = await apiClient.post<ApiResponse<QuizResult>>(API_ENDPOINTS.QUIZZES.SUBMIT(id), { answers });
+    const response = await apiClient.post<ApiResponse<{
+      score: number;
+      maxScore: number;
+      percentage: number;
+      isPassed: boolean;
+      results: QuizResult['results'];
+    }>>(API_ENDPOINTS.QUIZZES.SUBMIT(id), { answers });
     const responseData = response.data;
     if (responseData.success && responseData.data) {
-      return responseData.data;
+      const d = responseData.data;
+      const correctAnswers = d.results?.filter((r) => r.isCorrect).length ?? 0;
+      return {
+        score: d.score,
+        totalPoints: d.maxScore,
+        percentage: d.percentage,
+        passed: d.isPassed,
+        correctAnswers,
+        totalQuestions: d.results?.length ?? 0,
+        results: d.results ?? [],
+      };
     }
     throw new Error(responseData.message || 'Failed to submit quiz');
   } catch (error) {

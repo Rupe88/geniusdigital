@@ -31,15 +31,16 @@ function PaymentSuccessContent() {
     const verifyPayment = async (encodedData: string) => {
         try {
             setVerifying(true);
-            // eSewa v2 sends base64 encoded JSON in 'data' param
             const decodedData = JSON.parse(atob(encodedData));
-            console.log('Decoded eSewa data:', decodedData);
+            const transactionId = decodedData.transaction_uuid || decodedData.transactionId;
 
-            const result = await paymentApi.verifyPayment(
-                decodedData.transaction_uuid,
-                'ESEWA'
-            );
+            if (!transactionId) {
+                setStatus('failed');
+                setMessage('Invalid callback: missing transaction ID');
+                return;
+            }
 
+            const result = await paymentApi.verifyPaymentCallback(transactionId, 'ESEWA', decodedData);
             setPaymentData(result);
             setStatus('success');
             setMessage('Your payment has been successfully verified! You are now enrolled.');
@@ -73,11 +74,11 @@ function PaymentSuccessContent() {
                             <div className="bg-gray-50 rounded-none p-4 text-left space-y-2 mb-6 border border-gray-200">
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Transaction ID:</span>
-                                    <span className="font-semibold text-gray-900">{paymentData.transactionId}</span>
+                                    <span className="font-semibold text-gray-900">{(paymentData as any).transactionId ?? (paymentData as any).esewaRefId ?? '—'}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Amount Paid:</span>
-                                    <span className="font-semibold text-gray-900">Rs. {paymentData.amount.toLocaleString()}</span>
+                                    <span className="font-semibold text-gray-900">Rs. {Number((paymentData as any).finalAmount ?? (paymentData as any).amount ?? 0).toLocaleString()}</span>
                                 </div>
                             </div>
                         )}

@@ -53,6 +53,35 @@ export const getEnrollmentProgress = async (id: string): Promise<LessonProgress[
   }
 };
 
+export interface CourseProgressResponse {
+  enrollment: { id: string; progress: number; status: string };
+  course: {
+    id: string;
+    title: string;
+    lessons: Array<{
+      id: string;
+      title: string;
+      order: number;
+      chapterId?: string;
+      lessonType: string;
+      videoDuration?: number;
+      progress?: Array<{ isCompleted: boolean; watchTime?: number }>;
+    }>;
+  };
+}
+
+/**
+ * Get course progress (enrollment + lessons with completion) for current user
+ */
+export const getCourseProgress = async (courseId: string): Promise<CourseProgressResponse> => {
+  try {
+    const response = await apiClient.get<ApiResponse<CourseProgressResponse>>(API_ENDPOINTS.PROGRESS.COURSE(courseId));
+    return handleApiResponse<CourseProgressResponse>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 /**
  * Update lesson progress
  */
@@ -66,11 +95,13 @@ export const updateLessonProgress = async (id: string, data: UpdateProgressReque
 };
 
 /**
- * Mark lesson as completed
+ * Mark lesson as completed (PUT progress for lesson with isCompleted: true)
  */
 export const completeLesson = async (lessonId: string): Promise<LessonProgress> => {
   try {
-    const response = await apiClient.post<ApiResponse<LessonProgress>>(`${API_ENDPOINTS.PROGRESS.LIST}/complete`, { lessonId });
+    const response = await apiClient.put<ApiResponse<LessonProgress>>(API_ENDPOINTS.PROGRESS.LESSON(lessonId), {
+      isCompleted: true,
+    });
     return handleApiResponse<LessonProgress>(response);
   } catch (error) {
     throw new Error(handleApiError(error));

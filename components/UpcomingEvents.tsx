@@ -1,54 +1,49 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { getUpcomingEvents } from '@/lib/api/events';
+import type { Event } from '@/lib/api/events';
 
-interface Event {
-  id: number;
-  title: string;
-  date: string;
-  thumbnail: string;
+const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop&q=80';
+
+function formatEventDate(startDate: string): string {
+  return new Date(startDate).toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 }
-
-const dummyEvents: Event[] = [
-  {
-    id: 1,
-    title: 'Professional Vastu Consultant Course',
-    date: 'Monday, 12 January',
-    thumbnail: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop&q=80',
-  },
-  {
-    id: 2,
-    title: 'Advanced Numerology Course',
-    date: 'Friday, 20 January',
-    thumbnail: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=250&fit=crop&q=80',
-  },
-  {
-    id: 3,
-    title: 'Vedic Astrology Masterclass',
-    date: 'Wednesday, 25 January',
-    thumbnail: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=250&fit=crop&q=80',
-  },
-  {
-    id: 4,
-    title: 'Medical Astrology Course',
-    date: 'Saturday, 28 January',
-    thumbnail: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=250&fit=crop&q=80',
-  },
-  {
-    id: 5,
-    title: 'Marriage Compatibility Course',
-    date: 'Tuesday, 1 February',
-    thumbnail: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop&q=80',
-  },
-];
 
 export const UpcomingEvents: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const showCarousel = dummyEvents.length > 3;
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getUpcomingEvents();
+        if (!cancelled) setEvents(data);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load upcoming events');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchEvents();
+    return () => { cancelled = true; };
+  }, []);
+
+  const showCarousel = events.length > 3;
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -144,15 +139,36 @@ export const UpcomingEvents: React.FC = () => {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
           >
-            {dummyEvents.map((event) => (
-              <div
+            {loading && (
+              <div className="flex gap-6 w-full justify-center py-8">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-[400px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                  />
+                ))}
+              </div>
+            )}
+            {error && !loading && (
+              <div className="w-full py-12 text-center text-gray-600">
+                <p>{error}</p>
+              </div>
+            )}
+            {!loading && !error && events.length === 0 && (
+              <div className="w-full py-12 text-center text-gray-600">
+                <p>No upcoming events at the moment. Check back soon!</p>
+              </div>
+            )}
+            {!loading && !error && events.map((event) => (
+              <Link
                 key={event.id}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
+                href={`/events/${event.slug}`}
+                className="flex-shrink-0 w-[400px] block bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
               >
                 {/* Thumbnail */}
                 <div className="relative w-full h-52 p-2">
                   <img
-                    src={event.thumbnail}
+                    src={event.image || PLACEHOLDER_IMAGE}
                     alt={event.title}
                     className="w-full h-full object-cover rounded-lg"
                   />
@@ -163,7 +179,7 @@ export const UpcomingEvents: React.FC = () => {
                   {/* Date */}
                   <div className="mb-1">
                     <span className="inline-block pl-0 pr-3 py-0 rounded-none bg-white text-xs font-medium text-gray-700">
-                      {event.date}
+                      {formatEventDate(event.startDate)}
                     </span>
                   </div>
 
@@ -172,7 +188,7 @@ export const UpcomingEvents: React.FC = () => {
                     {event.title}
                   </h3>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

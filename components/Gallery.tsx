@@ -1,75 +1,76 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { getGalleryItems } from '@/lib/api/gallery';
+import type { GalleryItem } from '@/lib/api/gallery';
 
-type GalleryItem = { src: string; label?: string; isMore?: boolean };
+const ITEMS_PER_ROW = 7;
+const HOMEPAGE_LIMIT = 21;
 
-// Base 5 images
-const baseImages: GalleryItem[] = [
-  { src: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=80' },
-  { src: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&auto=format&fit=crop&q=80' },
-  { src: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1200&auto=format&fit=crop&q=80' },
-  { src: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1200&auto=format&fit=crop&q=80' },
-  { src: 'https://images.unsplash.com/photo-1455849318743-b2233052fcff?w=1200&auto=format&fit=crop&q=80' },
-];
-
-// Create 20 images by repeating base images 4 times, then add "See More"
-const allGalleryImages: GalleryItem[] = [
-  ...Array(4).fill(baseImages).flat(),
-  { src: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&auto=format&fit=crop&q=80', isMore: true, label: 'See More' },
-];
-
-// Distribute 21 items across 3 rows (7 items per row)
-const getRowItems = (items: GalleryItem[], rowIndex: number, itemsPerRow: number) => {
+const getRowItems = <T,>(items: T[], rowIndex: number, itemsPerRow: number): T[] => {
   const startIndex = rowIndex * itemsPerRow;
   return items.slice(startIndex, startIndex + itemsPerRow);
+};
+
+const getDisplayUrl = (item: GalleryItem): string => {
+  return item.imageUrl || item.videoUrl || '';
 };
 
 export const Gallery: React.FC = () => {
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
   const row3Ref = useRef<HTMLDivElement>(null);
-  
+
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLefts, setScrollLefts] = useState({ row1: 0, row2: 0, row3: 0 });
 
-  const itemsPerRow = 7;
-  const row1Items = getRowItems(allGalleryImages, 0, itemsPerRow);
-  const row2Items = getRowItems(allGalleryImages, 1, itemsPerRow);
-  const row3Items = getRowItems(allGalleryImages, 2, itemsPerRow);
+  useEffect(() => {
+    let cancelled = false;
+    getGalleryItems({ limit: HOMEPAGE_LIMIT, page: 1 })
+      .then((res) => {
+        if (!cancelled && res.data) setItems(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const displayItems = items.filter((item) => getDisplayUrl(item));
+  const withSeeMore = [...displayItems, { id: 'see-more', isMore: true } as GalleryItem & { isMore?: boolean }];
+  const itemsPerRow = ITEMS_PER_ROW;
+  const row1Items = getRowItems(withSeeMore, 0, itemsPerRow);
+  const row2Items = getRowItems(withSeeMore, 1, itemsPerRow);
+  const row3Items = getRowItems(withSeeMore, 2, itemsPerRow);
 
   const scrollGallery = (direction: 'left' | 'right') => {
-    const scrollAmount = 404; // Card width (400) + gap (24)
-    
+    const scrollAmount = 404;
     [row1Ref, row2Ref, row3Ref].forEach((ref) => {
       if (ref.current) {
         const currentScroll = ref.current.scrollLeft;
-        const newScroll = direction === 'left' 
-          ? currentScroll - scrollAmount 
-          : currentScroll + scrollAmount;
-        
-        ref.current.scrollTo({
-          left: newScroll,
-          behavior: 'smooth',
-        });
+        const newScroll = direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount;
+        ref.current.scrollTo({ left: newScroll, behavior: 'smooth' });
       }
     });
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
-    const clientX = e.pageX;
-    setStartX(clientX);
-    
-    const scrollLefts = {
+    setStartX(e.pageX);
+    setScrollLefts({
       row1: row1Ref.current?.scrollLeft || 0,
       row2: row2Ref.current?.scrollLeft || 0,
       row3: row3Ref.current?.scrollLeft || 0,
-    };
-    setScrollLefts(scrollLefts);
-
+    });
     [row1Ref, row2Ref, row3Ref].forEach((ref) => {
       if (ref.current) {
         ref.current.style.cursor = 'grabbing';
@@ -81,10 +82,7 @@ export const Gallery: React.FC = () => {
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
-    
-    const x = e.pageX;
-    const walk = (x - startX) * 2; // Scroll speed multiplier
-
+    const walk = (e.pageX - startX) * 2;
     [row1Ref, row2Ref, row3Ref].forEach((ref, index) => {
       if (ref.current) {
         const key = index === 0 ? 'row1' : index === 1 ? 'row2' : 'row3';
@@ -113,7 +111,63 @@ export const Gallery: React.FC = () => {
     });
   };
 
-  const hasMultipleItems = allGalleryImages.length > itemsPerRow;
+  const hasMultipleItems = withSeeMore.length > itemsPerRow;
+
+  const cardClass =
+    'flex-shrink-0 w-[min(400px,calc(100vw-2rem))] lg:w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg';
+
+  const renderCard = (
+    item: GalleryItem | (GalleryItem & { isMore?: boolean }),
+    rowKey: string,
+    index: number
+  ) => {
+    const isSeeMore = 'isMore' in item && item.isMore;
+    const src = isSeeMore ? '' : getDisplayUrl(item as GalleryItem);
+    const alt = isSeeMore ? 'See more' : (item as GalleryItem).title || `Gallery ${index + 1}`;
+
+    const content = (
+      <div className="aspect-[4/3] relative">
+        {isSeeMore ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-gray-700 text-lg font-semibold">
+            See More
+          </div>
+        ) : (
+          <img
+            src={src}
+            alt={alt}
+            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+            loading="lazy"
+          />
+        )}
+      </div>
+    );
+
+    return (
+      <Link
+        key={`${rowKey}-${(item as GalleryItem).id || 'see-more'}-${index}`}
+        href="/gallery"
+        className={`block ${cardClass}`}
+      >
+        {content}
+      </Link>
+    );
+  };
+
+  if (loading) {
+    return (
+      <section className="pt-8 pb-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Our Gallery</h2>
+            <p className="text-lg text-gray-600">Moments from our events, trainings, and community gatherings.</p>
+          </div>
+          <div className="flex justify-center py-12">
+            <div className="animate-pulse rounded-lg bg-gray-200 h-64 w-full max-w-4xl" />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="pt-8 pb-16 bg-white">
@@ -126,7 +180,6 @@ export const Gallery: React.FC = () => {
         </div>
 
         <div className="relative space-y-6">
-          {/* Navigation Arrows - Only show if there are more items than can fit */}
           {hasMultipleItems && (
             <>
               <button
@@ -146,7 +199,6 @@ export const Gallery: React.FC = () => {
             </>
           )}
 
-          {/* Row 1 */}
           <div
             ref={row1Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
@@ -157,29 +209,8 @@ export const Gallery: React.FC = () => {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
           >
-            {row1Items.map((item, index) => (
-              <div
-                key={`row1-${index}-${item.src}`}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
-              >
-                <div className="aspect-[4/3] relative">
-                  <img
-                    src={item.src}
-                    alt={item.label || `Gallery item ${index + 1}`}
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    loading="lazy"
-                  />
-                  {item.isMore && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-lg font-semibold">
-                      {item.label || 'See More'}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+            {row1Items.map((item, index) => renderCard(item, 'row1', index))}
           </div>
-
-          {/* Row 2 */}
           <div
             ref={row2Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
@@ -190,29 +221,8 @@ export const Gallery: React.FC = () => {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
           >
-            {row2Items.map((item, index) => (
-              <div
-                key={`row2-${index}-${item.src}`}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
-              >
-                <div className="aspect-[4/3] relative">
-                  <img
-                    src={item.src}
-                    alt={item.label || `Gallery item ${index + 1}`}
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    loading="lazy"
-                  />
-                  {item.isMore && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-lg font-semibold">
-                      {item.label || 'See More'}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+            {row2Items.map((item, index) => renderCard(item, 'row2', index))}
           </div>
-
-          {/* Row 3 */}
           <div
             ref={row3Ref}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
@@ -223,26 +233,7 @@ export const Gallery: React.FC = () => {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
           >
-            {row3Items.map((item, index) => (
-              <div
-                key={`row3-${index}-${item.src}`}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
-              >
-                <div className="aspect-[4/3] relative">
-                  <img
-                    src={item.src}
-                    alt={item.label || `Gallery item ${index + 1}`}
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    loading="lazy"
-                  />
-                  {item.isMore && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-lg font-semibold">
-                      {item.label || 'See More'}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+            {row3Items.map((item, index) => renderCard(item, 'row3', index))}
           </div>
         </div>
       </div>

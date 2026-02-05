@@ -2,16 +2,27 @@ import { apiClient, handleApiResponse, handleApiError } from './axios';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
 import { ApiResponse } from '@/lib/types/api';
 
+export interface ConsultationCategory {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string | null;
+  order: number;
+  isActive: boolean;
+}
+
 export interface Consultation {
   id: string;
   name: string;
   email: string;
   phone: string;
+  categoryId?: string | null;
+  category?: ConsultationCategory | null;
   consultationType?: 'ONLINE' | 'OFFLINE';
   referralSource?: string;
   referralSourceOther?: string;
   message: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CONFIRMED' | 'CANCELLED'; // Combined list to be safe
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CONFIRMED' | 'CANCELLED';
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -21,13 +32,25 @@ export interface CreateConsultationRequest {
   name: string;
   email: string;
   phone: string;
+  categoryId?: string | null;
   consultationType?: 'ONLINE' | 'OFFLINE';
   referralSource?: string;
   referralSourceOther?: string;
   message: string;
   topic?: string;
-  // preferredTime removed as it's not in backend, using consultationType instead
 }
+
+/**
+ * Get all active consultation categories (public)
+ */
+export const getConsultationCategories = async (): Promise<ConsultationCategory[]> => {
+  try {
+    const response = await apiClient.get<ApiResponse<ConsultationCategory[]>>(API_ENDPOINTS.CONSULTATIONS.CATEGORIES);
+    return handleApiResponse<ConsultationCategory[]>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
 
 export interface UpdateConsultationStatusRequest {
   status: Consultation['status'];
@@ -96,6 +119,7 @@ export const deleteConsultation = async (id: string): Promise<void> => {
 
 // For backward compatibility
 export const consultationApi = {
+  getCategories: getConsultationCategories,
   create: createConsultation,
   getAll: getAllConsultations,
   getById: getConsultationById,

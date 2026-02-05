@@ -51,8 +51,11 @@ export const API_ENDPOINTS = {
   COURSES: {
     LIST: '/courses',
     FILTER: '/courses/filter',
+    FEATURED_LIST: '/courses/featured',
     ONGOING: '/courses/ongoing',
     BY_ID: (id: string) => `/courses/${id}`,
+    STATUS: (id: string) => `/courses/${id}/status`,
+    FEATURED: (id: string) => `/courses/${id}/featured`,
   },
   // Enrollments
   ENROLLMENTS: {
@@ -67,7 +70,8 @@ export const API_ENDPOINTS = {
   PAYMENTS: {
     CREATE: '/payments/initiate',
     VERIFY: '/payments/verify',
-    HISTORY: '/payments/history',
+    VERIFY_CALLBACK: '/payments/verify-callback',
+    HISTORY: '/payments', // GET list (backend uses GET /)
     BY_ID: (id: string) => `/payments/${id}`,
   },
   // Payment Analytics
@@ -122,6 +126,13 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/blogs/${id}`,
     COMMENTS: (id: string) => `/blogs/${id}/comments`,
   },
+  // Hero Carousel (home page)
+  CAROUSEL: {
+    LIST: '/carousel',
+    ADMIN_LIST: '/carousel/admin',
+    ADMIN_BY_ID: (id: string) => `/carousel/admin/${id}`,
+    ADMIN_REORDER: '/carousel/admin/reorder',
+  },
   // Gallery
   GALLERY: {
     LIST: '/gallery',
@@ -136,6 +147,7 @@ export const API_ENDPOINTS = {
   CONSULTATIONS: {
     CREATE: '/consultations',
     LIST: '/consultations',
+    CATEGORIES: '/consultations/categories',
     BY_ID: (id: string) => `/consultations/${id}`,
   },
   // Contact
@@ -189,6 +201,8 @@ export const API_ENDPOINTS = {
   PROGRESS: {
     LIST: '/progress',
     BY_ID: (id: string) => `/progress/${id}`,
+    LESSON: (lessonId: string) => `/progress/lesson/${lessonId}`,
+    COURSE: (courseId: string) => `/progress/course/${courseId}`,
   },
   // Quizzes
   QUIZZES: {

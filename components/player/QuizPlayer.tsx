@@ -13,6 +13,9 @@ interface QuizPlayerProps {
     onComplete?: (result: QuizResult) => void;
 }
 
+const QUESTIONS_SAFE = (q: Quiz | undefined | null): QuizQuestion[] =>
+    Array.isArray(q?.questions) ? q.questions : [];
+
 export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
@@ -20,12 +23,12 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     const [result, setResult] = useState<QuizResult | null>(null);
     const [showExplanation, setShowExplanation] = useState(false);
 
-    const currentQuestion = quiz.questions[currentQuestionIndex];
-    const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
+    const questions = QUESTIONS_SAFE(quiz);
+    const currentQuestion = questions[currentQuestionIndex];
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
     const handleSelectAnswer = (answer: string) => {
-        if (result) return; // Prevent changing answers after submission
-
+        if (result || !currentQuestion) return;
         const questionId = currentQuestion.id!;
         if (currentQuestion.questionType === 'multiple_choice') {
             const currentAnswers = (selectedAnswers[questionId] as string[]) || [];
@@ -49,7 +52,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     };
 
     const handleNext = () => {
-        if (currentQuestionIndex < quiz.questions.length - 1) {
+        if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
             setShowExplanation(false);
         }
@@ -63,8 +66,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     };
 
     const handleSubmit = async () => {
-        // Validate that all questions have been answered
-        const unansweredCount = quiz.questions.filter(q => !selectedAnswers[q.id!]).length;
+        const unansweredCount = questions.filter(q => !selectedAnswers[q.id!]).length;
         if (unansweredCount > 0) {
             if (!confirm(`You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`)) {
                 return;
@@ -73,11 +75,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
 
         try {
             setSubmitting(true);
-            const answers = Object.entries(selectedAnswers).map(([questionId, answer]) => ({
-                questionId,
-                answer,
-            }));
-            const quizResult = await submitQuiz(quiz.id, answers);
+            const quizResult = await submitQuiz(quiz.id, selectedAnswers);
             setResult(quizResult);
             showSuccess('Quiz submitted successfully!');
             if (onComplete) onComplete(quizResult);
@@ -94,6 +92,17 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
         setCurrentQuestionIndex(0);
         setShowExplanation(false);
     };
+
+    // No questions: show empty state instead of crashing
+    if (!questions.length) {
+        return (
+            <Card padding="lg" className="max-w-2xl mx-auto border-2 border-[var(--border)] text-center">
+                <HiInformationCircle className="w-14 h-14 text-[var(--muted-foreground)] mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">No questions yet</h2>
+                <p className="text-[var(--muted-foreground)]">This quiz has no questions. You can mark the lesson as complete and continue.</p>
+            </Card>
+        );
+    }
 
     if (result) {
         return (
@@ -120,7 +129,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                 <div className="p-8 space-y-8">
                     <h3 className="text-xl font-black text-gray-900 border-b border-gray-100 pb-4">Detailed Review</h3>
                     <div className="space-y-6">
-                        {quiz.questions.map((q, idx) => {
+                        {questions.map((q, idx) => {
                             const res = result.results.find(r => r.questionId === q.id);
                             return (
                                 <div key={q.id} className={`p-6 rounded-none border ${res?.isCorrect ? 'border-green-100 bg-green-50/30' : 'border-red-100 bg-red-50/30'}`}>
@@ -133,7 +142,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
 
                                             {/* Show options with right/wrong decorations */}
                                             <div className="grid grid-cols-1 gap-2">
-                                                {Array.isArray(q.options) && q.options.map((option: string, oIdx: number) => {
+                                                {(Array.isArray(q.options) ? q.options : []).map((option: string, oIdx: number) => {
                                                     const isUserAnswer = Array.isArray(res?.userAnswer)
                                                         ? (res?.userAnswer as string[]).includes(option)
                                                         : res?.userAnswer === option;
@@ -195,13 +204,13 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                 <div>
                     <h2 className="text-2xl font-black text-gray-900 tracking-tight">{quiz.title}</h2>
                     <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
-                        Question {currentQuestionIndex + 1} of {quiz.questions.length}
+                        Question {currentQuestionIndex + 1} of {questions.length}
                     </p>
                 </div>
                 <div className="w-32 h-3 bg-gray-100 rounded-none overflow-hidden">
                     <div
                         className="h-full bg-[var(--primary-700)] transition-all duration-500"
-                        style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
+                        style={{ width: `${questions.length ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0}%` }}
                     />
                 </div>
             </div>
@@ -211,7 +220,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                 <div className="p-10 space-y-8">
                     <div className="space-y-4">
                         <span className="inline-block px-4 py-1 bg-blue-100 text-[var(--primary-700)] rounded-none text-xs font-black uppercase tracking-[0.2em]">
-                            {currentQuestion.questionType.replace('_', ' ')}
+                            {(currentQuestion.questionType || 'single_choice').replace('_', ' ')}
                         </span>
                         <h3 className="text-3xl font-black text-gray-900 leading-tight">
                             {currentQuestion.question}
@@ -219,7 +228,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                        {Array.isArray(currentQuestion.options) && (currentQuestion.options as string[]).map((option, index) => {
+                        {(Array.isArray(currentQuestion.options) ? currentQuestion.options : []).map((option: string, index: number) => {
                             const questionId = currentQuestion.id!;
                             const isSelected = currentQuestion.questionType === 'multiple_choice'
                                 ? ((selectedAnswers[questionId] as string[]) || []).includes(option)

@@ -18,7 +18,7 @@ import { formatPrice, formatCurrency, getYouTubeEmbedUrl } from '@/lib/utils/hel
 import { useAuth } from '@/lib/context/AuthContext';
 import { ROUTES } from '@/lib/utils/constants';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiCheck, HiHeart, HiClock, HiUsers, HiPlay, HiDocument, HiClipboardCheck, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
+import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiClipboardCheck, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
 import {
   FaFacebook,
   FaTwitter,
@@ -42,7 +42,6 @@ export default function CourseDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
@@ -152,22 +151,23 @@ export default function CourseDetailPage() {
     }
   };
 
-  const submitEsewaForm = (paymentDetails: any) => {
+  const submitEsewaForm = (paymentDetails: { paymentUrl?: string; formData?: Record<string, string> }) => {
+    const url = paymentDetails.paymentUrl;
+    const formData = paymentDetails.formData || {};
+    if (!url || typeof url !== 'string') {
+      showError('Invalid payment redirect URL');
+      return;
+    }
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = paymentDetails.paymentUrl;
-
-    const formData = paymentDetails.formData;
-    for (const key in formData) {
-      if (Object.prototype.hasOwnProperty.call(formData, key)) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = formData[key];
-        form.appendChild(input);
-      }
+    form.action = url;
+    for (const key of Object.keys(formData)) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = String(formData[key] ?? '');
+      form.appendChild(input);
     }
-
     document.body.appendChild(form);
     form.submit();
   };
@@ -203,57 +203,64 @@ export default function CourseDetailPage() {
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
-      router.push(`${ROUTES.LOGIN}?redirect=/courses/${params.id}`);
+      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(`/courses/${params.id}`)}`);
       return;
     }
 
     if (!course) return;
 
-    // If already enrolled
     if (course.isEnrolled) {
       router.push(`/courses/${course.id}/learn`);
       return;
     }
 
+    const priceNum = Number(course.price);
+    const isFreeCourse = course.isFree === true || course.price == null || priceNum === 0 || Number.isNaN(priceNum);
+
     try {
       setEnrolling(true);
 
-      if (course.isFree || course.price === 0) {
+      if (isFreeCourse) {
         await enrollmentApi.enrollInCourse(course.id);
         showSuccess('Successfully enrolled in course!');
         router.push(`/courses/${course.id}/learn`);
-      } else {
-        // Paid course - Initiate eSewa payment
-        const paymentResponse = await paymentApi.createPayment({
-          courseId: course.id,
-          amount: course.price,
-          paymentMethod: 'ESEWA',
-          referralClickId: referralClickId || undefined, // Pass referral click ID if exists
-          successUrl: `${window.location.origin}/payment/success`,
-          failureUrl: `${window.location.origin}/payment/failure`,
-        });
-
-        if (paymentResponse.success && paymentResponse.paymentDetails) {
-          showSuccess('Redirecting to eSewa...');
-          submitEsewaForm(paymentResponse.paymentDetails);
-        } else {
-          throw new Error('Failed to initiate payment');
-        }
+        return;
       }
-    } catch (error) {
-      showError(Object(error).message || 'An error occurred' || 'Enrollment failed');
+
+      // Paid course – initiate eSewa payment
+      if (priceNum <= 0 || !Number.isFinite(priceNum)) {
+        showError('Invalid course price. Please contact support.');
+        return;
+      }
+
+      const paymentResponse = await paymentApi.createPayment({
+        courseId: course.id,
+        amount: priceNum,
+        paymentMethod: 'ESEWA',
+        referralClickId: referralClickId || undefined,
+        successUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/success`,
+        failureUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/failure`,
+      });
+
+      if (paymentResponse?.paymentDetails?.paymentUrl) {
+        showSuccess('Redirecting to eSewa...');
+        submitEsewaForm(paymentResponse.paymentDetails);
+      } else if (paymentResponse?.paymentDetails) {
+        submitEsewaForm(paymentResponse.paymentDetails);
+      } else {
+        throw new Error('Payment gateway did not return redirect details');
+      }
+    } catch (error: unknown) {
+      const msg = Object(error).message || 'Enrollment failed';
+      if (typeof msg === 'string' && msg.toLowerCase().includes('already enrolled')) {
+        await fetchCourse(course.id);
+        showSuccess('You are already enrolled. Taking you to the course.');
+        router.push(`/courses/${course.id}/learn`);
+      } else {
+        showError(msg);
+      }
     } finally {
       setEnrolling(false);
-    }
-  };
-
-  const handleSaveCourse = () => {
-    setSaved(!saved);
-    // TODO: Implement save to wishlist API
-    if (!saved) {
-      showSuccess('Course saved to your list');
-    } else {
-      showSuccess('Course removed from your list');
     }
   };
 
@@ -417,6 +424,7 @@ export default function CourseDetailPage() {
                       src={course.thumbnail}
                       alt={course.title}
                       fill
+                      sizes="(max-width: 1280px) 100vw, 1280px"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                       priority
                     />
@@ -591,6 +599,7 @@ export default function CourseDetailPage() {
                           src={course.instructor.image}
                           alt={course.instructor.name}
                           fill
+                          sizes="160px"
                           className="object-cover"
                         />
                       ) : (
@@ -664,7 +673,7 @@ export default function CourseDetailPage() {
                           <div className="flex items-start gap-5">
                             <div className="w-14 h-14 rounded-none bg-[var(--primary-700)] shadow-lg overflow-hidden flex-shrink-0 ring-4 ring-white">
                               {review.user?.profileImage ? (
-                                <Image src={review.user.profileImage} alt={review.user.fullName || 'User'} fill className="object-cover" />
+                                <Image src={review.user.profileImage} alt={review.user.fullName || 'User'} fill className="object-cover" sizes="48px" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white font-black text-xl">
                                   {(review.user?.fullName || 'U')[0]}
@@ -703,7 +712,7 @@ export default function CourseDetailPage() {
               {/* Card Thumbnail */}
               <div className="relative aspect-[16/9] overflow-hidden">
                 {course.thumbnail && (
-                  <Image src={course.thumbnail} alt={course.title} fill className="object-cover" />
+                  <Image src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
                 )}
                 <div className="absolute top-4 left-4">
                   <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-none text-xs font-black text-gray-900 border border-white/20 shadow-lg uppercase tracking-widest">
@@ -748,24 +757,13 @@ export default function CourseDetailPage() {
                     {course.isEnrolled ? 'Go to Learning' : course.isFree ? 'Enroll for Free' : 'Enroll Now'}
                   </Button>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant={saved ? 'secondary' : 'outline'}
-                      size="lg"
-                      className="h-12 rounded-none font-bold"
-                      onClick={handleSaveCourse}
-                    >
-                      <HiHeart className={`w-5 h-5 mr-2 ${saved ? 'fill-red-500 text-red-500' : ''}`} />
-                      {saved ? 'Saved' : 'Wishlist'}
-                    </Button>
-                    <ShareButton
-                      courseId={course.id}
-                      course={{ id: course.id, title: course.title, thumbnail: course.thumbnail }}
-                      variant="outline"
-                      size="lg"
-                      className="h-12 rounded-none font-bold"
-                    />
-                  </div>
+                  <ShareButton
+                    courseId={course.id}
+                    course={{ id: course.id, title: course.title, thumbnail: course.thumbnail }}
+                    variant="outline"
+                    size="lg"
+                    className="h-12 w-full rounded-none font-bold"
+                  />
                 </div>
 
                 {/* Course Facts */}
@@ -848,6 +846,7 @@ export default function CourseDetailPage() {
                           src={rc.thumbnail}
                           alt={rc.title}
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className="object-cover"
                         />
                       </div>

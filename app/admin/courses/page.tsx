@@ -38,6 +38,8 @@ export default function AdminCoursesPage() {
   const [studentsModalCourse, setStudentsModalCourse] = useState<{ id: string; title: string; enrollmentCount: number } | null>(null);
   const [studentsList, setStudentsList] = useState<Enrollment[]>([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [featuredUpdatingId, setFeaturedUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -121,6 +123,36 @@ export default function AdminCoursesPage() {
       fetchCourses();
     } catch (error) {
       showError(Object(error).message || 'An error occurred' || 'Failed to delete course');
+    }
+  };
+
+  const handleStatusChange = async (courseId: string, newStatus: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED') => {
+    setStatusUpdatingId(courseId);
+    try {
+      await courseApi.updateCourseStatus(courseId, newStatus);
+      showSuccess('Status updated');
+      setCourses((prev) =>
+        prev.map((c) => (c.id === courseId ? { ...c, status: newStatus } : c))
+      );
+    } catch (error) {
+      showError(Object(error).message || 'Failed to update status');
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const handlePopularToggle = async (courseId: string, featured: boolean) => {
+    setFeaturedUpdatingId(courseId);
+    try {
+      await courseApi.updateCourseFeatured(courseId, featured);
+      showSuccess(featured ? 'Course marked as popular' : 'Course unmarked as popular');
+      setCourses((prev) =>
+        prev.map((c) => (c.id === courseId ? { ...c, featured } : c))
+      );
+    } catch (error) {
+      showError(Object(error).message || 'Failed to update popular');
+    } finally {
+      setFeaturedUpdatingId(null);
     }
   };
 
@@ -212,6 +244,7 @@ export default function AdminCoursesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Instructor</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Category</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Popular</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Price</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Enrollments</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Created</th>
@@ -221,7 +254,7 @@ export default function AdminCoursesPage() {
             <tbody className="divide-y divide-[var(--border)]">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-4 text-center">Loading...</td>
+                  <td colSpan={10} className="px-6 py-4 text-center">Loading...</td>
                 </tr>
               ) : courses && courses.length > 0 ? (
                 courses.map((course) => (
@@ -253,7 +286,38 @@ export default function AdminCoursesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {course.category?.name || 'Uncategorized'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(course.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Select
+                        value={course.status}
+                        onChange={(e) => handleStatusChange(course.id, e.target.value as 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED')}
+                        disabled={statusUpdatingId === course.id}
+                        className="min-w-[120px] text-sm"
+                        options={[
+                          { value: 'DRAFT', label: 'Draft' },
+                          { value: 'PUBLISHED', label: 'Published' },
+                          { value: 'ONGOING', label: 'Ongoing' },
+                          { value: 'ARCHIVED', label: 'Archived' },
+                        ]}
+                      />
+                      {statusUpdatingId === course.id && (
+                        <span className="ml-1 text-xs text-[var(--muted-foreground)]">Updating...</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!course.featured}
+                          disabled={featuredUpdatingId === course.id}
+                          onChange={(e) => handlePopularToggle(course.id, e.target.checked)}
+                          className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary-600)] focus:ring-[var(--primary-500)]"
+                          title={course.featured ? 'Unmark as popular' : 'Mark as popular'}
+                        />
+                        {featuredUpdatingId === course.id && (
+                          <span className="text-xs text-[var(--muted-foreground)]">Updating...</span>
+                        )}
+                      </label>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {formatPrice(course.price, course.isFree)}
                     </td>
@@ -299,7 +363,7 @@ export default function AdminCoursesPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-6 py-4 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={10} className="px-6 py-4 text-center text-[var(--muted-foreground)]">
                     No courses found
                   </td>
                 </tr>

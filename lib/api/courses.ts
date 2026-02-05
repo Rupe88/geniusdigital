@@ -71,6 +71,22 @@ export const filterCourses = async (filters: {
   }
 };
 
+/**
+ * Get featured (popular) courses for homepage. Always returns an array.
+ */
+export const getFeaturedCourses = async (): Promise<Course[]> => {
+  try {
+    const response = await apiClient.get<ApiResponse<Course[]>>(API_ENDPOINTS.COURSES.FEATURED_LIST);
+    const payload = response.data as ApiResponse<Course[]> & { data?: Course[] };
+    if (payload?.success && Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload?.data)) return payload.data;
+    return [];
+  } catch (error) {
+    console.error('getFeaturedCourses error:', error);
+    return [];
+  }
+};
+
 export const getOngoingCourses = async (): Promise<Course[]> => {
   try {
     const response = await apiClient.get<ApiResponse<Course[]>>(API_ENDPOINTS.COURSES.ONGOING);
@@ -319,6 +335,37 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       },
     });
     return handleApiResponse<Course>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/**
+ * Update course status only (for admin list quick toggle)
+ */
+export const updateCourseStatus = async (
+  id: string,
+  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED'
+): Promise<Course> => {
+  try {
+    const response = await apiClient.patch<ApiResponse<Course>>(API_ENDPOINTS.COURSES.STATUS(id), { status });
+    const responseData = response.data;
+    if (responseData.success && responseData.data) return responseData.data;
+    throw new Error(responseData.message || 'Failed to update status');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/**
+ * Update course featured (Popular) flag (for admin list toggle)
+ */
+export const updateCourseFeatured = async (id: string, featured: boolean): Promise<Course> => {
+  try {
+    const response = await apiClient.patch<ApiResponse<Course>>(API_ENDPOINTS.COURSES.FEATURED(id), { featured });
+    const responseData = response.data;
+    if (responseData.success && responseData.data) return responseData.data;
+    throw new Error(responseData.message || 'Failed to update popular');
   } catch (error) {
     throw new Error(handleApiError(error));
   }

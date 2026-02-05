@@ -3,30 +3,61 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { getCarouselSlides } from '@/lib/api/carousel';
+import type { HeroCarouselSlide } from '@/lib/api/carousel';
+import { getVideoEmbedUrl } from '@/lib/utils/helpers';
 
-// Hero slide images
-const heroSlides = [
-  {
-    image: '/hero1.png',
-    alt: 'Numerology Course - Nepal\'s First ISO Certified Institute in Vastu, Numerology & Astrology'
-  },
-  {
-    image: '/hero2.png',
-    alt: 'Vastu Shastra Course - Learn from Renowned Occult Master'
-  },
-  {
-    image: '/hero3.png',
-    alt: 'Astrology Course - Transform Your Life with Ancient Wisdom'
-  },
+/** Uploaded video that autoplays when its slide is active */
+const CarouselVideo: React.FC<{
+  src: string;
+  poster?: string;
+  isActive: boolean;
+}> = ({ src, poster, isActive }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (isActive && videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isActive]);
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      poster={poster}
+      className="absolute inset-0 w-full h-full object-cover"
+      muted
+      loop
+      playsInline
+      autoPlay
+    />
+  );
+};
+
+const FALLBACK_SLIDES = [
+  { image: '/hero1.png', altText: 'Numerology Course - Nepal\'s First ISO Certified Institute in Vastu, Numerology & Astrology', videoEmbedUrl: null, videoUrl: null },
+  { image: '/hero2.png', altText: 'Vastu Shastra Course - Learn from Renowned Occult Master', videoEmbedUrl: null, videoUrl: null },
+  { image: '/hero3.png', altText: 'Astrology Course - Transform Your Life with Ancient Wisdom', videoEmbedUrl: null, videoUrl: null },
 ];
 
 export const HeroCarousel: React.FC = () => {
+  const [slides, setSlides] = useState<HeroCarouselSlide[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const slideRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    getCarouselSlides().then((data) => {
+      if (!cancelled && Array.isArray(data) && data.length > 0) setSlides(data);
+      if (!cancelled) setLoading(false);
+    }).catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const heroSlides = slides.length > 0 ? slides : FALLBACK_SLIDES;
   const totalSlides = heroSlides.length;
 
   // Navigate to specific slide
@@ -87,49 +118,55 @@ export const HeroCarousel: React.FC = () => {
     >
       {/* Constrained container to match Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="hero-carousel-container shadow-2xl border border-gray-100">
-          {/* Slides wrapper with smooth transition */}
-          <div
-            ref={slideRef}
-            className="hero-slides-wrapper"
-            style={{
-              transform: `translateX(-${currentSlide * 100}%)`,
-            }}
-          >
-            {heroSlides.map((slide, index) => (
-              <div key={index} className="hero-slide">
-                <Image
-                  src={slide.image}
-                  alt={slide.alt}
-                  fill
-                  priority={index === 0}
-                  sizes="(max-width: 1280px) 100vw, 1280px"
-                  className="hero-slide-image"
-                  quality={90}
-                />
-                {/* Gradient overlay for better text visibility */}
-                <div className="hero-slide-overlay" />
-              </div>
-            ))}
+        <div className="hero-carousel-outer">
+          <div className="hero-carousel-wrap">
+          <div className="hero-carousel-container shadow-2xl border border-gray-100">
+            {/* Slides wrapper with smooth transition */}
+            <div
+              ref={slideRef}
+              className="hero-slides-wrapper"
+              style={{
+                transform: `translateX(-${currentSlide * 100}%)`,
+              }}
+            >
+            {heroSlides.map((slide, index) => {
+              const s = slide as HeroCarouselSlide & { altText?: string };
+              const alt = s.altText ?? '';
+              const embedUrl = getVideoEmbedUrl(s.videoEmbedUrl, { autoplay: true });
+              return (
+                <div key={s.id || `fallback-${index}`} className="hero-slide">
+                  {embedUrl ? (
+                    <div className="absolute inset-0 w-full h-full min-w-full min-h-full">
+                      <iframe
+                        src={embedUrl}
+                        title={alt || `Slide ${index + 1}`}
+                        className="absolute inset-0 w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : s.videoUrl ? (
+                    <CarouselVideo
+                      src={s.videoUrl}
+                      poster={s.image ?? undefined}
+                      isActive={index === currentSlide}
+                    />
+                  ) : s.image ? (
+                    <Image
+                      src={s.image}
+                      alt={alt}
+                      fill
+                      priority={index === 0}
+                      sizes="(max-width: 1280px) 100vw, 1280px"
+                      className="hero-slide-image"
+                      quality={90}
+                    />
+                  ) : null}
+                  <div className="hero-slide-overlay" />
+                </div>
+              );
+            })}
           </div>
-
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="hero-nav-btn hero-nav-btn-left"
-            aria-label="Previous slide"
-            disabled={isTransitioning}
-          >
-            <HiChevronLeft className="h-6 w-6 md:h-7 md:w-7" />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="hero-nav-btn hero-nav-btn-right"
-            aria-label="Next slide"
-            disabled={isTransitioning}
-          >
-            <HiChevronRight className="h-6 w-6 md:h-7 md:w-7" />
-          </button>
 
           {/* Pagination Dots */}
           <div className="hero-pagination">
@@ -155,6 +192,24 @@ export const HeroCarousel: React.FC = () => {
               key={currentSlide}
             />
           </div>
+          </div>
+          <button
+            onClick={prevSlide}
+            className="hero-nav-btn hero-nav-btn-left"
+            aria-label="Previous slide"
+            disabled={isTransitioning}
+          >
+            <HiChevronLeft className="h-6 w-6 md:h-7 md:w-7" />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="hero-nav-btn hero-nav-btn-right"
+            aria-label="Next slide"
+            disabled={isTransitioning}
+          >
+            <HiChevronRight className="h-6 w-6 md:h-7 md:w-7" />
+          </button>
+          </div>
         </div>
       </div>
 
@@ -163,6 +218,16 @@ export const HeroCarousel: React.FC = () => {
         .hero-carousel-wrapper {
           width: 100%;
           background: transparent;
+        }
+
+        .hero-carousel-outer {
+          width: 100%;
+        }
+
+        .hero-carousel-wrap {
+          position: relative;
+          width: 100%;
+          overflow: visible;
         }
 
         .hero-carousel-container {
@@ -247,10 +312,24 @@ export const HeroCarousel: React.FC = () => {
           transition: all 0.3s ease;
         }
 
+        .hero-nav-btn-left {
+          left: -22px;
+        }
+
+        .hero-nav-btn-right {
+          right: -22px;
+        }
+
         @media (min-width: 768px) {
           .hero-nav-btn {
             width: 52px;
             height: 52px;
+          }
+          .hero-nav-btn-left {
+            left: -26px;
+          }
+          .hero-nav-btn-right {
+            right: -26px;
           }
         }
 
@@ -263,32 +342,6 @@ export const HeroCarousel: React.FC = () => {
         .hero-nav-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
-        }
-
-        .hero-nav-btn-left {
-          left: 16px;
-        }
-
-        .hero-nav-btn-right {
-          right: 16px;
-        }
-
-        @media (min-width: 768px) {
-          .hero-nav-btn-left {
-            left: 24px;
-          }
-          .hero-nav-btn-right {
-            right: 24px;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .hero-nav-btn-left {
-            left: 40px;
-          }
-          .hero-nav-btn-right {
-            right: 40px;
-          }
         }
 
         .hero-pagination {

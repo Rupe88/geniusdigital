@@ -45,6 +45,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/blogs`, label: 'Blog', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/testimonials`, label: 'Testimonials', icon: HiStar },
       { href: `${ROUTES.ADMIN}/gallery`, label: 'Gallery', icon: HiPhotograph },
+      { href: `${ROUTES.ADMIN}/carousel`, label: 'Carousel', icon: HiPhotograph },
       { href: `${ROUTES.ADMIN}/events`, label: 'Events', icon: HiCalendar },
       { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
       { href: `${ROUTES.ADMIN}/popups`, label: 'Popups', icon: HiPhotograph },

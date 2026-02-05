@@ -120,3 +120,41 @@ export const getYouTubeEmbedUrl = (url: string): string | null => {
   }
   return null;
 };
+
+/**
+ * Get embed URL for carousel (YouTube or Vimeo). Accepts watch, youtu.be, or embed URLs.
+ * @param options.autoplay - If true, appends autoplay (and mute for YouTube) query params.
+ */
+export const getVideoEmbedUrl = (
+  url: string | null | undefined,
+  options?: { autoplay?: boolean }
+): string | null => {
+  if (!url || !url.trim()) return null;
+  const u = url.trim();
+  let embed: string | null = null;
+  let isYoutube = false;
+  let isVimeo = false;
+  const yt = getYouTubeEmbedUrl(u);
+  if (yt) {
+    embed = yt;
+    isYoutube = true;
+  } else {
+    const vimeoMatch = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vimeoMatch) {
+      embed = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+      isVimeo = true;
+    } else if (u.startsWith('https://www.youtube.com/embed/') || u.startsWith('https://player.vimeo.com/video/')) {
+      embed = u;
+      isYoutube = u.includes('youtube.com');
+      isVimeo = u.includes('vimeo.com');
+    }
+  }
+  if (!embed) return null;
+  if (options?.autoplay) {
+    const sep = embed.includes('?') ? '&' : '?';
+    if (isYoutube) embed = `${embed}${sep}autoplay=1&mute=1`;
+    else if (isVimeo) embed = `${embed}${sep}autoplay=1&muted=1`;
+    else embed = `${embed}${sep}autoplay=1`;
+  }
+  return embed;
+};

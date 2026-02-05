@@ -16,6 +16,10 @@ export interface Payment {
   metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  /** Included when fetched from history/list API */
+  course?: { id: string; title: string; thumbnail?: string };
+  /** Included when fetched from history/list API */
+  order?: { id: string; orderNumber: string };
 }
 
 export interface PaymentAnalytics {
