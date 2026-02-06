@@ -125,8 +125,8 @@ export default function RegisterPage() {
     otpChannel === 'email'
       ? 'your email'
       : otpChannel === 'sms'
-        ? 'your phone'
-        : 'your email and phone';
+        ? 'your mobile number (SMS)'
+        : 'your email and mobile number (SMS)';
 
   if (showOtpVerification) {
     return (
@@ -238,26 +238,25 @@ export default function RegisterPage() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-[var(--foreground)]">
-              Where should we send your verification code?
+              Send OTP verification code to
             </label>
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" value="email" {...register('otpChannel')} className="rounded-full border-gray-300 text-[#c01e2e] focus:ring-[#c01e2e]" />
-                <span className="text-sm text-gray-700">Email only</span>
-              </label>
+            <select
+              {...register('otpChannel')}
+              className="block w-full rounded-none border border-[var(--border)] bg-[var(--input)] py-2 px-3 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+            >
+              <option value="email">Email only</option>
               {smsAvailable && (
                 <>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" value="sms" {...register('otpChannel')} className="rounded-full border-gray-300 text-[#c01e2e] focus:ring-[#c01e2e]" />
-                    <span className="text-sm text-gray-700">SMS only</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" value="both" {...register('otpChannel')} className="rounded-full border-gray-300 text-[#c01e2e] focus:ring-[#c01e2e]" />
-                    <span className="text-sm text-gray-700">Email and SMS</span>
-                  </label>
+                  <option value="sms">Mobile number (SMS) only</option>
+                  <option value="both">Both email and mobile number (SMS)</option>
                 </>
               )}
-            </div>
+            </select>
+            {smsAvailable && (
+              <p className="mt-1 text-xs text-gray-500">
+                You can receive the code on your mobile number via SMS.
+              </p>
+            )}
           </div>
 
           <Input
