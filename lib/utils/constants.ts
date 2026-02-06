@@ -1,6 +1,7 @@
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
+    OTP_OPTIONS: '/auth/otp-options',
     REGISTER: '/auth/register',
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',

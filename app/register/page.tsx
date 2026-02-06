@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,15 +11,40 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { ROUTES } from '@/lib/utils/constants';
+import * as authApi from '@/lib/api/auth';
+import type { OtpChannel } from '@/lib/types/auth';
 
-const registerSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  phone: z.string().optional(),
-});
+const registerSchema = z
+  .object({
+    fullName: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must include uppercase, lowercase, and a number'),
+    phone: z.string().optional(),
+    otpChannel: z.enum(['email', 'sms', 'both']).optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.otpChannel === 'sms' || data.otpChannel === 'both') {
+        const digits = (data.phone || '').replace(/\D/g, '');
+        const normalized = digits.length === 12 && digits.startsWith('977') ? digits.slice(2) : digits;
+        return normalized.length === 10 && normalized.startsWith('98');
+      }
+      return true;
+    },
+    { message: 'Please enter a valid 10-digit Nepal mobile (e.g. 98XXXXXXXX)', path: ['phone'] }
+  );
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('977')) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('977')) return digits.slice(2);
+  return digits.length === 10 ? digits : phone;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,16 +54,26 @@ export default function RegisterPage() {
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
   const [registeredPhone, setRegisteredPhone] = useState<string>('');
+  const [otpChannel, setOtpChannel] = useState<OtpChannel>('email');
+  const [smsAvailable, setSmsAvailable] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string>('');
+
+  useEffect(() => {
+    authApi.getOtpOptions().then((opts) => setSmsAvailable(opts.smsAvailable)).catch(() => setSmsAvailable(false));
+  }, []);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { otpChannel: 'email' },
   });
+
+  const watchOtpChannel = watch('otpChannel') || 'email';
 
   const {
     register: registerOtp,
@@ -58,16 +93,21 @@ export default function RegisterPage() {
     try {
       setError('');
       setIsLoading(true);
+      const channel = (data.otpChannel || 'email') as OtpChannel;
+      const phoneValue = data.phone?.trim();
+      const phoneForApi = (channel === 'sms' || channel === 'both') && phoneValue ? normalizePhone(phoneValue) : undefined;
       await registerUser({
         email: data.email,
         password: data.password,
         fullName: data.fullName,
-        phone: data.phone,
+        phone: phoneForApi,
+        otpChannel: channel,
       });
       setRegisteredEmail(data.email);
-      setRegisteredPhone(data.phone?.trim() || '');
+      setRegisteredPhone(phoneForApi || phoneValue || '');
+      setOtpChannel(channel);
       setShowOtpVerification(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError((err instanceof Error ? err.message : 'An error occurred') || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -82,22 +122,28 @@ export default function RegisterPage() {
         email: registeredEmail,
         otp: data.otp,
       });
-      // After successful verification, redirect to login so the user can sign in.
       router.push(ROUTES.LOGIN);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError((err instanceof Error ? err.message : 'An error occurred') || 'OTP verification failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const otpSentTo =
+    otpChannel === 'email'
+      ? 'your email'
+      : otpChannel === 'sms'
+        ? 'your phone'
+        : 'your email and phone';
+
   if (showOtpVerification) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex items-start justify-center px-4 pt-16 pb-10">
         <Card className="w-full max-w-sm rounded-none border border-gray-200 shadow-md" padding="md">
-          <h2 className="text-xl font-semibold text-gray-900 mb-1 text-center">Verify email</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-1 text-center">Verify your account</h2>
           <p className="text-xs text-gray-600 mb-4">
-            Enter the 6-digit code sent to your email{registeredPhone ? ' and phone' : ''}.
+            Enter the 6-digit code sent to {otpSentTo}.
           </p>
 
           {error && (
@@ -109,7 +155,7 @@ export default function RegisterPage() {
           <form onSubmit={handleOtpSubmit(onOtpSubmit)} className="space-y-3">
             <Input
               size="sm"
-              label="Code"
+              label="Verification code"
               type="text"
               maxLength={6}
               inputMode="numeric"
@@ -134,9 +180,9 @@ export default function RegisterPage() {
                   setError('');
                   setResendMessage('');
                   setIsResending(true);
-                  await resendOtp(registeredEmail);
+                  await resendOtp(registeredEmail, otpChannel);
                   setResendMessage('New code sent.');
-                } catch (err: any) {
+                } catch (err: unknown) {
                   setError((err instanceof Error ? err.message : 'An error occurred') || 'Failed to resend.');
                 } finally {
                   setIsResending(false);
@@ -182,21 +228,49 @@ export default function RegisterPage() {
             error={errors.email?.message}
             placeholder="Email"
           />
+
           <div>
-            <label className="mb-0.5 block text-xs font-medium text-[var(--foreground)]">
-              Phone <span className="text-gray-400">(optional)</span>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--foreground)]">
+              Where should we send your verification code?
             </label>
-            <div className="flex rounded-none border border-[var(--border)] focus-within:ring-2 focus-within:ring-[var(--primary-500)]">
-              <span className="flex items-center border-r border-[var(--border)] bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600">+977</span>
-              <input
-                type="tel"
-                className="block w-full rounded-none border-0 bg-[var(--input)] py-1.5 px-3 text-sm text-[var(--foreground)] focus:outline-none"
-                placeholder="98XXXXXXXX"
-                {...register('phone')}
-              />
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" value="email" {...register('otpChannel')} className="rounded-full border-gray-300 text-[#c01e2e] focus:ring-[#c01e2e]" />
+                <span className="text-sm text-gray-700">Email only</span>
+              </label>
+              {smsAvailable && (
+                <>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" value="sms" {...register('otpChannel')} className="rounded-full border-gray-300 text-[#c01e2e] focus:ring-[#c01e2e]" />
+                    <span className="text-sm text-gray-700">SMS only</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" value="both" {...register('otpChannel')} className="rounded-full border-gray-300 text-[#c01e2e] focus:ring-[#c01e2e]" />
+                    <span className="text-sm text-gray-700">Email and SMS</span>
+                  </label>
+                </>
+              )}
             </div>
-            {errors.phone?.message && <p className="mt-0.5 text-xs text-[var(--error)]">{errors.phone.message}</p>}
           </div>
+
+          {(watchOtpChannel === 'sms' || watchOtpChannel === 'both') && (
+            <div>
+              <label className="mb-0.5 block text-xs font-medium text-[var(--foreground)]">
+                Phone number <span className="text-red-500">*</span>
+              </label>
+              <div className="flex rounded-none border border-[var(--border)] focus-within:ring-2 focus-within:ring-[var(--primary-500)]">
+                <span className="flex items-center border-r border-[var(--border)] bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600">+977</span>
+                <input
+                  type="tel"
+                  className="block w-full rounded-none border-0 bg-[var(--input)] py-1.5 px-3 text-sm text-[var(--foreground)] focus:outline-none"
+                  placeholder="98XXXXXXXX"
+                  {...register('phone')}
+                />
+              </div>
+              {errors.phone?.message && <p className="mt-0.5 text-xs text-[var(--error)]">{errors.phone.message}</p>}
+            </div>
+          )}
+
           <Input
             size="sm"
             label="Password"
@@ -204,7 +278,7 @@ export default function RegisterPage() {
             showPasswordToggle
             {...register('password')}
             error={errors.password?.message}
-            placeholder="Password"
+            placeholder="At least 8 characters, with uppercase, lowercase & number"
           />
           <Button
             type="submit"
