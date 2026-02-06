@@ -14,28 +14,23 @@ import { ROUTES } from '@/lib/utils/constants';
 import * as authApi from '@/lib/api/auth';
 import type { OtpChannel } from '@/lib/types/auth';
 
-const registerSchema = z
-  .object({
-    fullName: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Invalid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must include uppercase, lowercase, and a number'),
-    phone: z.string().optional(),
-    otpChannel: z.enum(['email', 'sms', 'both']).optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.otpChannel === 'sms' || data.otpChannel === 'both') {
-        const digits = (data.phone || '').replace(/\D/g, '');
-        const normalized = digits.length === 12 && digits.startsWith('977') ? digits.slice(2) : digits;
-        return normalized.length === 10 && normalized.startsWith('98');
-      }
-      return true;
-    },
-    { message: 'Please enter a valid 10-digit Nepal mobile (e.g. 98XXXXXXXX)', path: ['phone'] }
-  );
+const registerSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must include uppercase, lowercase, and a number'),
+  phone: z
+    .string()
+    .min(1, 'Phone number is required')
+    .refine((val) => {
+      const digits = val.replace(/\D/g, '');
+      const normalized = digits.length === 12 && digits.startsWith('977') ? digits.slice(2) : digits;
+      return normalized.length === 10 && normalized.startsWith('98');
+    }, 'Please enter a valid 10-digit Nepal mobile (e.g. 98XXXXXXXX)'),
+  otpChannel: z.enum(['email', 'sms', 'both']).optional(),
+});
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -66,14 +61,11 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: { otpChannel: 'email' },
   });
-
-  const watchOtpChannel = watch('otpChannel') || 'email';
 
   const {
     register: registerOtp,
@@ -94,8 +86,7 @@ export default function RegisterPage() {
       setError('');
       setIsLoading(true);
       const channel = (data.otpChannel || 'email') as OtpChannel;
-      const phoneValue = data.phone?.trim();
-      const phoneForApi = (channel === 'sms' || channel === 'both') && phoneValue ? normalizePhone(phoneValue) : undefined;
+      const phoneForApi = data.phone?.trim() ? normalizePhone(data.phone.trim()) : '';
       await registerUser({
         email: data.email,
         password: data.password,
@@ -104,7 +95,7 @@ export default function RegisterPage() {
         otpChannel: channel,
       });
       setRegisteredEmail(data.email);
-      setRegisteredPhone(phoneForApi || phoneValue || '');
+      setRegisteredPhone(phoneForApi);
       setOtpChannel(channel);
       setShowOtpVerification(true);
     } catch (err: unknown) {
@@ -230,6 +221,22 @@ export default function RegisterPage() {
           />
 
           <div>
+            <label className="mb-0.5 block text-xs font-medium text-[var(--foreground)]">
+              Phone number <span className="text-red-500">*</span>
+            </label>
+            <div className="flex rounded-none border border-[var(--border)] focus-within:ring-2 focus-within:ring-[var(--primary-500)]">
+              <span className="flex items-center border-r border-[var(--border)] bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600">+977</span>
+              <input
+                type="tel"
+                className="block w-full rounded-none border-0 bg-[var(--input)] py-1.5 px-3 text-sm text-[var(--foreground)] focus:outline-none"
+                placeholder="98XXXXXXXX"
+                {...register('phone')}
+              />
+            </div>
+            {errors.phone?.message && <p className="mt-0.5 text-xs text-[var(--error)]">{errors.phone.message}</p>}
+          </div>
+
+          <div>
             <label className="mb-1.5 block text-xs font-medium text-[var(--foreground)]">
               Where should we send your verification code?
             </label>
@@ -252,24 +259,6 @@ export default function RegisterPage() {
               )}
             </div>
           </div>
-
-          {(watchOtpChannel === 'sms' || watchOtpChannel === 'both') && (
-            <div>
-              <label className="mb-0.5 block text-xs font-medium text-[var(--foreground)]">
-                Phone number <span className="text-red-500">*</span>
-              </label>
-              <div className="flex rounded-none border border-[var(--border)] focus-within:ring-2 focus-within:ring-[var(--primary-500)]">
-                <span className="flex items-center border-r border-[var(--border)] bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600">+977</span>
-                <input
-                  type="tel"
-                  className="block w-full rounded-none border-0 bg-[var(--input)] py-1.5 px-3 text-sm text-[var(--foreground)] focus:outline-none"
-                  placeholder="98XXXXXXXX"
-                  {...register('phone')}
-                />
-              </div>
-              {errors.phone?.message && <p className="mt-0.5 text-xs text-[var(--error)]">{errors.phone.message}</p>}
-            </div>
-          )}
 
           <Input
             size="sm"
