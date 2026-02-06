@@ -12,7 +12,7 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<User | null>;
   register: (data: RegisterRequest) => Promise<void>;
   verifyOtp: (data: VerifyOtpRequest) => Promise<void>;
-  resendOtp: (email: string) => Promise<void>;
+  resendOtp: (email: string, otpChannel?: 'email' | 'sms' | 'both') => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -188,8 +188,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(response.user);
   };
 
-  const resendOtp = async (email: string) => {
-    await authApi.resendOtp(email);
+  const resendOtp = async (email: string, otpChannel?: 'email' | 'sms' | 'both') => {
+    await authApi.resendOtp(email, otpChannel);
   };
 
   const logout = async () => {
