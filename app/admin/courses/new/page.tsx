@@ -45,18 +45,9 @@ export default function CreateCoursePage() {
   const handleSubmit = async (data: CreateCourseData & { curriculumData?: { chapters: any[], lessons: any[] } }) => {
     try {
       setSubmitting(true);
-      console.log('Starting course creation...');
 
-      // Add timeout for course creation (2 minutes)
-      const createCoursePromise = courseApi.createCourse(data);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Course creation timed out. Please try again.'));
-        }, 120000); // 2 minutes
-      });
-
-      const result = await Promise.race([createCoursePromise, timeoutPromise]);
-      console.log('Course created successfully:', result);
+      // createCourse uses its own timeout (10 min when uploading video/thumbnail)
+      const result = await courseApi.createCourse(data);
 
       // If there's curriculum data, create chapters and lessons
       if (data.curriculumData && (result as any).id) {
@@ -146,17 +137,24 @@ export default function CreateCoursePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div>Loading...</div>
+      <div className="animate-in fade-in duration-200">
+        <div className="mb-8">
+          <div className="h-9 w-64 bg-[var(--muted)] rounded mb-2 animate-pulse" />
+          <div className="h-5 w-96 bg-[var(--muted)] rounded animate-pulse opacity-80" />
+        </div>
+        <div className="space-y-6">
+          <div className="h-64 bg-[var(--card)] border border-[var(--border)] rounded-xl animate-pulse" />
+          <div className="h-48 bg-[var(--card)] border border-[var(--border)] rounded-xl animate-pulse" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="animate-in fade-in duration-300">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[var(--foreground)]">Create New Course</h1>
-        <p className="text-[var(--muted-foreground)] mt-2">Fill in the course details below</p>
+        <p className="text-[var(--muted-foreground)] mt-2">Fill in the course details below. You can add curriculum in step 3.</p>
       </div>
 
       <CourseForm

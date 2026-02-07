@@ -331,19 +331,8 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         };
       }
 
-      setUploadProgress(70);
-
       // Final validation before submission
-      console.log('Submitting course data:', {
-        title: submitData.title,
-        instructorId: submitData.instructorId,
-        categoryId: submitData.categoryId,
-        hasThumbnail: !!submitData.thumbnailFile,
-      });
-
       await onSubmit(submitData);
-
-      setUploadProgress(100);
     } catch (error) {
       console.error('Form submission error:', error);
       throw error; // Re-throw to let parent handle error
@@ -403,37 +392,60 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           ))}
         </div>
 
-        {/* Upload Progress Bar */}
-        {(isUploading || isLoading) && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-[var(--foreground)]">
-                {isUploading ? 'Creating course...' : 'Processing...'}
-              </span>
-              <span className="text-sm text-[var(--muted-foreground)]">
-                {isUploading ? `${uploadProgress}%` : 'Please wait...'}
-              </span>
+        {/* Inline progress (compact) when loading only */}
+        {!isUploading && isLoading && (
+          <div className="mt-6 flex items-center gap-3">
+            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-[var(--primary-600)] rounded-full animate-pulse w-1/3" />
             </div>
-            <div className="w-full bg-gray-200 rounded-none h-2 shadow-inner">
-              <div
-                className="bg-[var(--primary-700)] h-2 rounded-none transition-all duration-300 smooth-transition shadow-sm"
-                style={{ width: isUploading ? `${uploadProgress}%` : '100%' }}
-              ></div>
-            </div>
-            {isUploading && (
-              <p className="text-xs text-[var(--muted-foreground)] mt-2">
-                {uploadProgress < 50 ? 'Validating data...' :
-                  uploadProgress < 70 ? 'Processing files...' :
-                    'Finalizing course creation...'}
-              </p>
-            )}
+            <span className="text-sm text-[var(--muted-foreground)]">Processing...</span>
           </div>
         )}
       </div>
 
+      {/* YouTube-style upload overlay: real percentage, smooth bar */}
+      {(isUploading || isLoading) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          aria-modal="true"
+          role="dialog"
+          aria-label="Upload progress"
+        >
+          <div className="bg-[var(--card)] border border-[var(--border)] shadow-2xl rounded-xl p-8 w-full max-w-md mx-4 animate-in fade-in duration-300">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                {uploadProgress < 100 ? 'Uploading course...' : 'Almost done...'}
+              </h3>
+              <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                {uploadProgress < 5
+                  ? 'Preparing files...'
+                  : uploadProgress < 100
+                    ? 'Uploading video & files'
+                    : 'Saving course'}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-[var(--foreground)]">Progress</span>
+                <span className="tabular-nums text-[var(--primary-600)] font-semibold">{uploadProgress}%</span>
+              </div>
+              <div className="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[var(--primary-600)] rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-[var(--muted-foreground)] mt-4 text-center">
+              Please don&apos;t close this page. Large videos may take a few minutes.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Step 1: Basic Information */}
       {currentStep === 1 && (
-        <Card padding="lg">
+        <Card padding="lg" className="animate-in fade-in slide-in-from-right-4 duration-300">
           <h2 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Basic Information</h2>
 
           <div className="space-y-4">
@@ -551,7 +563,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
 
       {/* Step 2: Details & Settings */}
       {currentStep === 2 && (
-        <Card padding="lg">
+        <Card padding="lg" className="animate-in fade-in slide-in-from-right-4 duration-300">
           <h2 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Details & Settings</h2>
 
           <div className="space-y-6">
@@ -762,7 +774,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
 
       {/* Step 3: Curriculum Builder */}
       {currentStep === 3 && (
-        <Card padding="lg">
+        <Card padding="lg" className="animate-in fade-in slide-in-from-right-4 duration-300">
           <h2 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Curriculum</h2>
           {course ? (
             <>
@@ -858,7 +870,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
 
       {/* Step 4: Publish & Schedule */}
       {currentStep === 4 && (
-        <Card padding="lg">
+        <Card padding="lg" className="animate-in fade-in slide-in-from-right-4 duration-300">
           <h2 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Publish & Schedule</h2>
 
           <div className="bg-[var(--muted)]/30 rounded-none p-6 border border-[var(--border)] mb-8">

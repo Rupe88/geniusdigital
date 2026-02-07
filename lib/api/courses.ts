@@ -143,8 +143,7 @@ export interface CreateCourseData {
 
 export const createCourse = async (data: CreateCourseData): Promise<Course> => {
   try {
-    // Update progress: Starting
-    data.onProgress?.(10);
+    data.onProgress?.(0);
 
     // Validate required fields
     if (!data.title || !data.title.trim()) {
@@ -222,10 +221,8 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       });
     }
 
-    // Update progress: Form data prepared
-    data.onProgress?.(30);
+    data.onProgress?.(1);
 
-    // Long timeout for course creation when uploading video (up to 10 min for large files)
     const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 600000 : 120000;
     const response = await apiClient.post<ApiResponse<Course>>(API_ENDPOINTS.COURSES.LIST, formData, {
       headers: {
@@ -233,14 +230,15 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       },
       timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const percentCompleted = Math.round((progressEvent.loaded * 70) / progressEvent.total) + 30;
-          data.onProgress?.(Math.min(percentCompleted, 90));
+        if (progressEvent.total && progressEvent.total > 0) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          data.onProgress?.(Math.min(percent, 99));
+        } else if (progressEvent.loaded) {
+          data.onProgress?.(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
         }
       },
     });
 
-    // Update progress: Request completed
     data.onProgress?.(100);
 
     return handleApiResponse<Course>(response);
