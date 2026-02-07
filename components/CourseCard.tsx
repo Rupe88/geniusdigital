@@ -48,7 +48,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 
         {/* Content */}
         <div className="px-5 pt-0 pb-1">
-          <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
+          <h3 className="text-base font-[550] md:text-lg leading-6 antialiased tracking-[0.05em] text-gray-900 mb-1 line-clamp-2 ">
             {title}
           </h3>
           <div className="flex items-baseline space-x-2">

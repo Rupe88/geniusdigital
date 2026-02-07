@@ -9,8 +9,9 @@ import PromotionalPopup from '@/components/layout/PromotionalPopup';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
+  const isDashboard = pathname?.startsWith('/dashboard');
 
-  if (isAdmin) {
+  if (isAdmin || isDashboard) {
     return <>{children}</>;
   }
 

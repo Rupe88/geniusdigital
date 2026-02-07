@@ -377,7 +377,7 @@ export default function HomePage() {
       <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <h2 className="section-title text-gray-900">
               Ongoing Courses
             </h2>
           </div>
@@ -451,7 +451,7 @@ export default function HomePage() {
       <section className="pt-8 pb-8 bg-white" data-section="popular-courses">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <h2 className="section-title text-gray-900">
               Popular Courses
             </h2>
           </div>
@@ -526,7 +526,7 @@ export default function HomePage() {
       <section className="pt-8 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <h2 className="section-title text-gray-900">
               What Our Client Say
             </h2>
           </div>

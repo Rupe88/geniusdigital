@@ -21,15 +21,6 @@ export default function LessonPage() {
   const [completing, setCompleting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Dashboard-only: keep backward compatibility for old URLs
-  useEffect(() => {
-    const courseId = params.id as string | undefined;
-    const lessonId = params.lessonId as string | undefined;
-    if (courseId && lessonId) {
-      router.replace(`/dashboard/courses/${courseId}/learn/${lessonId}`);
-    }
-  }, [params.id, params.lessonId, router]);
-
   useEffect(() => {
     if (params.lessonId) {
       fetchLesson(params.lessonId as string);
@@ -98,16 +89,14 @@ export default function LessonPage() {
             ? 'Please enroll in this course to access lessons.'
             : loadError || 'Lesson not found'}
         </p>
-        {course && (
-          <Button
-            variant="outline"
-            size="md"
-            onClick={() => router.push(`/courses/${course.id}`)}
-            className="mt-4"
-          >
-            Back to course
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="md"
+          onClick={() => router.push('/dashboard/my-courses')}
+          className="mt-4"
+        >
+          Back to dashboard
+        </Button>
       </div>
     );
   }
@@ -118,22 +107,22 @@ export default function LessonPage() {
 
       <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          {prevLesson && (
+          {prevLesson && course && (
             <Button
               variant="outline"
               size="md"
-              onClick={() => router.push(`/courses/${course!.id}/learn/${prevLesson.id}`)}
+              onClick={() => router.push(`/dashboard/courses/${course.id}/learn/${prevLesson.id}`)}
               className="rounded-lg"
             >
               <HiChevronLeft className="w-5 h-5 mr-1" />
               Previous
             </Button>
           )}
-          {nextLesson && (
+          {nextLesson && course && (
             <Button
               variant="primary"
               size="md"
-              onClick={() => router.push(`/courses/${course!.id}/learn/${nextLesson.id}`)}
+              onClick={() => router.push(`/dashboard/courses/${course.id}/learn/${nextLesson.id}`)}
               className="rounded-lg"
             >
               Next
@@ -155,8 +144,14 @@ export default function LessonPage() {
 
       <style jsx global>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
@@ -165,3 +160,4 @@ export default function LessonPage() {
     </div>
   );
 }
+

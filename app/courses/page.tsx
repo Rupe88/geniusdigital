@@ -112,7 +112,7 @@ export default function CoursesPage() {
 
           {/* Search bar */}
           <form onSubmit={handleSearchSubmit} className="max-w-lg">
-            <div className="inline-flex p-2 h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
+            <div className="inline-flex p-1 h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
               <div className="flex items-center px-2 text-[#ae8c94]">
                 <HiSearch className="h-6 w-6" />
               </div>
@@ -129,7 +129,7 @@ export default function CoursesPage() {
                 type="submit"
                 variant="primary"
                 size="sm"
-                className="rounded-none px-5 focus:ring-0 focus:ring-offset-0"
+                className="rounded-none px-5  focus:ring-0 outline-none focus:ring-offset-0"
                 style={{ borderRadius: '8px' }}
               >
                 Search

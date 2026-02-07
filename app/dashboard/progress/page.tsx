@@ -82,7 +82,7 @@ function CourseProgressCard({
 }) {
   const progress = Math.min(100, Math.round(enrollment.progress ?? 0));
   const isCompleted = enrollment.status === 'COMPLETED';
-  const learnHref = `/courses/${enrollment.courseId}/learn`;
+  const learnHref = `/dashboard/courses/${enrollment.courseId}/learn`;
 
   return (
     <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-200)] transition-colors">

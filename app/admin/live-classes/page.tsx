@@ -23,7 +23,6 @@ export default function AdminLiveClassesPage() {
     duration: 60,
     meetingUrl: '',
     meetingProvider: 'OTHER',
-    autoGenerateMeeting: false,
     meetingPassword: '',
   });
 
@@ -94,7 +93,6 @@ export default function AdminLiveClassesPage() {
       duration: liveClass.duration,
       meetingUrl: liveClass.meetingUrl || '',
       meetingProvider: liveClass.meetingProvider || 'OTHER',
-      autoGenerateMeeting: liveClass.autoGenerateMeeting || false,
       meetingPassword: liveClass.meetingPassword || '',
     });
     setShowForm(true);
@@ -124,7 +122,6 @@ export default function AdminLiveClassesPage() {
       duration: 60,
       meetingUrl: '',
       meetingProvider: 'OTHER',
-      autoGenerateMeeting: false,
       meetingPassword: '',
     });
   };
@@ -248,45 +245,27 @@ export default function AdminLiveClassesPage() {
               />
             </div>
 
-            {/* Zoom Integration Options */}
+            {/* Meeting Details */}
             <div className="space-y-3">
-              <div className="flex items-center">
+              <div>
+                <label className="block text-sm font-medium mb-2">Meeting URL</label>
                 <input
-                  type="checkbox"
-                  id="autoGenerate"
-                  checked={formData.autoGenerateMeeting}
-                  onChange={(e) => setFormData({ ...formData, autoGenerateMeeting: e.target.checked })}
-                  disabled={formData.meetingProvider !== 'ZOOM'}
-                  className="mr-2"
+                  type="url"
+                  value={formData.meetingUrl}
+                  onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
+                  placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                  className="w-full px-3 py-2 border rounded-none"
                 />
-                <label htmlFor="autoGenerate" className={formData.meetingProvider !== 'ZOOM' ? 'opacity-50' : ''}>
-                  Auto-generate Zoom meeting
-                </label>
               </div>
-
-              {!formData.autoGenerateMeeting && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Meeting URL</label>
-                    <input
-                      type="url"
-                      value={formData.meetingUrl}
-                      onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
-                      placeholder="https://zoom.us/j/... or https://meet.google.com/..."
-                      className="w-full px-3 py-2 border rounded-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Meeting Password (Optional)</label>
-                    <input
-                      type="text"
-                      value={formData.meetingPassword}
-                      onChange={(e) => setFormData({ ...formData, meetingPassword: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-none"
-                    />
-                  </div>
-                </>
-              )}
+              <div>
+                <label className="block text-sm font-medium mb-2">Meeting Password (Optional)</label>
+                <input
+                  type="text"
+                  value={formData.meetingPassword}
+                  onChange={(e) => setFormData({ ...formData, meetingPassword: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-none"
+                />
+              </div>
             </div>
 
             <div className="flex gap-2">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { classNames } from '@/lib/utils/helpers';
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg';
@@ -13,6 +13,7 @@ export const Card: React.FC<CardProps> = ({
   className,
   padding = 'md',
   hover = false,
+  ...props
 }) => {
   const paddings = {
     none: '',
@@ -29,6 +30,7 @@ export const Card: React.FC<CardProps> = ({
         hover && 'card-hover',
         className
       )}
+      {...props}
     >
       {children}
     </div>

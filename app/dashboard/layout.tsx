@@ -4,13 +4,25 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
-import { HiHome, HiBookOpen, HiChartBar, HiCreditCard, HiCog, HiShare, HiMenu, HiX } from 'react-icons/hi';
+import {
+  HiHome,
+  HiBookOpen,
+  HiChartBar,
+  HiCreditCard,
+  HiCog,
+  HiShare,
+  HiMenu,
+  HiX,
+  HiExternalLink,
+  HiVideoCamera,
+} from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
 const menuItems = [
   { href: ROUTES.DASHBOARD, label: 'Overview', icon: HiHome },
   { href: `${ROUTES.DASHBOARD}/my-courses`, label: 'My Courses', icon: HiBookOpen },
   { href: `${ROUTES.DASHBOARD}/progress`, label: 'Progress', icon: HiChartBar },
+  { href: `${ROUTES.DASHBOARD}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
   { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
   { href: `${ROUTES.DASHBOARD}/payments`, label: 'Payments', icon: HiCreditCard },
   { href: `${ROUTES.DASHBOARD}/settings`, label: 'Settings', icon: HiCog },
@@ -20,6 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, isAuthenticated, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isLearnRoute = pathname.startsWith('/dashboard/courses/') && pathname.includes('/learn');
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -105,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0">
+        <main className={`flex-1 min-w-0 flex flex-col ${isLearnRoute ? 'h-screen overflow-hidden' : ''}`}>
           {/* Mobile: menu button */}
           <div className="sticky top-0 z-30 flex items-center gap-4 px-4 py-3 bg-[var(--background)] border-b border-[var(--border)] lg:hidden">
             <button
@@ -119,9 +132,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-semibold text-[var(--foreground)]">Dashboard</span>
           </div>
 
-          <div className="p-4 sm:p-6 lg:p-8">
-            {children}
-          </div>
+          {/* Top bar - desktop only, hidden on learn routes */}
+          {!isLearnRoute && (
+            <header className="hidden lg:flex h-14 flex-shrink-0 items-center justify-between px-6 bg-[var(--background)] border-b border-[var(--border)]">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-[var(--muted-foreground)] truncate max-w-[200px] sm:max-w-none">
+                  {user?.fullName ?? user?.email ?? 'User'}
+                </span>
+              </div>
+              <Link
+                href={ROUTES.HOME}
+                className="text-sm text-[var(--muted-foreground)] hover:text-[var(--primary-700)] transition-colors inline-flex items-center gap-1"
+              >
+                <HiExternalLink className="w-4 h-4" />
+                View site
+              </Link>
+            </header>
+          )}
+
+          {isLearnRoute ? (
+            <div className="flex-1 h-full overflow-hidden">{children}</div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</div>
+          )}
         </main>
       </div>
     </div>

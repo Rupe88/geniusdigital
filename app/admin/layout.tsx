@@ -36,6 +36,8 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/courses`, label: 'Courses', icon: HiBookOpen },
       { href: `${ROUTES.ADMIN}/categories`, label: 'Categories', icon: HiFolder },
       { href: `${ROUTES.ADMIN}/enrollments`, label: 'Enrollments', icon: HiBookOpen },
+      { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
+
     ],
   },
   {
@@ -47,7 +49,6 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/gallery`, label: 'Gallery', icon: HiPhotograph },
       { href: `${ROUTES.ADMIN}/carousel`, label: 'Carousel', icon: HiPhotograph },
       { href: `${ROUTES.ADMIN}/events`, label: 'Events', icon: HiCalendar },
-      { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
       { href: `${ROUTES.ADMIN}/popups`, label: 'Popups', icon: HiPhotograph },
     ],
   },

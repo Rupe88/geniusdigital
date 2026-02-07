@@ -244,12 +244,12 @@ export default function DashboardPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <Link href={`/courses/${e.courseId}/learn`} className="font-medium text-[var(--foreground)] hover:underline line-clamp-1">
+                    <Link href={`/dashboard/courses/${e.courseId}/learn`} className="font-medium text-[var(--foreground)] hover:underline line-clamp-1">
                       {e.course?.title ?? 'Course'}
                     </Link>
                     <p className="text-xs text-[var(--muted-foreground)]">{Math.round(e.progress ?? 0)}% complete</p>
                   </div>
-                  <Link href={`/courses/${e.courseId}/learn`}>
+                  <Link href={`/dashboard/courses/${e.courseId}/learn`}>
                     <Button variant="ghost" size="sm" className="gap-1">
                       Continue <HiChevronRight className="w-4 h-4" />
                     </Button>

@@ -151,7 +151,7 @@ function SkeletonCard() {
   );
 }
 
-export default function LiveClassesPage() {
+export default function DashboardLiveClassesPage() {
   const [classes, setClasses] = useState<LiveClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,102 +197,101 @@ export default function LiveClassesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--muted)]/30 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-2">
-            Live Classes
-          </h1>
-          <p className="text-lg text-[var(--muted-foreground)]">
-            Join scheduled live sessions with instructors. Enroll and join via the meeting link when it&apos;s time.
-          </p>
-        </header>
+    <div>
+      <header className="mb-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-2">
+          Live Classes
+        </h1>
+        <p className="text-lg text-[var(--muted-foreground)]">
+          Join scheduled live sessions with instructors. Enroll and join via the meeting link when it&apos;s time.
+        </p>
+      </header>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex rounded-lg border border-[var(--border)] p-0.5 bg-[var(--background)]">
-            {(['upcoming', 'all', 'past'] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilterAndReset(f)}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:ring-offset-2 ${
-                  filter === f
-                    ? 'bg-[var(--primary-600)] text-white'
-                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                }`}
-                aria-pressed={filter === f}
-              >
-                {f === 'upcoming' ? 'Upcoming' : f === 'all' ? 'All' : 'Past'}
-              </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex rounded-lg border border-[var(--border)] p-0.5 bg-[var(--background)]">
+          {(['upcoming', 'all', 'past'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilterAndReset(f)}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:ring-offset-2 ${
+                filter === f
+                  ? 'bg-[var(--primary-600)] text-white'
+                  : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+              }`}
+              aria-pressed={filter === f}
+            >
+              {f === 'upcoming' ? 'Upcoming' : f === 'all' ? 'All' : 'Past'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && (
+        <Card padding="md" className="mb-6 border-[var(--error)]/30 bg-[var(--error)]/5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <p className="text-[var(--foreground)]">{error}</p>
+            <Button variant="primary" size="sm" onClick={fetchClasses} className="gap-2">
+              <HiRefresh className="w-4 h-4" />
+              Try again
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : classes.length === 0 ? (
+        <Card padding="lg" className="text-center">
+          <HiVideoCamera className="w-16 h-16 text-[var(--muted-foreground)] mx-auto mb-4 opacity-60" />
+          <h2 className="text-xl font-semibold text-[var(--foreground)] mb-2">No live classes found</h2>
+          <p className="text-[var(--muted-foreground)]">
+            {filter === 'upcoming'
+              ? 'There are no upcoming live classes at the moment. Check back later.'
+              : filter === 'past'
+              ? 'No past live classes.'
+              : 'No live classes match your selection.'}
+          </p>
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {classes.map((item) => (
+              <LiveClassCard key={item.id} item={item} />
             ))}
           </div>
-        </div>
-
-        {error && (
-          <Card padding="md" className="mb-6 border-[var(--error)]/30 bg-[var(--error)]/5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <p className="text-[var(--foreground)]">{error}</p>
-              <Button variant="primary" size="sm" onClick={fetchClasses} className="gap-2">
-                <HiRefresh className="w-4 h-4" />
-                Try again
+          {pagination.pages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
+                disabled={pagination.page <= 1}
+              >
+                <HiChevronLeft className="w-4 h-4 mr-1" />
+                Previous
+              </Button>
+              <span className="text-sm text-[var(--muted-foreground)]">
+                Page {pagination.page} of {pagination.pages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
+                disabled={pagination.page >= pagination.pages}
+              >
+                Next
+                <HiChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
-          </Card>
-        )}
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : classes.length === 0 ? (
-          <Card padding="lg" className="text-center">
-            <HiVideoCamera className="w-16 h-16 text-[var(--muted-foreground)] mx-auto mb-4 opacity-60" />
-            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-2">No live classes found</h2>
-            <p className="text-[var(--muted-foreground)]">
-              {filter === 'upcoming'
-                ? 'There are no upcoming live classes at the moment. Check back later.'
-                : filter === 'past'
-                ? 'No past live classes.'
-                : 'No live classes match your selection.'}
-            </p>
-          </Card>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {classes.map((item) => (
-                <LiveClassCard key={item.id} item={item} />
-              ))}
-            </div>
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-8">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-                  disabled={pagination.page <= 1}
-                >
-                  <HiChevronLeft className="w-4 h-4 mr-1" />
-                  Previous
-                </Button>
-                <span className="text-sm text-[var(--muted-foreground)]">
-                  Page {pagination.page} of {pagination.pages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-                  disabled={pagination.page >= pagination.pages}
-                >
-                  Next
-                  <HiChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
+

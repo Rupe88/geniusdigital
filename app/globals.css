@@ -224,3 +224,17 @@ img {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
 }
+
+/* Shared section title style for landing page headings */
+.section-title {
+  font-size: 25px;
+  line-height: 1.35;
+  font-weight: 550;
+  letter-spacing: 0.05em;
+  text-decoration: underline;
+  text-underline-offset: 0.55em;
+  text-decoration-thickness: 4px;
+  text-decoration-color: var(--primary-700);
+  line-height:32px;
+
+}

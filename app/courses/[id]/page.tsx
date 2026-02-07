@@ -327,10 +327,10 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--muted)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-[var(--primary-700)] border-t-transparent rounded-none animate-spin"></div>
-          <p className="text-gray-900 font-black text-xl tracking-tight">Preparing your journey...</p>
+          <div className="w-16 h-16 border-4 border-[var(--primary-700)] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-900 font-medium text-lg">Loading course...</p>
         </div>
       </div>
     );
@@ -338,9 +338,9 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--muted)]">
         <div className="text-center space-y-4">
-          <h2 className="text-3xl font-black text-gray-900">Course not found</h2>
+          <h2 className="text-3xl font-semibold text-gray-900">Course not found</h2>
           <Link href="/courses">
             <Button variant="primary">Browse all courses</Button>
           </Link>
@@ -363,9 +363,9 @@ export default function CourseDetailPage() {
   const totalMinutes = Math.floor((totalVideoDuration % 3600) / 60);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--muted)]">
       {/* Top Header / Breadcrumbs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <nav className="flex items-center text-sm font-medium">
             <Link href="/" className="text-gray-500 hover:text-[var(--primary-700)] transition-colors">Home</Link>
@@ -379,8 +379,8 @@ export default function CourseDetailPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Title and Description - Above both columns */}
-        <div className="space-y-4 mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+        <div className="space-y-3 mb-8">
+          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">
             {course.title}
           </h1>
           <p className="text-lg text-gray-600 leading-relaxed max-w-3xl">
@@ -392,7 +392,7 @@ export default function CourseDetailPage() {
           {/* LEFT COLUMN - Scrollable Content */}
           <div className="flex-1 w-full lg:w-2/3 space-y-8">
             {/* Main Course Media */}
-            <div className={`relative aspect-video shadow-2xl bg-black group ${!demoVideoPlaying ? 'cursor-pointer' : ''}`}
+            <div className={`relative aspect-video rounded-lg overflow-hidden bg-black ${!demoVideoPlaying ? 'cursor-pointer' : ''}`}
               onClick={() => !demoVideoPlaying && setDemoVideoPlaying(true)}>
               {demoVideoPlaying ? (
                 <div className="w-full h-full">
@@ -413,7 +413,7 @@ export default function CourseDetailPage() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                       <HiVideoCamera className="w-16 h-16 opacity-20" />
-                      <p className="font-bold">Preview video not available</p>
+                      <p className="font-medium">Preview video not available</p>
                     </div>
                   )}
                 </div>
@@ -425,14 +425,14 @@ export default function CourseDetailPage() {
                       alt={course.title}
                       fill
                       sizes="(max-width: 1280px) 100vw, 1280px"
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="object-cover"
                       priority
                     />
                   )}
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                    <button className="flex items-center gap-3 px-8 py-4 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] text-white font-bold text-lg shadow-xl shadow-primary-500/30 transform transition-all group-hover:scale-110 active:scale-95">
-                      <HiPlay className="w-8 h-8" />
-                      Play Demo Video
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <button className="flex items-center gap-3 px-8 py-4 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] text-white font-semibold text-lg rounded-lg transition-colors">
+                      <HiPlay className="w-6 h-6" />
+                      Play Preview
                     </button>
                   </div>
                 </>
@@ -440,7 +440,7 @@ export default function CourseDetailPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="bg-white rounded-none shadow-sm border border-gray-200 sticky top-0 z-10">
+            <div className="bg-white rounded-lg sticky top-0 z-10">
               <div className="flex overflow-x-auto no-scrollbar">
                 {[
                   { id: 'overview', label: 'Overview' },
@@ -451,9 +451,9 @@ export default function CourseDetailPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as TabType)}
-                    className={`flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 transition-all duration-300 ${activeTab === tab.id
-                      ? 'text-[var(--primary-700)] border-[var(--primary-700)] bg-blue-50/50'
-                      : 'text-gray-500 border-transparent hover:text-gray-900 hover:bg-gray-50'
+                    className={`flex-1 min-w-[100px] py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                      ? 'text-[var(--primary-700)] border-[var(--primary-700)]'
+                      : 'text-gray-500 border-transparent hover:text-gray-700'
                       }`}
                   >
                     {tab.label}
@@ -463,23 +463,22 @@ export default function CourseDetailPage() {
             </div>
 
             {/* Tab Panels */}
-            <div className="bg-white rounded-none shadow-sm border border-gray-200 p-6 md:p-8 min-h-[400px]">
+            <div className="bg-white rounded-lg p-6 md:p-8 min-h-[400px]">
               {activeTab === 'overview' && (
-                <div className="space-y-10 animate-fadeIn">
+                <div className="space-y-8 animate-fadeIn">
                   {/* Learning Outcomes */}
                   {course.learningOutcomes && course.learningOutcomes.length > 0 && (
                     <section>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <span className="w-2 h-8 bg-[var(--primary-700)] rounded-none mr-2"></span>
+                      <h2 className="text-2xl font-semibold text-gray-900 mb-4">
                         What you&apos;ll learn
                       </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {course.learningOutcomes.map((outcome, index) => (
-                          <div key={index} className="flex items-start gap-4 p-4 rounded-none bg-gray-50 border border-gray-100 group hover:border-blue-200 hover:bg-white transition-all">
-                            <div className="flex-shrink-0 w-6 h-6 rounded-none bg-green-100 flex items-center justify-center text-green-600 mt-0.5">
-                              <HiCheck className="w-4 h-4" />
+                          <div key={index} className="flex items-start gap-3 p-3 bg-[var(--muted)] rounded-lg">
+                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600 mt-0.5">
+                              <HiCheck className="w-3 h-3" />
                             </div>
-                            <span className="text-gray-700 text-sm font-medium leading-relaxed">{outcome}</span>
+                            <span className="text-gray-700 text-sm leading-relaxed">{outcome}</span>
                           </div>
                         ))}
                       </div>
@@ -489,13 +488,12 @@ export default function CourseDetailPage() {
                   {/* Skills */}
                   {course.skills && course.skills.length > 0 && (
                     <section>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <span className="w-2 h-8 bg-[var(--primary-700)] rounded-none mr-2"></span>
+                      <h2 className="text-2xl font-semibold text-gray-900 mb-4">
                         Skills you&apos;ll gain
                       </h2>
                       <div className="flex flex-wrap gap-2">
                         {course.skills.map((skill, index) => (
-                          <span key={index} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-none text-sm font-bold border border-gray-200 hover:bg-[var(--primary-700)] hover:text-white hover:border-[var(--primary-700)] transition-all cursor-default shadow-sm">
+                          <span key={index} className="px-4 py-2 bg-[var(--muted)] text-gray-700 rounded-full text-sm font-medium">
                             {skill}
                           </span>
                         ))}
@@ -506,9 +504,8 @@ export default function CourseDetailPage() {
                   {/* Description */}
                   {course.description && (
                     <section>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <span className="w-2 h-8 bg-[var(--primary-700)] rounded-none mr-2"></span>
-                        Course description
+                      <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                        About this course
                       </h2>
                       <div className="prose max-w-none text-gray-700 leading-relaxed ql-editor px-0"
                         dangerouslySetInnerHTML={{ __html: course.description }} />
@@ -518,25 +515,25 @@ export default function CourseDetailPage() {
               )}
 
               {activeTab === 'chapters' && (
-                <div className="space-y-4 animate-fadeIn">
+                <div className="space-y-3 animate-fadeIn">
                   {nestedCurriculum.map((chapter: any, index: number) => (
-                    <div key={chapter.id} className="border border-gray-200 rounded-none overflow-hidden shadow-sm hover:border-[var(--primary-700)] transition-colors">
+                    <div key={chapter.id} className="bg-[var(--muted)] rounded-lg overflow-hidden">
                       <button
                         onClick={() => toggleChapter(chapter.id)}
-                        className={`w-full flex items-center justify-between p-5 text-left transition-colors ${expandedChapters.has(chapter.id) ? 'bg-blue-50/50' : 'bg-white hover:bg-gray-50'
+                        className={`w-full flex items-center justify-between p-4 text-left transition-colors ${expandedChapters.has(chapter.id) ? 'bg-white' : ''
                           }`}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="flex-shrink-0 w-10 h-10 rounded-none bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-xs uppercase tracking-wider">
-                            CH {index + 1}
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white text-gray-600 flex items-center justify-center text-sm font-medium">
+                            {index + 1}
                           </div>
                           <div>
-                            <h3 className="font-bold text-gray-900 text-lg">{chapter.title}</h3>
-                            <div className="flex items-center gap-3 mt-1 text-sm font-medium text-gray-500">
-                              <span className="flex items-center gap-1"><HiPlay className="w-4 h-4" /> {chapter.lessons?.length || 0} Lessons</span>
+                            <h3 className="font-semibold text-gray-900">{chapter.title}</h3>
+                            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                              <span className="flex items-center gap-1"><HiPlay className="w-3 h-3" /> {chapter.lessons?.length || 0} lessons</span>
                               {chapter.lessons?.some((l: any) => l.videoDuration) && (
                                 <span className="flex items-center gap-1">
-                                  <HiClock className="w-4 h-4" />
+                                  <HiClock className="w-3 h-3" />
                                   {formatDuration(chapter.lessons.reduce((acc: number, l: any) => acc + (l.videoDuration || 0), 0))}
                                 </span>
                               )}
@@ -547,30 +544,30 @@ export default function CourseDetailPage() {
                       </button>
 
                       {expandedChapters.has(chapter.id) && (
-                        <div className="border-t border-gray-200 bg-white">
+                        <div className="bg-white border-t border-gray-100">
                           <div className="divide-y divide-gray-100">
                             {chapter.lessons && chapter.lessons.length > 0 ? (
                               chapter.lessons.map((lesson: any) => (
-                                <div key={lesson.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors group">
-                                  <div className="flex items-center gap-4 flex-1">
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-none bg-blue-50 text-[var(--primary-700)] flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <div key={lesson.id} className="flex items-center justify-between p-3">
+                                  <div className="flex items-center gap-3 flex-1">
+                                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-50 text-[var(--primary-700)] flex items-center justify-center">
                                       {getLessonIcon(lesson.lessonType)}
                                     </div>
-                                    <div className="space-y-0.5">
-                                      <h4 className="font-semibold text-gray-900 group-hover:text-[var(--primary-700)] transition-colors">
+                                    <div>
+                                      <h4 className="font-medium text-gray-900 text-sm">
                                         {lesson.title}
                                       </h4>
                                       {lesson.description && (
-                                        <p className="text-sm text-gray-500 line-clamp-1">{lesson.description}</p>
+                                        <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{lesson.description}</p>
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
                                     {lesson.videoDuration && (
-                                      <span className="text-xs font-bold text-gray-400">{formatDuration(lesson.videoDuration)}</span>
+                                      <span className="text-xs text-gray-400">{formatDuration(lesson.videoDuration)}</span>
                                     )}
                                     {lesson.isPreview && (
-                                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded-none text-[10px] font-extrabold uppercase tracking-wide">
+                                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-medium">
                                         Preview
                                       </span>
                                     )}
@@ -578,7 +575,7 @@ export default function CourseDetailPage() {
                                 </div>
                               ))
                             ) : (
-                              <div className="p-8 text-center text-gray-500 font-medium italic">
+                              <div className="p-6 text-center text-gray-500 text-sm">
                                 No lessons available in this chapter.
                               </div>
                             )}
@@ -592,29 +589,29 @@ export default function CourseDetailPage() {
 
               {activeTab === 'instructors' && course.instructor && (
                 <div className="animate-fadeIn">
-                  <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className="relative w-40 h-40 rounded-none overflow-hidden shadow-xl flex-shrink-0 ring-4 ring-white">
+                  <div className="flex flex-col md:flex-row gap-6 items-start">
+                    <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0">
                       {course.instructor.image ? (
                         <Image
                           src={course.instructor.image}
                           alt={course.instructor.name}
                           fill
-                          sizes="160px"
+                          sizes="128px"
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-[var(--primary-700)] flex items-center justify-center text-white text-5xl font-black">
+                        <div className="w-full h-full bg-[var(--primary-700)] flex items-center justify-center text-white text-3xl font-semibold">
                           {course.instructor.name[0]}
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="space-y-1">
-                        <h3 className="text-3xl font-black text-gray-900">
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <h3 className="text-2xl font-semibold text-gray-900">
                           {course.instructor.name}
                         </h3>
                         {course.instructor.designation && (
-                          <p className="text-xl font-bold text-[var(--primary-700)]">
+                          <p className="text-lg text-[var(--primary-700)] mt-1">
                             {course.instructor.designation}
                           </p>
                         )}
@@ -628,20 +625,20 @@ export default function CourseDetailPage() {
               )}
 
               {activeTab === 'reviews' && (
-                <div className="space-y-8 animate-fadeIn">
+                <div className="space-y-6 animate-fadeIn">
                   {course.isEnrolled && (
-                    <div className="p-6 bg-gray-50 rounded-none border border-gray-100 shadow-inner">
-                      <h4 className="text-xl font-black text-gray-900 mb-6">Course review</h4>
-                      <form onSubmit={handleSubmitReview} className="space-y-6">
-                        <div className="space-y-3">
-                          <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">Your Rating</label>
+                    <div className="p-6 bg-[var(--muted)] rounded-lg">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Share your experience</h4>
+                      <form onSubmit={handleSubmitReview} className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Your rating</label>
                           <div className="flex gap-2">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <button
                                 key={star}
                                 type="button"
                                 onClick={() => setReviewRating(star)}
-                                className={`text-4xl transform transition-all active:scale-90 ${star <= reviewRating ? 'text-yellow-400 scale-110' : 'text-gray-300 grayscale opacity-40 hover:scale-105'
+                                className={`text-3xl transition-colors ${star <= reviewRating ? 'text-yellow-400' : 'text-gray-300'
                                   }`}
                               >
                                 ★
@@ -649,55 +646,55 @@ export default function CourseDetailPage() {
                             ))}
                           </div>
                         </div>
-                        <div className="space-y-3">
-                          <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">Your thoughts</label>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Your review</label>
                           <textarea
                             value={reviewComment}
                             onChange={(e) => setReviewComment(e.target.value)}
                             required
-                            className="w-full px-5 py-4 rounded-none border border-gray-200 bg-white text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-[var(--primary-700)] transition-all outline-none min-h-[120px] shadow-sm"
-                            placeholder="Tell us what you loved about this course..."
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-700)] transition-all outline-none min-h-[120px]"
+                            placeholder="Tell us what you thought about this course..."
                           />
                         </div>
-                        <Button type="submit" isLoading={submittingReview} variant="primary" className="h-12 px-10 rounded-none shadow-lg">
-                          Post Review
+                        <Button type="submit" isLoading={submittingReview} variant="primary" className="h-11 px-8 rounded-lg">
+                          Submit Review
                         </Button>
                       </form>
                     </div>
                   )}
 
-                  <div className="space-y-5">
+                  <div className="space-y-4">
                     {reviews.length > 0 ? (
                       reviews.map((review) => (
-                        <div key={review.id} className="p-6 bg-white rounded-none border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-start gap-5">
-                            <div className="w-14 h-14 rounded-none bg-[var(--primary-700)] shadow-lg overflow-hidden flex-shrink-0 ring-4 ring-white">
+                        <div key={review.id} className="p-5 bg-[var(--muted)] rounded-lg">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-full bg-[var(--primary-700)] overflow-hidden flex-shrink-0">
                               {review.user?.profileImage ? (
                                 <Image src={review.user.profileImage} alt={review.user.fullName || 'User'} fill className="object-cover" sizes="48px" />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-white font-black text-xl">
+                                <div className="w-full h-full flex items-center justify-center text-white font-semibold">
                                   {(review.user?.fullName || 'U')[0]}
                                 </div>
                               )}
                             </div>
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center justify-between">
-                                <h4 className="font-black text-gray-900 text-lg">{review.user?.fullName || 'Anonymous'}</h4>
-                                <span className="text-xs font-bold text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                <h4 className="font-semibold text-gray-900">{review.user?.fullName || 'Anonymous'}</h4>
+                                <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                               </div>
                               <div className="flex gap-0.5">
                                 {[...Array(5)].map((_, i) => (
-                                  <span key={i} className={`text-xl ${i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                                  <span key={i} className={`text-lg ${i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
                                 ))}
                               </div>
-                              <p className="text-gray-700 leading-relaxed font-medium">{review.comment}</p>
+                              <p className="text-gray-700 leading-relaxed">{review.comment}</p>
                             </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center py-20 bg-gray-50 rounded-none border border-dashed border-gray-300">
-                        <p className="text-gray-500 font-bold text-lg">No reviews yet. Be the first!</p>
+                      <div className="text-center py-12 bg-[var(--muted)] rounded-lg">
+                        <p className="text-gray-500">No reviews yet. Be the first to share your thoughts!</p>
                       </div>
                     )}
                   </div>
@@ -708,30 +705,32 @@ export default function CourseDetailPage() {
 
           {/* RIGHT COLUMN - Sticky Enrollment Pad */}
           <div className="w-full lg:w-1/3 lg:sticky lg:top-8">
-            <div className="bg-white rounded-none shadow-2xl border border-gray-100 overflow-hidden transform transition-all hover:translate-y-[-4px]">
+            <div className="bg-white rounded-lg overflow-hidden">
               {/* Card Thumbnail */}
               <div className="relative aspect-[16/9] overflow-hidden">
                 {course.thumbnail && (
                   <Image src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
                 )}
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-none text-xs font-black text-gray-900 border border-white/20 shadow-lg uppercase tracking-widest">
-                    {course.level || 'Expert'}
-                  </span>
-                </div>
+                {course.level && (
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 bg-white/95 backdrop-blur-sm rounded text-xs font-medium text-gray-900">
+                      {course.level}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className="p-8 space-y-8">
+              <div className="p-6 space-y-6">
                 {/* Price Display */}
                 <div className="space-y-1">
                   <div className="flex items-baseline gap-3">
                     {course.isFree ? (
-                      <span className="text-4xl font-black text-[var(--primary-700)]">FREE</span>
+                      <span className="text-3xl font-semibold text-[var(--primary-700)]">Free</span>
                     ) : (
                       <>
-                        <span className="text-4xl font-black text-gray-900">Rs. {course.price.toLocaleString()}</span>
+                        <span className="text-3xl font-semibold text-gray-900">Rs. {course.price.toLocaleString()}</span>
                         {course.originalPrice && course.originalPrice > course.price && (
-                          <span className="text-xl text-gray-400 line-through font-bold decoration-2">
+                          <span className="text-lg text-gray-400 line-through">
                             Rs. {course.originalPrice.toLocaleString()}
                           </span>
                         )}
@@ -739,22 +738,22 @@ export default function CourseDetailPage() {
                     )}
                   </div>
                   {course.originalPrice && course.originalPrice > course.price && (
-                    <p className="text-green-600 text-sm font-black uppercase tracking-wider">
-                      Save {Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)}% Today
+                    <p className="text-green-600 text-sm font-medium">
+                      Save {Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)}%
                     </p>
                   )}
                 </div>
 
                 {/* Main Actions */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <Button
                     variant="primary"
                     size="lg"
-                    className="w-full h-14 rounded-none text-xl font-black tracking-tight shadow-xl shadow-primary-700/20 active:scale-95 transition-transform"
+                    className="w-full h-12 text-base font-semibold rounded-lg"
                     onClick={handleEnroll}
                     isLoading={enrolling}
                   >
-                    {course.isEnrolled ? 'Go to Learning' : course.isFree ? 'Enroll for Free' : 'Enroll Now'}
+                    {course.isEnrolled ? 'Continue Learning' : course.isFree ? 'Enroll for Free' : 'Enroll Now'}
                   </Button>
 
                   <ShareButton
@@ -762,61 +761,51 @@ export default function CourseDetailPage() {
                     course={{ id: course.id, title: course.title, thumbnail: course.thumbnail }}
                     variant="outline"
                     size="lg"
-                    className="h-12 w-full rounded-none font-bold"
+                    className="h-11 w-full rounded-lg font-medium"
                   />
                 </div>
 
                 {/* Course Facts */}
-                <div className="space-y-6 pt-6 border-t border-gray-100">
-                  <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Course Overview</h3>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center gap-4 group">
-                      <div className="w-12 h-12 rounded-none bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-[var(--primary-700)] transition-colors">
-                        <HiUsers className="w-6 h-6" />
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-600">Course details</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--muted)] flex items-center justify-center text-gray-600">
+                        <HiUsers className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Enrolled</p>
-                        <p className="font-black text-gray-900">{course.totalEnrollments || 0} Students</p>
+                        <p className="text-xs text-gray-500">Students enrolled</p>
+                        <p className="font-medium text-gray-900">{course.totalEnrollments || 0}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 group">
-                      <div className="w-12 h-12 rounded-none bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
-                        <HiPlay className="w-6 h-6" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--muted)] flex items-center justify-center text-gray-600">
+                        <HiPlay className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Videos</p>
-                        <p className="font-black text-gray-900">{videoLessons} Lessons</p>
+                        <p className="text-xs text-gray-500">Video lessons</p>
+                        <p className="font-medium text-gray-900">{videoLessons}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 group">
-                      <div className="w-12 h-12 rounded-none bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">
-                        <HiDocument className="w-6 h-6" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--muted)] flex items-center justify-center text-gray-600">
+                        <HiDocument className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Resources</p>
-                        <p className="font-black text-gray-900">{totalLessons} Lectures</p>
+                        <p className="text-xs text-gray-500">Total lessons</p>
+                        <p className="font-medium text-gray-900">{totalLessons}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 group">
-                      <div className="w-12 h-12 rounded-none bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-orange-50 group-hover:text-orange-600 transition-colors">
-                        <HiClock className="w-6 h-6" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--muted)] flex items-center justify-center text-gray-600">
+                        <HiClock className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Access</p>
-                        <p className="font-black text-gray-900">Lifetime Validity</p>
+                        <p className="text-xs text-gray-500">Access</p>
+                        <p className="font-medium text-gray-900">Lifetime</p>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Security Badge */}
-                <div className="pt-6 border-t border-gray-100 flex items-center justify-center gap-2">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="w-6 h-6 rounded-none border-2 border-white bg-gray-200"></div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Joined by 500+ pupils</p>
                 </div>
               </div>
             </div>
@@ -825,14 +814,14 @@ export default function CourseDetailPage() {
 
         {/* RELATED COURSES SECTION */}
         {relatedCourses.length > 0 && (
-          <div className="mt-24 space-y-12">
-            <div className="flex items-end justify-between border-b-4 border-gray-100 pb-6">
-              <div className="space-y-2">
-                <span className="inline-block px-3 py-1 bg-blue-100 text-[var(--primary-700)] rounded-none text-[10px] font-black uppercase tracking-[0.2em]">Next Step</span>
-                <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">Similar Learning Journeys</h2>
+          <div className="mt-16 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900">You might also like</h2>
+                <p className="text-gray-600 mt-1">Similar courses you might enjoy</p>
               </div>
-              <Link href="/courses" className="text-sm font-black text-[var(--primary-700)] hover:translate-x-1 transition-transform flex items-center gap-2">
-                Explore All <HiChevronRight className="w-5 h-5" />
+              <Link href="/courses" className="text-sm font-medium text-[var(--primary-700)] hover:underline flex items-center gap-1">
+                View all <HiChevronRight className="w-4 h-4" />
               </Link>
             </div>
 

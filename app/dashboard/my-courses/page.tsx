@@ -3,12 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import { Enrollment } from '@/lib/types/course';
 
 export default function MyCoursesPage() {
+  const router = useRouter();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,14 @@ export default function MyCoursesPage() {
       ) : enrollments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enrollments.map((enrollment) => (
-            <Card key={enrollment.id} hover className="overflow-hidden">
+            <Card
+              key={enrollment.id}
+              hover
+              className="overflow-hidden cursor-pointer"
+              // Click card anywhere to open learning inside dashboard
+              // (button link below will stop propagation)
+              onClick={() => router.push(`/dashboard/courses/${enrollment.courseId}/learn`)}
+            >
               {enrollment.course?.thumbnail && (
                 <div className="relative h-48 w-full">
                   <Image
@@ -70,7 +79,10 @@ export default function MyCoursesPage() {
                     }`}>
                     {enrollment.status}
                   </span>
-                  <Link href={`/courses/${enrollment.courseId}`}>
+                  <Link
+                    href={`/dashboard/courses/${enrollment.courseId}/learn`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button variant="primary" size="sm">
                       {enrollment.status === 'COMPLETED' ? 'Review' : 'Continue'}
                     </Button>

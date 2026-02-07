@@ -26,7 +26,6 @@ export const Navbar: React.FC = () => {
     { label: 'Home', href: ROUTES.HOME },
     { label: 'Consultation', href: ROUTES.CONSULTATION },
     { label: 'Courses', href: ROUTES.COURSES },
-    { label: 'Live Classes', href: ROUTES.LIVE_CLASSES },
     { label: 'Vastu Product', href: ROUTES.VASTU_PRODUCT },
   ];
 
@@ -101,8 +100,8 @@ export const Navbar: React.FC = () => {
                   href={item.href}
                   className={`transition-colors font-medium text-base whitespace-nowrap ${
                     active
-                      ? 'text-red-600'
-                      : 'text-gray-700 hover:text-red-600'
+                      ? 'text-[var(--primary-700)]'
+                      : 'text-gray-700 hover:text-[var(--primary-700)]'
                   }`}
                 >
                   {item.label}
@@ -117,8 +116,8 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsMoreMenuOpen((prev) => !prev)}
                 className={`flex items-center gap-1 transition-colors font-medium text-base whitespace-nowrap ${
                   isMoreMenuActive() || isMoreMenuOpen
-                    ? 'text-red-600'
-                    : 'text-gray-700 hover:text-red-600'
+                    ? 'text-[var(--primary-700)]'
+                    : 'text-gray-700 hover:text-[var(--primary-700)]'
                 }`}
               >
                 <span>More</span>
@@ -137,11 +136,11 @@ export const Navbar: React.FC = () => {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`block px-4 py-2 text-sm whitespace-nowrap ${
-                          active
-                            ? 'text-red-600 bg-red-50'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
+                          className={`block px-4 py-2 text-sm whitespace-nowrap ${
+                            active
+                              ? 'text-[var(--primary-700)] bg-[var(--primary-50)]'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
                         onClick={() => setIsMoreMenuOpen(false)}
                       >
                         {item.label}
@@ -160,7 +159,7 @@ export const Navbar: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-[var(--primary-700)] transition-colors"
                 >
                   <HiUser className="h-5 w-5" />
                   <span className="hidden xl:inline">{user?.fullName || 'User'}</span>
@@ -214,12 +213,12 @@ export const Navbar: React.FC = () => {
             ) : (
               <>
                 <Link href={ROUTES.LOGIN}>
-                  <button className="px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-600 rounded-none hover:bg-red-50 transition-colors whitespace-nowrap">
+                  <button className="px-4 py-2 text-sm font-medium text-[var(--primary-700)] bg-white border border-[var(--primary-700)] rounded hover:bg-[var(--primary-50)] transition-colors whitespace-nowrap">
                     Login
                   </button>
                 </Link>
                 <Link href={ROUTES.REGISTER}>
-                  <button className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-none hover:bg-red-700 transition-colors whitespace-nowrap">
+                  <button className="px-4 py-2 text-sm font-medium text-white bg-[var(--primary-700)] rounded hover:bg-[var(--primary-800)] transition-colors whitespace-nowrap">
                     Register
                   </button>
                 </Link>
@@ -330,14 +329,14 @@ export const Navbar: React.FC = () => {
               <div className="pt-2 space-y-2">
                 <Link
                   href={ROUTES.LOGIN}
-                  className="block px-3 py-2 text-center text-sm font-medium text-red-600 bg-white border border-red-600 rounded-none hover:bg-red-50 transition-colors"
+                  className="block px-3 py-2 text-center text-sm font-medium text-[var(--primary-700)] bg-white border border-[var(--primary-700)] rounded hover:bg-[var(--primary-50)] transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   href={ROUTES.REGISTER}
-                  className="block px-3 py-2 text-center text-sm font-medium text-white bg-red-600 rounded-none hover:bg-red-700 transition-colors"
+                  className="block px-3 py-2 text-center text-sm font-medium text-white bg-[var(--primary-700)] rounded hover:bg-[var(--primary-800)] transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Register

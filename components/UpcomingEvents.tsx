@@ -98,7 +98,7 @@ export const UpcomingEvents: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+          <h2 className="section-title text-gray-900">
             Upcoming Events
           </h2>
         </div>
@@ -186,7 +186,7 @@ export const UpcomingEvents: React.FC = () => {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
+                  <h3 className="text-base md:text-lg  font-lg tracking-wide text-gray-900 mb-1 line-clamp-2 ">
                     {event.title}
                   </h3>
                 </div>
