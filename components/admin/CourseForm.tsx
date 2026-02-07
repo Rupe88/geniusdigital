@@ -270,15 +270,10 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
     try {
       setIsSubmitting(true);
       setIsUploading(true);
-      setUploadProgress(10);
+      setUploadProgress(0);
 
-      // Learning outcomes and Skills are already arrays from BulletListInput
       const learningOutcomes = data.learningOutcomes;
       const skills = data.skills;
-
-      setUploadProgress(30);
-
-      setUploadProgress(50);
 
       // Validate required fields before submission
       if (!data.title || !data.title.trim()) {

@@ -345,13 +345,26 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       formData.append('video', data.videoFile);
     }
 
+    const onProgress = (data as CreateCourseData).onProgress;
+    onProgress?.(0);
+
     const uploadTimeout = (data.thumbnailFile || data.videoFile) ? 7200000 : 60000; // 2 hours with file
     const response = await apiClient.put<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
       timeout: uploadTimeout,
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total && progressEvent.total > 0) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          onProgress(Math.min(percent, 99));
+        } else if (onProgress && progressEvent.loaded) {
+          onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        }
+      },
     });
+
+    onProgress?.(100);
     return handleApiResponse<Course>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
