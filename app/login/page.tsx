@@ -107,10 +107,15 @@ function LoginForm() {
       setError('');
       setIsLoading(true);
       const user = await login(data);
-      if (user?.role === 'ADMIN') {
-        router.push(ROUTES.ADMIN);
+      if (typeof window !== 'undefined') {
+        if (user?.role === 'ADMIN') {
+          window.location.href = ROUTES.ADMIN;
+        } else {
+          window.location.href = ROUTES.DASHBOARD;
+        }
       } else {
-        router.push(ROUTES.DASHBOARD);
+        if (user?.role === 'ADMIN') router.push(ROUTES.ADMIN);
+        else router.push(ROUTES.DASHBOARD);
       }
     } catch (err: any) {
       console.error('Login failed:', err);

@@ -51,7 +51,6 @@ export const Footer: React.FC = () => {
                 fill
                 className="object-contain"
                 sizes="112px"
-                priority
               />
             </div>
             <div className="flex items-center gap-3 text-xl">
