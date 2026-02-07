@@ -185,7 +185,10 @@ function LoginForm() {
             disabled={googleLoading}
             onClick={() => {
               setGoogleLoading(true);
-              window.location.href = `${getApiBaseUrl()}/auth/google`;
+              const origin = typeof window !== 'undefined' ? window.location.origin : '';
+              const state = origin ? encodeURIComponent(origin) : '';
+              const url = `${getApiBaseUrl()}/auth/google${state ? `?state=${state}` : ''}`;
+              window.location.href = url;
             }}
           >
             {googleLoading ? (
