@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { getPaymentHistory } from '@/lib/api/payments';
@@ -149,7 +150,7 @@ export default function PaymentsPage() {
                         <div className="flex items-center gap-3">
                           {payment.course?.thumbnail && (
                             <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-[var(--muted)]">
-                              <Image
+                              <StorageImage
                                 src={payment.course.thumbnail}
                                 alt=""
                                 fill

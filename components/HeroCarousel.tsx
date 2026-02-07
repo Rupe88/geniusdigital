@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { getCarouselSlides } from '@/lib/api/carousel';
+import { useUnoptimizedForStorage } from '@/lib/utils/storage';
 import type { HeroCarouselSlide } from '@/lib/api/carousel';
 import { getVideoEmbedUrl } from '@/lib/utils/helpers';
 
@@ -160,6 +161,7 @@ export const HeroCarousel: React.FC = () => {
                       sizes="(max-width: 1280px) 100vw, 1280px"
                       className="hero-slide-image"
                       quality={90}
+                      unoptimized={useUnoptimizedForStorage(s.image)}
                     />
                   ) : null}
                   <div className="hero-slide-overlay" />

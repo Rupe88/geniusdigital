@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -179,7 +180,7 @@ export default function EventsPage() {
                   {event.image && (
                     <Link href={`/events/${event.slug || event.id}`}>
                       <div className="relative h-48 w-full">
-                        <Image
+                        <StorageImage
                           src={event.image}
                           alt={event.title}
                           fill

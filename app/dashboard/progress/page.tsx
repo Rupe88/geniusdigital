@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
@@ -89,7 +90,7 @@ function CourseProgressCard({
       <div className="flex flex-col sm:flex-row">
         {enrollment.course?.thumbnail && (
           <div className="relative w-full sm:w-40 h-40 sm:h-auto sm:min-h-[140px] flex-shrink-0">
-            <Image
+            <StorageImage
               src={enrollment.course.thumbnail}
               alt={enrollment.course.title ?? 'Course'}
               fill

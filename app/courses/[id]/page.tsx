@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as courseApi from '@/lib/api/courses';
@@ -420,7 +421,7 @@ export default function CourseDetailPage() {
               ) : (
                 <>
                   {course.thumbnail && (
-                    <Image
+                    <StorageImage
                       src={course.thumbnail}
                       alt={course.title}
                       fill
@@ -595,7 +596,7 @@ export default function CourseDetailPage() {
                   <div className="flex flex-col md:flex-row gap-8 items-start">
                     <div className="relative w-40 h-40 rounded-none overflow-hidden shadow-xl flex-shrink-0 ring-4 ring-white">
                       {course.instructor.image ? (
-                        <Image
+                        <StorageImage
                           src={course.instructor.image}
                           alt={course.instructor.name}
                           fill
@@ -712,7 +713,7 @@ export default function CourseDetailPage() {
               {/* Card Thumbnail */}
               <div className="relative aspect-[16/9] overflow-hidden">
                 {course.thumbnail && (
-                  <Image src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
+                  <StorageImage src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
                 )}
                 <div className="absolute top-4 left-4">
                   <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-none text-xs font-black text-gray-900 border border-white/20 shadow-lg uppercase tracking-widest">
@@ -842,7 +843,7 @@ export default function CourseDetailPage() {
                   <Link href={`/courses/${rc.slug || rc.id}`} className="block h-full">
                     {rc.thumbnail && (
                       <div className="relative h-48 w-full">
-                        <Image
+                        <StorageImage
                           src={rc.thumbnail}
                           alt={rc.title}
                           fill

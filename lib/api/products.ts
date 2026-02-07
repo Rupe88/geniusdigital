@@ -183,7 +183,7 @@ export const productsApi = {
   },
 
   /**
-   * Create new product (admin only). Sends FormData with images when imageFiles present (Cloudinary upload);
+   * Create new product (admin only). Sends FormData with images when imageFiles present (S3 upload);
    * otherwise sends JSON.
    */
   create: async (data: CreateProductRequest): Promise<ApiResponse<Product>> => {
@@ -264,7 +264,7 @@ export const productsApi = {
 
   /**
    * Update product (admin only). Sends JSON when no new image files (works reliably locally);
-   * sends FormData when imageFiles present (Cloudinary upload).
+   * sends FormData when imageFiles present (S3 upload).
    */
   update: async (id: string, data: UpdateProductRequest): Promise<ApiResponse<Product>> => {
     try {

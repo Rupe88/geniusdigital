@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -234,7 +235,7 @@ export default function EventDetailPage() {
       {/* Header Image */}
       {event.image && (
         <div className="relative h-64 md:h-96 w-full">
-          <Image
+          <StorageImage
             src={event.image}
             alt={event.title}
             fill
