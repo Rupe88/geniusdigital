@@ -27,11 +27,16 @@ export interface LoginRequest {
   password: string;
 }
 
+/** Where to send the verification OTP */
+export type OtpChannel = 'email' | 'sms' | 'both';
+
 export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
   phone?: string;
+  /** Where to receive OTP: email, sms, or both. Default email. */
+  otpChannel?: OtpChannel;
 }
 
 export interface VerifyOtpRequest {

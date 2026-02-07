@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { useParams, useRouter } from 'next/navigation';
 import { HiArrowLeft, HiCalendar, HiUser } from 'react-icons/hi';
 import { blogsApi, Blog } from '@/lib/api/blog';
@@ -56,7 +57,7 @@ export default function BlogDetailPage() {
             {/* Hero Section */}
             <div className="relative w-full h-[400px] md:h-[500px]">
                 {blog.featuredImage ? (
-                    <Image
+                    <StorageImage
                         src={blog.featuredImage}
                         alt={blog.title}
                         fill

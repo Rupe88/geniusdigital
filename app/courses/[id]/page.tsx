@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as courseApi from '@/lib/api/courses';
@@ -409,6 +410,7 @@ export default function CourseDetailPage() {
                       controls
                       autoPlay
                       className="w-full h-full"
+                      playsInline
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
@@ -420,7 +422,7 @@ export default function CourseDetailPage() {
               ) : (
                 <>
                   {course.thumbnail && (
-                    <Image
+                    <StorageImage
                       src={course.thumbnail}
                       alt={course.title}
                       fill
@@ -592,7 +594,7 @@ export default function CourseDetailPage() {
                   <div className="flex flex-col md:flex-row gap-6 items-start">
                     <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0">
                       {course.instructor.image ? (
-                        <Image
+                        <StorageImage
                           src={course.instructor.image}
                           alt={course.instructor.name}
                           fill
@@ -709,7 +711,7 @@ export default function CourseDetailPage() {
               {/* Card Thumbnail */}
               <div className="relative aspect-[16/9] overflow-hidden">
                 {course.thumbnail && (
-                  <Image src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
+                  <StorageImage src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
                 )}
                 {course.level && (
                   <div className="absolute top-3 left-3">
@@ -831,7 +833,7 @@ export default function CourseDetailPage() {
                   <Link href={`/courses/${rc.slug || rc.id}`} className="block h-full">
                     {rc.thumbnail && (
                       <div className="relative h-48 w-full">
-                        <Image
+                        <StorageImage
                           src={rc.thumbnail}
                           alt={rc.title}
                           fill

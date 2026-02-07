@@ -12,6 +12,16 @@ import {
 } from '@/lib/types/auth';
 import { ApiResponse } from '@/lib/types/api';
 
+export interface OtpOptionsResponse {
+  smsAvailable: boolean;
+}
+
+export const getOtpOptions = async (): Promise<OtpOptionsResponse> => {
+  const response = await apiClient.get<ApiResponse<OtpOptionsResponse>>(API_ENDPOINTS.AUTH.OTP_OPTIONS);
+  const data = handleApiResponse<OtpOptionsResponse>(response);
+  return data;
+};
+
 export const register = async (data: RegisterRequest): Promise<void> => {
   try {
     await apiClient.post(API_ENDPOINTS.AUTH.REGISTER, data);
@@ -29,9 +39,9 @@ export const verifyOtp = async (data: VerifyOtpRequest): Promise<AuthResponse['d
   }
 };
 
-export const resendOtp = async (email: string): Promise<void> => {
+export const resendOtp = async (email: string, otpChannel?: 'email' | 'sms' | 'both'): Promise<void> => {
   try {
-    await apiClient.post(API_ENDPOINTS.AUTH.RESEND_OTP, { email });
+    await apiClient.post(API_ENDPOINTS.AUTH.RESEND_OTP, { email, ...(otpChannel && { otpChannel }) });
   } catch (error) {
     throw new Error(handleApiError(error));
   }

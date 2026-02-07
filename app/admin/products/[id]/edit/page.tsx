@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
 import { productsApi, Product } from '@/lib/api/products';
 import { ROUTES } from '@/lib/utils/constants';
+import { useUnoptimizedForStorage } from '@/lib/utils/storage';
 import toast from 'react-hot-toast';
 
 // Vastu product schema (same as create)
@@ -435,7 +436,7 @@ export default function EditProductPage() {
                             width={200}
                             height={200}
                             className="w-full h-32 object-cover rounded-none"
-                            unoptimized={imageUrl.includes('cloudinary')}
+                            unoptimized={useUnoptimizedForStorage(imageUrl)}
                           />
                         )}
                         <button

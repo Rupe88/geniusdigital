@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { HiCalendar, HiUser } from 'react-icons/hi';
 import { blogsApi, Blog } from '@/lib/api/blog';
 
@@ -51,7 +52,7 @@ export default function BlogListingPage() {
                 <div className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full border border-gray-100">
                   <div className="relative h-48 sm:h-56 w-full bg-gray-200">
                     {blog.featuredImage ? (
-                      <Image
+                      <StorageImage
                         src={blog.featuredImage}
                         alt={blog.title}
                         fill

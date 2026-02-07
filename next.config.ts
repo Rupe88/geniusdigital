@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      // S3 storage (Kailesh Cloud / DataHub) – course thumbnails, events, gallery, etc.
+      {
+        protocol: 'https',
+        hostname: 's3-np1.datahub.com.np',
+      },
+      // Legacy Cloudinary (if any old URLs still in DB)
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',

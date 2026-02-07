@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -240,7 +241,7 @@ export default function DashboardPage() {
                 <li key={e.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--muted)]/50 transition-colors">
                   {e.course?.thumbnail && (
                     <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-[var(--muted)]">
-                      <Image src={e.course.thumbnail} alt="" fill className="object-cover" sizes="48px" />
+                      <StorageImage src={e.course.thumbnail} alt="" fill className="object-cover" sizes="48px" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

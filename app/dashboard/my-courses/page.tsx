@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
@@ -48,7 +49,7 @@ export default function MyCoursesPage() {
             >
               {enrollment.course?.thumbnail && (
                 <div className="relative h-48 w-full">
-                  <Image
+                  <StorageImage
                     src={enrollment.course.thumbnail}
                     alt={enrollment.course.title}
                     fill
