@@ -826,12 +826,26 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
           {lessonForm.lessonType === 'VIDEO' && (
             <>
-              <Input
-                label="Video URL"
-                value={lessonForm.videoUrl}
-                onChange={(e) => setLessonForm(prev => ({ ...prev, videoUrl: e.target.value }))}
-                placeholder="https://example.com/video.mp4"
-              />
+              <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4">
+                <p className="text-sm font-medium text-[var(--foreground)]">Video source (use one)</p>
+                <Input
+                  label="Video URL (optional)"
+                  value={lessonForm.videoUrl}
+                  onChange={(e) => setLessonForm(prev => ({ ...prev, videoUrl: e.target.value, videoFile: e.target.value ? null : prev.videoFile }))}
+                  placeholder="YouTube link or https://example.com/video.mp4"
+                  helperText="Paste a YouTube or direct video URL"
+                />
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Or upload a video file</label>
+                  <FileUpload
+                    accept="video/*"
+                    maxSize={3072}
+                    value={lessonForm.videoFile}
+                    onChange={(file) => setLessonForm(prev => ({ ...prev, videoFile: file || null, videoUrl: file ? '' : prev.videoUrl }))}
+                    helperText="MP4, WebM, etc. Up to 3GB. Upload and link are alternatives."
+                  />
+                </div>
+              </div>
 
               <Input
                 label="Video Duration (seconds)"
@@ -839,15 +853,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                 value={lessonForm.videoDuration || ''}
                 onChange={(e) => setLessonForm(prev => ({ ...prev, videoDuration: parseInt(e.target.value) || 0 }))}
                 placeholder="0"
-              />
-
-              <FileUpload
-                label="Upload Video File"
-                accept="video/*"
-                maxSize={3072}
-                value={lessonForm.videoFile}
-                onChange={(file) => setLessonForm(prev => ({ ...prev, videoFile: file }))}
-                helperText="Upload video file. Large files supported (up to 3GB)."
               />
             </>
           )}
