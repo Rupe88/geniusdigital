@@ -74,8 +74,14 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   isLoading = false,
 }) => {
   const searchParams = useSearchParams();
-  const initialStep = parseInt(searchParams.get('step') || '1');
-  const [currentStep, setCurrentStep] = useState(initialStep);
+  const stepFromUrl = parseInt(searchParams.get('step') || '1', 10);
+  const safeStep = stepFromUrl >= 1 && stepFromUrl <= 4 ? stepFromUrl : 1;
+  const [currentStep, setCurrentStep] = useState(safeStep);
+
+  // Sync step from URL when landing on edit?step=3 (e.g. after creating course)
+  useEffect(() => {
+    setCurrentStep(safeStep);
+  }, [safeStep]);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
     course?.thumbnail || null
@@ -787,7 +793,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                   </div>
                 </div>
               </div>
-              <CurriculumBuilder courseId={course.id} />
+              <CurriculumBuilder key={course.id} courseId={course.id} />
             </>
           ) : (
             <div className="text-center py-12">

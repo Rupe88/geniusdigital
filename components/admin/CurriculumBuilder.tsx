@@ -141,6 +141,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       setChapters(chapters || []);
     } catch (error) {
       console.error('Error loading chapters:', error);
+      setChapters([]);
       showError('Failed to load chapters');
     } finally {
       setLoading(false);
