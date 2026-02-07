@@ -70,15 +70,11 @@ function LoginForm() {
       localStorage.setItem('refreshToken', refreshToken);
       window.history.replaceState({}, '', window.location.pathname);
 
-      const goTo = (path: string) => {
-        window.location.replace(path);
-      };
-
       authApi
         .getMe()
         .then((user) => {
-          if (user?.role === 'ADMIN') goTo(ROUTES.ADMIN);
-          else goTo(ROUTES.DASHBOARD);
+          if (user?.role === 'ADMIN') window.location.href = ROUTES.ADMIN;
+          else window.location.href = ROUTES.DASHBOARD;
         })
         .catch(() => {
           localStorage.removeItem('accessToken');
