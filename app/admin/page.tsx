@@ -24,6 +24,8 @@ import {
   HiCheckCircle
 } from 'react-icons/hi2';
 import { ROUTES } from '@/lib/utils/constants';
+import { getApiBaseUrl } from '@/lib/api/axios';
+import { getStorageImageSrc } from '@/lib/utils/storage';
 
 interface DashboardStats {
   totalUsers: number;
@@ -332,7 +334,7 @@ export default function AdminDashboardPage() {
                       <div className="w-12 h-12 bg-gray-100 rounded-none overflow-hidden flex-shrink-0">
                         {course.thumbnail ? (
                           <img
-                            src={course.thumbnail}
+                            src={getStorageImageSrc(course.thumbnail, getApiBaseUrl()) || course.thumbnail}
                             alt={course.title}
                             className="w-full h-full object-cover"
                           />

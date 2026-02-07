@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -262,7 +263,7 @@ export default function AdminCoursesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {course.thumbnail ? (
                         <div className="relative w-16 h-16 rounded-none overflow-hidden">
-                          <Image
+                          <StorageImage
                             src={course.thumbnail}
                             alt={course.title}
                             fill

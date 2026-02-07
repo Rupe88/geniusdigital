@@ -2,11 +2,12 @@
 
 import React from 'react';
 import Image, { ImageProps } from 'next/image';
-import { useUnoptimizedForStorage } from '@/lib/utils/storage';
+import { useUnoptimizedForStorage, getStorageImageSrc } from '@/lib/utils/storage';
+import { getApiBaseUrl } from '@/lib/api/axios';
 
 /**
  * Next/Image wrapper that sets unoptimized for storage URLs (S3/DataHub or Cloudinary).
- * Use for any image src that comes from the backend (thumbnails, gallery, products, etc.).
+ * S3 images use the backend proxy (/api/media/image?url=...) to avoid 403 from private bucket.
  */
 export function StorageImage({
   src,
@@ -14,8 +15,14 @@ export function StorageImage({
   unoptimized: unoptimizedProp,
   ...rest
 }: ImageProps) {
-  const fromStorage = useUnoptimizedForStorage(typeof src === 'string' ? src : undefined);
+  const srcStr = typeof src === 'string' ? src : undefined;
+  const fromStorage = useUnoptimizedForStorage(srcStr);
   const unoptimized = unoptimizedProp ?? fromStorage;
 
-  return <Image src={src} alt={alt} unoptimized={unoptimized} {...rest} />;
+  const resolvedSrc =
+    typeof src === 'string' && src
+      ? getStorageImageSrc(src, getApiBaseUrl()) || src
+      : src;
+
+  return <Image src={resolvedSrc} alt={alt} unoptimized={unoptimized} {...rest} />;
 }

@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -123,7 +124,7 @@ export default function CourseDetailPage() {
           {course.thumbnail && (
             <Card padding="none">
               <div className="relative w-full h-64 lg:h-96">
-                <Image
+                <StorageImage
                   src={course.thumbnail}
                   alt={course.title}
                   fill
