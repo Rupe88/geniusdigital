@@ -437,11 +437,11 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
               </div>
             </div>
             <p className="text-xs text-[var(--muted-foreground)] mt-4 text-center">
-              Please don&apos;t close this page. Large videos may take a few minutes.
+              Don&apos;t close this page. Videos over 1GB can take 15–30+ min depending on connection.
             </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Step 1: Basic Information */}
       {currentStep === 1 && (
@@ -591,7 +591,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                 />
                 {videoFile && (
                   <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                    Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB). Large videos supported.
+                    Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB). Videos over 1GB supported (up to 3GB).
                   </p>
                 )}
               </div>

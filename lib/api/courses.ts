@@ -223,7 +223,8 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
 
     data.onProgress?.(1);
 
-    const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 600000 : 120000;
+    // Large video uploads (1GB+) can take 1–2+ hours on slow connections
+    const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 7200000 : 120000; // 2 hours with file, 2 min without
     const response = await apiClient.post<ApiResponse<Course>>(API_ENDPOINTS.COURSES.LIST, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -259,7 +260,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       });
 
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        throw new Error('Upload timed out. For large videos, the request may take several minutes. Please try again.');
+        throw new Error('Upload took too long. For 300MB+ videos use a fast connection or try a smaller file. You can also add the video later from the course edit page.');
       }
       if (error.response?.status === 408) {
         throw new Error('Request timed out during file upload. Please try again.');
@@ -344,7 +345,7 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       formData.append('video', data.videoFile);
     }
 
-    const uploadTimeout = (data.thumbnailFile || data.videoFile) ? 600000 : 60000;
+    const uploadTimeout = (data.thumbnailFile || data.videoFile) ? 7200000 : 60000; // 2 hours with file
     const response = await apiClient.put<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

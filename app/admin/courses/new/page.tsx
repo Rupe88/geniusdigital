@@ -115,8 +115,8 @@ export default function CreateCoursePage() {
           .map((err: any) => `${err.param || err.field || 'Field'}: ${err.msg || err.message || 'Invalid value'}`)
           .join('\n');
         errorMessage = `Validation failed:\n${validationErrors}`;
-      } else if (errorObj?.message?.includes('timed out')) {
-        errorMessage = 'Course creation timed out. Please check your connection and try again.';
+      } else if (errorObj?.message?.includes('timed out') || errorObj?.message?.includes('timeout') || errorObj?.code === 'ECONNABORTED') {
+        errorMessage = errorObj?.message || 'Upload took too long. Try a faster connection, a smaller video, or add the video later from the course edit page.';
       } else if (errorObj?.message?.includes('upload')) {
         errorMessage = 'File upload failed. Please try with a smaller image or check your internet connection.';
       } else if (errorObj?.message?.includes('network') || errorObj?.message?.includes('Network Error')) {
