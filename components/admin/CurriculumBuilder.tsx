@@ -844,10 +844,10 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
               <FileUpload
                 label="Upload Video File"
                 accept="video/*"
-                maxSize={500}
+                maxSize={1024}
                 value={lessonForm.videoFile}
                 onChange={(file) => setLessonForm(prev => ({ ...prev, videoFile: file }))}
-                helperText="Upload video file (max 500MB)"
+                helperText="Upload video file. Large files supported (up to 1GB)."
               />
             </>
           )}

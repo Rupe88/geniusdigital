@@ -579,7 +579,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                 />
                 {videoFile && (
                   <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                    Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB). Max 100MB.
+                    Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB). Large videos supported.
                   </p>
                 )}
               </div>

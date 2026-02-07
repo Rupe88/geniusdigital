@@ -207,7 +207,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
                 onRemove={() => setVideoFile(null)}
                 value={videoFile}
                 label="Select Video"
-                helperText="MP4, WebM, OGG (Max 100MB)"
+                helperText="MP4, WebM, OGG. Large videos supported."
               />
               {videoFile && (
                 <p className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">

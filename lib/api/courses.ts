@@ -225,12 +225,13 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     // Update progress: Form data prepared
     data.onProgress?.(30);
 
-    // Use longer timeout for course creation (2 minutes due to file upload)
+    // Long timeout for course creation when uploading video (up to 10 min for large files)
+    const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 600000 : 120000;
     const response = await apiClient.post<ApiResponse<Course>>(API_ENDPOINTS.COURSES.LIST, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 120000, // 2 minutes for course creation
+      timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 70) / progressEvent.total) + 30;
@@ -260,10 +261,10 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       });
 
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        throw new Error('Course creation timed out. The server may be busy. Please try again.');
+        throw new Error('Upload timed out. For large videos, the request may take several minutes. Please try again.');
       }
       if (error.response?.status === 408) {
-        throw new Error('Request timed out during file upload. Please try with a smaller image.');
+        throw new Error('Request timed out during file upload. Please try again.');
       }
       if (error.response?.status === 400) {
         // Validation error - extract detailed error messages
@@ -345,10 +346,12 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       formData.append('video', data.videoFile);
     }
 
+    const uploadTimeout = (data.thumbnailFile || data.videoFile) ? 600000 : 60000;
     const response = await apiClient.put<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: uploadTimeout,
     });
     return handleApiResponse<Course>(response);
   } catch (error) {
