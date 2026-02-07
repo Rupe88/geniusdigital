@@ -35,6 +35,18 @@ function LoginForm() {
   const [callbackProcessing, setCallbackProcessing] = useState(false);
   const callbackHandled = useRef(false);
 
+  // Read tokens from URL (hash or query). Hash can appear after hydration on some hosts.
+  const getTokensFromUrl = () => {
+    if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
+    const href = window.location.href || '';
+    const hashIndex = href.indexOf('#');
+    const hashPart = hashIndex >= 0 ? href.slice(hashIndex + 1) : '';
+    const hashParams = hashPart ? new URLSearchParams(hashPart) : null;
+    const accessToken = hashParams?.get('accessToken') ?? searchParams.get('accessToken');
+    const refreshToken = hashParams?.get('refreshToken') ?? searchParams.get('refreshToken');
+    return { accessToken, refreshToken };
+  };
+
   // Handle Google OAuth callback: tokens in hash or query -> store and redirect to dashboard
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -46,34 +58,40 @@ function LoginForm() {
       return;
     }
 
-    // Prefer hash (backend sends tokens in hash to avoid URL length limits); fallback to query
-    const hashParams = window.location.hash
-      ? new URLSearchParams(window.location.hash.replace(/^#/, ''))
-      : null;
-    const accessToken = hashParams?.get('accessToken') ?? searchParams.get('accessToken');
-    const refreshToken = hashParams?.get('refreshToken') ?? searchParams.get('refreshToken');
+    const tryProcessCallback = () => {
+      if (callbackHandled.current) return;
+      const { accessToken, refreshToken } = getTokensFromUrl();
+      if (!accessToken || !refreshToken) return;
 
-    if (!accessToken || !refreshToken || callbackHandled.current) return;
-    callbackHandled.current = true;
-    setCallbackProcessing(true);
+      callbackHandled.current = true;
+      setCallbackProcessing(true);
 
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    window.history.replaceState({}, '', window.location.pathname);
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      window.history.replaceState({}, '', window.location.pathname);
 
-    const goTo = (path: string) => {
-      window.location.replace(path);
+      const goTo = (path: string) => {
+        window.location.replace(path);
+      };
+
+      authApi
+        .getMe()
+        .then((user) => {
+          if (user?.role === 'ADMIN') goTo(ROUTES.ADMIN);
+          else goTo(ROUTES.DASHBOARD);
+        })
+        .catch(() => {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          setError('Session could not be restored. Please try logging in again.');
+          setCallbackProcessing(false);
+          callbackHandled.current = false;
+        });
     };
 
-    authApi
-      .getMe()
-      .then((user) => {
-        if (user?.role === 'ADMIN') goTo(ROUTES.ADMIN);
-        else goTo(ROUTES.DASHBOARD);
-      })
-      .catch(() => {
-        goTo(ROUTES.DASHBOARD);
-      });
+    tryProcessCallback();
+    const t = setTimeout(tryProcessCallback, 200);
+    return () => clearTimeout(t);
   }, [searchParams]);
 
   const {
