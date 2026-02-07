@@ -17,6 +17,7 @@ import { reviewsApi } from '@/lib/api/reviews';
 import { Course, Lesson, Review, Chapter } from '@/lib/types/course';
 import { formatPrice, formatCurrency, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
 import { useAuth } from '@/lib/context/AuthContext';
+import { getVideoStreamUrl, isSecureStreamPath } from '@/lib/api/media';
 import { ROUTES } from '@/lib/utils/constants';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiClipboardCheck, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
@@ -46,6 +47,8 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
+  const [promoStreamUrl, setPromoStreamUrl] = useState<string | null>(null);
+  const [promoStreamError, setPromoStreamError] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -359,6 +362,21 @@ export default function CourseDetailPage() {
   const videoLessons = safeLessons.filter(l => l && l.lessonType === 'VIDEO').length;
   const totalLessons = safeLessons.length;
 
+  // Fetch secure stream URL when user clicks play on promo video (stream path)
+  useEffect(() => {
+    if (!demoVideoPlaying || !course?.videoUrl || !isSecureStreamPath(course.videoUrl)) return;
+    let cancelled = false;
+    setPromoStreamError(null);
+    getVideoStreamUrl({ courseId: course.id, type: 'promo' })
+      .then((url) => {
+        if (!cancelled) setPromoStreamUrl(url);
+      })
+      .catch((err) => {
+        if (!cancelled) setPromoStreamError(err instanceof Error ? err.message : 'Could not load video');
+      });
+    return () => { cancelled = true; };
+  }, [demoVideoPlaying, course?.id, course?.videoUrl]);
+
   // Calculate total hours and minutes for display
   const totalHours = Math.floor(totalVideoDuration / 3600);
   const totalMinutes = Math.floor((totalVideoDuration % 3600) / 60);
@@ -404,6 +422,27 @@ export default function CourseDetailPage() {
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     />
+                  ) : promoStreamError ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                      <HiVideoCamera className="w-16 h-16 opacity-20" />
+                      <p className="font-medium">{promoStreamError}</p>
+                    </div>
+                  ) : isSecureStreamPath(course.videoUrl) ? (
+                    promoStreamUrl ? (
+                      <video
+                        key={promoStreamUrl}
+                        src={promoStreamUrl}
+                        controls
+                        autoPlay
+                        className="w-full h-full"
+                        playsInline
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                        <HiVideoCamera className="w-16 h-16 opacity-20 animate-pulse" />
+                        <p className="font-medium">Loading video...</p>
+                      </div>
+                    )
                   ) : course.videoUrl ? (
                     <video
                       src={course.videoUrl}

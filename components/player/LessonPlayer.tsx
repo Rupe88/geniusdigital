@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload } from 'react-icons/hi';
 import { getYouTubeEmbedUrl } from '@/lib/utils/helpers';
+import { getVideoStreamUrl, isSecureStreamPath } from '@/lib/api/media';
 
 interface LessonPlayerProps {
     lesson: Lesson;
@@ -12,10 +13,27 @@ interface LessonPlayerProps {
 }
 
 export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }) => {
+    const [secureVideoSrc, setSecureVideoSrc] = useState<string | null>(null);
+    const [secureVideoError, setSecureVideoError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl || !isSecureStreamPath(lesson.videoUrl)) return;
+        let cancelled = false;
+        getVideoStreamUrl({ lessonId: lesson.id })
+            .then((url) => {
+                if (!cancelled) setSecureVideoSrc(url);
+            })
+            .catch((err) => {
+                if (!cancelled) setSecureVideoError(err instanceof Error ? err.message : 'Could not load video');
+            });
+        return () => { cancelled = true; };
+    }, [lesson.id, lesson.lessonType, lesson.videoUrl]);
+
     const renderContent = () => {
         switch (lesson.lessonType) {
-            case 'VIDEO':
+            case 'VIDEO': {
                 const youtubeUrl = lesson.videoUrl ? getYouTubeEmbedUrl(lesson.videoUrl) : null;
+                const videoSrc = isSecureStreamPath(lesson.videoUrl) ? secureVideoSrc : lesson.videoUrl;
                 return (
                     <div className="space-y-6">
                         <div className="aspect-video bg-black shadow-2xl">
@@ -26,13 +44,24 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen
                                 />
-                            ) : lesson.videoUrl ? (
+                            ) : secureVideoError ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                                    <HiVideoCamera className="w-16 h-16 opacity-20" />
+                                    <p className="font-bold">{secureVideoError}</p>
+                                </div>
+                            ) : videoSrc ? (
                                 <video
-                                    src={lesson.videoUrl}
+                                    key={videoSrc}
+                                    src={videoSrc}
                                     controls
                                     className="w-full h-full"
                                     onEnded={onComplete}
                                 />
+                            ) : isSecureStreamPath(lesson.videoUrl) ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                                    <HiVideoCamera className="w-16 h-16 opacity-20 animate-pulse" />
+                                    <p className="font-bold">Loading video...</p>
+                                </div>
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                                     <HiVideoCamera className="w-16 h-16 opacity-20" />
@@ -44,6 +73,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                             dangerouslySetInnerHTML={{ __html: lesson.content || lesson.description || '' }} />
                     </div>
                 );
+            }
 
             case 'TEXT':
                 return (
