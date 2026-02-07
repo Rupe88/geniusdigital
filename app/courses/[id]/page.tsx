@@ -87,6 +87,21 @@ export default function CourseDetailPage() {
     }
   }, [params.id]);
 
+  // Fetch secure stream URL when user clicks play on promo video (stream path). Must run unconditionally (no early return before this).
+  useEffect(() => {
+    if (!demoVideoPlaying || !course?.videoUrl || !isSecureStreamPath(course.videoUrl)) return;
+    let cancelled = false;
+    setPromoStreamError(null);
+    getVideoStreamUrl({ courseId: course.id, type: 'promo' })
+      .then((url) => {
+        if (!cancelled) setPromoStreamUrl(url);
+      })
+      .catch((err) => {
+        if (!cancelled) setPromoStreamError(err instanceof Error ? err.message : 'Could not load video');
+      });
+    return () => { cancelled = true; };
+  }, [demoVideoPlaying, course?.id, course?.videoUrl]);
+
   const fetchCourse = async (id: string) => {
     try {
       setLoading(true);
@@ -361,21 +376,6 @@ export default function CourseDetailPage() {
 
   const videoLessons = safeLessons.filter(l => l && l.lessonType === 'VIDEO').length;
   const totalLessons = safeLessons.length;
-
-  // Fetch secure stream URL when user clicks play on promo video (stream path)
-  useEffect(() => {
-    if (!demoVideoPlaying || !course?.videoUrl || !isSecureStreamPath(course.videoUrl)) return;
-    let cancelled = false;
-    setPromoStreamError(null);
-    getVideoStreamUrl({ courseId: course.id, type: 'promo' })
-      .then((url) => {
-        if (!cancelled) setPromoStreamUrl(url);
-      })
-      .catch((err) => {
-        if (!cancelled) setPromoStreamError(err instanceof Error ? err.message : 'Could not load video');
-      });
-    return () => { cancelled = true; };
-  }, [demoVideoPlaying, course?.id, course?.videoUrl]);
 
   // Calculate total hours and minutes for display
   const totalHours = Math.floor(totalVideoDuration / 3600);

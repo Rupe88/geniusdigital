@@ -164,7 +164,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     if (data.price !== undefined) formData.append('price', data.price.toString());
     if (data.originalPrice !== undefined) formData.append('originalPrice', data.originalPrice.toString());
     if (data.isFree !== undefined) formData.append('isFree', data.isFree.toString());
-    if (data.status) formData.append('status', data.status);
+    formData.append('status', data.status || 'PUBLISHED');
     if (data.level) formData.append('level', data.level);
     if (data.duration !== undefined) formData.append('duration', data.duration.toString());
     if (data.language) formData.append('language', data.language);
@@ -270,7 +270,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
         const errorData = error.response.data;
         if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
           const errorMessages = errorData.errors.map((err: any) => {
-            const field = err.param || err.field || 'field';
+            const field = err.param || err.path || err.field || 'field';
             const message = err.msg || err.message || 'Invalid value';
             return `${field}: ${message}`;
           }).join('\n');
@@ -292,8 +292,8 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
   try {
     const formData = new FormData();
 
-    // Add all provided fields to FormData
-    if (data.title) formData.append('title', data.title);
+    // Add all provided fields to FormData (title and instructorId required by backend)
+    if (data.title) formData.append('title', data.title.trim());
     if (data.slug) formData.append('slug', data.slug);
     if (data.description !== undefined) formData.append('description', data.description);
     if (data.shortDescription !== undefined) formData.append('shortDescription', data.shortDescription);
@@ -301,7 +301,7 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     if (data.price !== undefined) formData.append('price', data.price.toString());
     if (data.originalPrice !== undefined) formData.append('originalPrice', data.originalPrice.toString());
     if (data.isFree !== undefined) formData.append('isFree', data.isFree.toString());
-    if (data.status) formData.append('status', data.status);
+    if (data.status !== undefined) formData.append('status', data.status);
     if (data.level) formData.append('level', data.level);
     if (data.duration !== undefined) formData.append('duration', data.duration.toString());
     if (data.language) formData.append('language', data.language);
@@ -333,7 +333,7 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       }
     }
 
-    if (data.instructorId) formData.append('instructorId', data.instructorId);
+    if (data.instructorId) formData.append('instructorId', data.instructorId.trim());
     if (data.categoryId !== undefined) formData.append('categoryId', data.categoryId || '');
 
     // Add thumbnail file if provided (only if it's a new file)
@@ -367,6 +367,17 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     onProgress?.(100);
     return handleApiResponse<Course>(response);
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      const errorData = error.response.data;
+      if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+        const errorMessages = errorData.errors.map((err: any) => {
+          const field = err.param || err.path || err.field || 'field';
+          const message = err.msg || err.message || 'Invalid value';
+          return `${field}: ${message}`;
+        }).join('\n');
+        throw new Error(`Validation failed:\n${errorMessages}`);
+      }
+    }
     throw new Error(handleApiError(error));
   }
 };
