@@ -148,7 +148,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         language: 'ne',
         skills: [],
         tags: [],
-        status: 'DRAFT',
+        status: 'PUBLISHED',
         isFree: false,
         featured: false,
         isOngoing: false,
@@ -304,7 +304,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         price: data.price !== undefined ? Number(data.price) : undefined,
         originalPrice: data.originalPrice !== undefined ? Number(data.originalPrice) : undefined,
         isFree: data.isFree || false,
-        status: data.status || 'DRAFT',
+        status: data.status || 'PUBLISHED',
         level: data.level || undefined,
         duration: data.duration !== undefined ? Number(data.duration) : undefined,
         language: data.language || 'en',
@@ -911,7 +911,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                 <span className="text-sm font-medium">
                   <span className={`px-2 py-0.5 rounded-none text-xs ${getValues('status') === 'PUBLISHED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                     }`}>
-                    {getValues('status') || 'DRAFT'}
+                    {getValues('status') || 'PUBLISHED'}
                   </span>
                 </span>
               </div>
