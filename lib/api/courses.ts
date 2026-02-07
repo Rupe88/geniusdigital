@@ -137,6 +137,7 @@ export interface CreateCourseData {
   categoryId?: string;
   videoUrl?: string;
   thumbnailFile?: File;
+  videoFile?: File;
   onProgress?: (progress: number) => void;
 }
 
@@ -202,6 +203,10 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     // Add thumbnail file if provided
     if (data.thumbnailFile) {
       formData.append('thumbnail', data.thumbnailFile);
+    }
+    // Add video file if provided (optional; alternative to videoUrl)
+    if (data.videoFile) {
+      formData.append('video', data.videoFile);
     }
 
     // Log FormData contents for debugging (in development)
@@ -305,7 +310,10 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     if (data.startDate !== undefined) formData.append('startDate', data.startDate || '');
     if (data.endDate !== undefined) formData.append('endDate', data.endDate || '');
     if (data.tags !== undefined) formData.append('tags', data.tags);
-    if (data.videoUrl !== undefined) formData.append('videoUrl', data.videoUrl);
+    // Always send videoUrl when defined so backend can save or clear it (empty string → null)
+    if (data.videoUrl !== undefined) {
+      formData.append('videoUrl', data.videoUrl !== null ? String(data.videoUrl).trim() : '');
+    }
 
     // Handle learningOutcomes - send as JSON string if array, empty string if undefined/null
     if (data.learningOutcomes !== undefined) {
@@ -331,6 +339,10 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     // Add thumbnail file if provided (only if it's a new file)
     if (data.thumbnailFile) {
       formData.append('thumbnail', data.thumbnailFile);
+    }
+    // Add video file if provided (optional; alternative to videoUrl)
+    if (data.videoFile) {
+      formData.append('video', data.videoFile);
     }
 
     const response = await apiClient.put<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id), formData, {

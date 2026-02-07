@@ -46,11 +46,12 @@ const courseSchema = z.object({
   isOngoing: z.boolean().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  videoUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  videoUrl: z.union([z.string().url('Invalid URL'), z.literal('')]).optional(),
 });
 
 type CourseFormData = z.infer<typeof courseSchema> & {
   thumbnailFile?: File | null;
+  videoFile?: File | null;
   tags?: string[];
   skills?: string[];
 };
@@ -79,6 +80,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
     course?.thumbnail || null
   );
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   // Curriculum state
   const [curriculumChapters, setCurriculumChapters] = useState<any[]>([]);
@@ -130,6 +132,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         isOngoing: course.isOngoing,
         startDate: course.startDate ? course.startDate.split('T')[0] : '',
         endDate: course.endDate ? course.endDate.split('T')[0] : '',
+        videoUrl: course.videoUrl || '',
       }
       : {
         title: '',
@@ -311,8 +314,9 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         tags: data.tags && data.tags.length > 0 ? data.tags.join(',') : undefined,
         learningOutcomes,
         skills,
-        videoUrl: data.videoUrl || undefined,
+        videoUrl: (data.videoUrl && data.videoUrl.trim()) || undefined,
         thumbnailFile: thumbnailFile || undefined,
+        videoFile: videoFile || undefined,
         onProgress: (progress: number) => {
           // Use requestAnimationFrame to avoid too many re-renders
           requestAnimationFrame(() => setUploadProgress(progress));
@@ -551,13 +555,35 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           <h2 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Details & Settings</h2>
 
           <div className="space-y-6">
-            <Input
-              label="Promo Video URL (YouTube)"
-              {...register('videoUrl')}
-              error={errors.videoUrl?.message}
-              helperText="Add a YouTube link for the course preview trailer"
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
+            <div className="space-y-3">
+              <Input
+                label="Promo Video – YouTube link (optional)"
+                {...register('videoUrl')}
+                error={errors.videoUrl?.message}
+                helperText="Paste a YouTube URL for the course preview trailer"
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">
+                  Or upload a video file (optional)
+                </label>
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                  className="block w-full text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-[var(--primary-600)] file:text-white file:font-medium hover:file:bg-[var(--primary-700)]"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    setVideoFile(f || null);
+                    if (f) setValue('videoUrl', '', { shouldValidate: true });
+                  }}
+                />
+                {videoFile && (
+                  <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                    Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB). Max 100MB.
+                  </p>
+                )}
+              </div>
+            </div>
 
             <Textarea
               label="Short Description"
