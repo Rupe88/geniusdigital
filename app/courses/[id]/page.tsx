@@ -437,8 +437,17 @@ export default function CourseDetailPage() {
                         src={promoStreamUrl}
                         controls
                         autoPlay
-                        className="w-full h-full"
                         playsInline
+                        preload="auto"
+                        className="w-full h-full"
+                        onCanPlay={(e) => {
+                          e.currentTarget.play().catch(() => {});
+                        }}
+                        onError={(e) => {
+                          const v = e.currentTarget;
+                          const msg = v.error?.message || 'Video failed to play';
+                          if (typeof window !== 'undefined') console.warn('Video error:', msg);
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
