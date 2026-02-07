@@ -143,8 +143,7 @@ export interface CreateCourseData {
 
 export const createCourse = async (data: CreateCourseData): Promise<Course> => {
   try {
-    // Update progress: Starting
-    data.onProgress?.(10);
+    data.onProgress?.(0);
 
     // Validate required fields
     if (!data.title || !data.title.trim()) {
@@ -165,7 +164,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     if (data.price !== undefined) formData.append('price', data.price.toString());
     if (data.originalPrice !== undefined) formData.append('originalPrice', data.originalPrice.toString());
     if (data.isFree !== undefined) formData.append('isFree', data.isFree.toString());
-    if (data.status) formData.append('status', data.status);
+    formData.append('status', data.status || 'PUBLISHED');
     if (data.level) formData.append('level', data.level);
     if (data.duration !== undefined) formData.append('duration', data.duration.toString());
     if (data.language) formData.append('language', data.language);
@@ -222,24 +221,25 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       });
     }
 
-    // Update progress: Form data prepared
-    data.onProgress?.(30);
+    data.onProgress?.(1);
 
-    // Use longer timeout for course creation (2 minutes due to file upload)
+    // Large video uploads (1GB+) can take 1–2+ hours on slow connections
+    const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 7200000 : 120000; // 2 hours with file, 2 min without
     const response = await apiClient.post<ApiResponse<Course>>(API_ENDPOINTS.COURSES.LIST, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 120000, // 2 minutes for course creation
+      timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const percentCompleted = Math.round((progressEvent.loaded * 70) / progressEvent.total) + 30;
-          data.onProgress?.(Math.min(percentCompleted, 90));
+        if (progressEvent.total && progressEvent.total > 0) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          data.onProgress?.(Math.min(percent, 99));
+        } else if (progressEvent.loaded) {
+          data.onProgress?.(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
         }
       },
     });
 
-    // Update progress: Request completed
     data.onProgress?.(100);
 
     return handleApiResponse<Course>(response);
@@ -260,17 +260,17 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       });
 
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        throw new Error('Course creation timed out. The server may be busy. Please try again.');
+        throw new Error('Upload took too long. For 300MB+ videos use a fast connection or try a smaller file. You can also add the video later from the course edit page.');
       }
       if (error.response?.status === 408) {
-        throw new Error('Request timed out during file upload. Please try with a smaller image.');
+        throw new Error('Request timed out during file upload. Please try again.');
       }
       if (error.response?.status === 400) {
         // Validation error - extract detailed error messages
         const errorData = error.response.data;
         if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
           const errorMessages = errorData.errors.map((err: any) => {
-            const field = err.param || err.field || 'field';
+            const field = err.param || err.path || err.field || 'field';
             const message = err.msg || err.message || 'Invalid value';
             return `${field}: ${message}`;
           }).join('\n');
@@ -292,8 +292,8 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
   try {
     const formData = new FormData();
 
-    // Add all provided fields to FormData
-    if (data.title) formData.append('title', data.title);
+    // Add all provided fields to FormData (title and instructorId required by backend)
+    if (data.title) formData.append('title', data.title.trim());
     if (data.slug) formData.append('slug', data.slug);
     if (data.description !== undefined) formData.append('description', data.description);
     if (data.shortDescription !== undefined) formData.append('shortDescription', data.shortDescription);
@@ -301,7 +301,7 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     if (data.price !== undefined) formData.append('price', data.price.toString());
     if (data.originalPrice !== undefined) formData.append('originalPrice', data.originalPrice.toString());
     if (data.isFree !== undefined) formData.append('isFree', data.isFree.toString());
-    if (data.status) formData.append('status', data.status);
+    if (data.status !== undefined) formData.append('status', data.status);
     if (data.level) formData.append('level', data.level);
     if (data.duration !== undefined) formData.append('duration', data.duration.toString());
     if (data.language) formData.append('language', data.language);
@@ -333,7 +333,7 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       }
     }
 
-    if (data.instructorId) formData.append('instructorId', data.instructorId);
+    if (data.instructorId) formData.append('instructorId', data.instructorId.trim());
     if (data.categoryId !== undefined) formData.append('categoryId', data.categoryId || '');
 
     // Add thumbnail file if provided (only if it's a new file)
@@ -345,13 +345,39 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       formData.append('video', data.videoFile);
     }
 
+    const onProgress = (data as CreateCourseData).onProgress;
+    onProgress?.(0);
+
+    const uploadTimeout = (data.thumbnailFile || data.videoFile) ? 7200000 : 60000; // 2 hours with file
     const response = await apiClient.put<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: uploadTimeout,
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total && progressEvent.total > 0) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          onProgress(Math.min(percent, 99));
+        } else if (onProgress && progressEvent.loaded) {
+          onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        }
+      },
     });
+
+    onProgress?.(100);
     return handleApiResponse<Course>(response);
   } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      const errorData = error.response.data;
+      if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+        const errorMessages = errorData.errors.map((err: any) => {
+          const field = err.param || err.path || err.field || 'field';
+          const message = err.msg || err.message || 'Invalid value';
+          return `${field}: ${message}`;
+        }).join('\n');
+        throw new Error(`Validation failed:\n${errorMessages}`);
+      }
+    }
     throw new Error(handleApiError(error));
   }
 };

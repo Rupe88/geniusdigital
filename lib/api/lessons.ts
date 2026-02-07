@@ -91,8 +91,10 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
     if (data.videoFile) formData.append('video', data.videoFile);
     if (data.attachmentFile) formData.append('attachment', data.attachmentFile);
 
+    const uploadTimeout = (data.videoFile || data.attachmentFile) ? 7200000 : 60000; // 2 hours for large video uploads
     const response = await apiClient.post<ApiResponse<Lesson>>(API_ENDPOINTS.LESSONS.LIST, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: uploadTimeout,
     });
 
     const responseData = response.data;
@@ -138,8 +140,10 @@ export const updateLesson = async (id: string, data: Partial<CreateLessonData>):
     if (data.videoFile) formData.append('video', data.videoFile);
     if (data.attachmentFile) formData.append('attachment', data.attachmentFile);
 
+    const uploadTimeout = (data.videoFile || data.attachmentFile) ? 7200000 : 60000;
     const response = await apiClient.put<ApiResponse<Lesson>>(API_ENDPOINTS.LESSONS.BY_ID(id), formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: uploadTimeout,
     });
 
     const responseData = response.data;

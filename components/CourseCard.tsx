@@ -1,5 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
+import { getStorageImageSrc } from '@/lib/utils/storage';
+import { getApiBaseUrl } from '@/lib/api/axios';
 
 interface CourseCardProps {
   id: string | number;
@@ -33,7 +35,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         <div className="relative w-full h-52 p-2">
           {thumbnail ? (
             <img
-              src={thumbnail}
+              src={getStorageImageSrc(thumbnail, getApiBaseUrl()) || thumbnail}
               alt={title}
               className="w-full h-full object-cover rounded-lg"
             />

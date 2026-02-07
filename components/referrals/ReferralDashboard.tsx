@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { getReferralStats, getReferralLinks, deactivateReferralLink, reactivateReferralLink, ReferralStats, ReferralLink } from '@/lib/api/referrals';
+import { getApiBaseUrl } from '@/lib/api/axios';
+import { getStorageImageSrc } from '@/lib/utils/storage';
 import { Pagination } from '@/lib/types/api';
 import { FaLink, FaEye, FaUsers, FaDollarSign, FaToggleOn, FaToggleOff, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -285,7 +287,7 @@ export const ReferralDashboard: React.FC = () => {
                           <div className="flex-shrink-0 h-10 w-10">
                             <img
                               className="h-10 w-10 rounded-none object-cover"
-                              src={link.course?.thumbnail || '/placeholder-course.jpg'}
+                              src={link.course?.thumbnail ? (getStorageImageSrc(link.course.thumbnail, getApiBaseUrl()) || link.course.thumbnail) : '/placeholder-course.jpg'}
                               alt={link.course?.title}
                             />
                           </div>

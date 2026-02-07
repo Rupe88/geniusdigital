@@ -15,6 +15,7 @@ import {
   HiX,
   HiExternalLink,
   HiVideoCamera,
+  HiLogout,
 } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
@@ -30,8 +31,21 @@ const menuItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      await logout();
+      if (typeof window !== 'undefined') window.location.href = ROUTES.LOGIN;
+    } catch {
+      if (typeof window !== 'undefined') window.location.href = ROUTES.LOGIN;
+    } finally {
+      setLoggingOut(false);
+    }
+  };
   const isLearnRoute = pathname.startsWith('/dashboard/courses/') && pathname.includes('/learn');
 
   // Close mobile sidebar on route change
@@ -53,7 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const navContent = (
-    <nav className="p-4">
+    <nav className="p-4 flex-1 overflow-y-auto">
       <ul className="space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -93,14 +107,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar: hidden on mobile, drawer on open */}
         <aside
           className={`
-            fixed lg:sticky top-0 left-0 z-50 h-screen w-64
+            fixed lg:sticky top-0 left-0 z-50 h-screen w-64 flex flex-col
             bg-[var(--background)] border-r border-[var(--border)] shadow-lg
             transform transition-transform duration-200 ease-out
             lg:translate-x-0 lg:shadow-md
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
-          <div className="flex items-center justify-between p-4 border-b border-[var(--border)] lg:p-6">
+          <div className="flex items-center justify-between p-4 border-b border-[var(--border)] lg:p-6 flex-shrink-0">
             <div>
               <h2 className="text-xl font-bold text-[var(--foreground)]">Dashboard</h2>
               <p className="text-sm text-[var(--muted-foreground)] mt-0.5 truncate">{user?.fullName}</p>
@@ -115,6 +129,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
           {navContent}
+          <div className="p-4 border-t border-[var(--border)] flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors disabled:opacity-50"
+            >
+              <HiLogout className="h-5 w-5 flex-shrink-0" />
+              <span>{loggingOut ? 'Logging out…' : 'Log out'}</span>
+            </button>
+          </div>
         </aside>
 
         {/* Main content */}
