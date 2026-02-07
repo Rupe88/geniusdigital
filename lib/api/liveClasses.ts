@@ -62,6 +62,29 @@ export const getAllLiveClasses = async (params?: {
   }
 };
 
+/** Get available live classes for authenticated user (filtered by enrolled courses and time window) */
+export const getMyAvailableLiveClasses = async (params?: {
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<LiveClass>> => {
+  try {
+    const response = await apiClient.get<{ success: boolean; data: LiveClass[]; pagination: Pagination }>(
+      '/live-classes/my-available',
+      { params }
+    );
+    const payload = response.data;
+    if (payload?.success) {
+      return {
+        data: payload.data ?? [],
+        pagination: payload.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+      };
+    }
+    throw new Error('Failed to fetch available live classes');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 export const getLiveClassById = async (id: string): Promise<LiveClass> => {
   try {
     const response = await apiClient.get<ApiResponse<LiveClass>>(API_ENDPOINTS.LIVE_CLASSES.BY_ID(id));

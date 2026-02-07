@@ -10,6 +10,7 @@ import { HeroCarousel } from '@/components/HeroCarousel';
 import { UpcomingEvents } from '@/components/UpcomingEvents';
 import { SuccessStories } from '@/components/SuccessStories';
 import { Gallery } from '@/components/Gallery';
+import { FAQ } from '@/components/FAQ';
 import { CourseCard } from '@/components/CourseCard';
 import { ROUTES } from '@/lib/utils/constants';
 import * as courseApi from '@/lib/api/courses';
@@ -615,6 +616,9 @@ export default function HomePage() {
 
       {/* Gallery Section */}
       <Gallery />
+
+      {/* FAQ Section */}
+      <FAQ />
 
       {showBackToTop && (
         <>

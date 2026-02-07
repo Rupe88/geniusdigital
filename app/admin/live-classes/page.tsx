@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import * as liveClassApi from '@/lib/api/liveClasses';
 import { LiveClass } from '@/lib/api/liveClasses';
 import * as instructorApi from '@/lib/api/instructors';
@@ -12,6 +13,7 @@ export default function AdminLiveClassesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<LiveClass | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [instructors, setInstructors] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -64,6 +66,7 @@ export default function AdminLiveClassesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       if (editingClass) {
         await liveClassApi.updateLiveClass(editingClass.id, formData);
@@ -79,6 +82,8 @@ export default function AdminLiveClassesPage() {
     } catch (error) {
       console.error('Error saving live class:', error);
       alert('Failed to save live class');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -269,12 +274,14 @@ export default function AdminLiveClassesPage() {
             </div>
 
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-none hover:bg-blue-700"
+                variant="primary"
+                isLoading={submitting}
+                disabled={submitting}
               >
                 {editingClass ? 'Update' : 'Create'} Live Class
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={() => {
@@ -282,7 +289,8 @@ export default function AdminLiveClassesPage() {
                   setEditingClass(null);
                   resetForm();
                 }}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-none hover:bg-gray-300"
+                disabled={submitting}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-none hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>

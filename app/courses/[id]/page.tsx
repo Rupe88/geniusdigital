@@ -222,12 +222,15 @@ export default function CourseDetailPage() {
       setEnrolling(true);
 
       if (isFreeCourse) {
+        // Free courses: Enroll directly with ACTIVE status
         await enrollmentApi.enrollInCourse(course.id);
         showSuccess('Successfully enrolled in course!');
         router.push(`/courses/${course.id}/learn`);
         return;
       }
 
+      // Paid courses: Skip enrollment API, go directly to payment
+      // Enrollment will be created automatically after payment verification
       // Paid course – initiate eSewa payment
       if (priceNum <= 0 || !Number.isFinite(priceNum)) {
         showError('Invalid course price. Please contact support.');

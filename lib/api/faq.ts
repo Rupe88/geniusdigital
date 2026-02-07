@@ -6,9 +6,10 @@ export interface FAQ {
   id: string;
   question: string;
   answer: string;
-  category: string;
-  featured: boolean;
-  published: boolean;
+  category: string | null;
+  featured?: boolean;
+  published?: boolean;
+  isActive?: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -17,9 +18,10 @@ export interface FAQ {
 export interface CreateFAQRequest {
   question: string;
   answer: string;
-  category: string;
+  category?: string;
   featured?: boolean;
   published?: boolean;
+  isActive?: boolean;
   order?: number;
 }
 
@@ -29,6 +31,7 @@ export interface UpdateFAQRequest {
   category?: string;
   featured?: boolean;
   published?: boolean;
+  isActive?: boolean;
   order?: number;
 }
 

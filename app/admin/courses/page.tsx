@@ -22,7 +22,7 @@ import { Enrollment } from '@/lib/types/course';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatPrice, formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiPencil, HiTrash, HiEye, HiUserGroup } from 'react-icons/hi';
+import { HiPencil, HiTrash, HiEye, HiUserGroup, HiDotsVertical } from 'react-icons/hi';
 
 export default function AdminCoursesPage() {
   const router = useRouter();
@@ -40,6 +40,7 @@ export default function AdminCoursesPage() {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [featuredUpdatingId, setFeaturedUpdatingId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -170,6 +171,21 @@ export default function AdminCoursesPage() {
     );
   };
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.actions-menu')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openMenuId]);
+
   return (
     <div>
       <div className="mb-8 flex justify-between items-center">
@@ -239,27 +255,25 @@ export default function AdminCoursesPage() {
           <table className="w-full">
             <thead className="bg-[var(--muted)]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Thumbnail</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Title</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Instructor</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Popular</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Enrollments</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Thumbnail</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase ">Title</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Instructor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Popular</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Price</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Enrollments</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-4 text-center">Loading...</td>
+                  <td colSpan={8} className="px-4 py-4 text-center">Loading...</td>
                 </tr>
               ) : courses && courses.length > 0 ? (
                 courses.map((course) => (
                   <tr key={course.id} className="hover:bg-[var(--muted)]">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       {course.thumbnail ? (
                         <div className="relative w-16 h-16 rounded-none overflow-hidden">
                           <Image
@@ -276,17 +290,16 @@ export default function AdminCoursesPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-[var(--foreground)]">{course.title}</div>
-                      <div className="text-sm text-[var(--muted-foreground)]">{course.slug}</div>
+                    <td className="px-4 py-4">
+                      <div className="font-medium text-[var(--foreground)] line-clamp-2" title={course.title}>
+                        {course.title.length > 20 ? `${course.title.substring(0, 20)}...` : course.title}
+                      </div>
+                      <div className="text-sm text-[var(--muted-foreground)] truncate">{course.category?.name || 'Uncategorized'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {course.instructor?.name || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {course.category?.name || 'Uncategorized'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <Select
                         value={course.status}
                         onChange={(e) => handleStatusChange(course.id, e.target.value as 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED')}
@@ -303,7 +316,7 @@ export default function AdminCoursesPage() {
                         <span className="ml-1 text-xs text-[var(--muted-foreground)]">Updating...</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -324,46 +337,63 @@ export default function AdminCoursesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                       {course._count?.enrollments ?? course.totalEnrollments ?? 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted-foreground)]">
-                      {formatDate(course.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="View enrolled students"
-                          onClick={() => openStudentsModal(course)}
-                          className="text-[var(--primary-600)] hover:text-[var(--primary-700)]"
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="relative actions-menu">
+                        <button
+                          type="button"
+                          onClick={() => setOpenMenuId(openMenuId === course.id ? null : course.id)}
+                          className="p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] rounded-none transition-colors"
+                          title="Actions"
                         >
-                          <HiUserGroup className="h-4 w-4" />
-                        </Button>
-                        <Link href={`/admin/courses/${course.id}`}>
-                          <Button variant="ghost" size="sm" title="View" className="text-[var(--primary-600)] hover:text-[var(--primary-700)]">
-                            <HiEye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/admin/courses/${course.id}/edit`}>
-                          <Button variant="ghost" size="sm" title="Edit" className="text-[var(--primary-600)] hover:text-[var(--primary-700)]">
-                            <HiPencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="Delete"
-                          onClick={() => handleDelete(course.id, course.title)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <HiTrash className="h-4 w-4" />
-                        </Button>
+                          <HiDotsVertical className="h-5 w-5" />
+                        </button>
+                        {openMenuId === course.id && (
+                          <div className="absolute right-0 mt-2 w-48 bg-[var(--background)] rounded-none shadow-lg border border-[var(--border)] z-50 py-1">
+                            <button
+                              onClick={() => {
+                                openStudentsModal(course);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--muted)] flex items-center gap-2"
+                            >
+                              <HiUserGroup className="h-4 w-4" />
+                              View Students
+                            </button>
+                            <Link
+                              href={`/admin/courses/${course.id}`}
+                              onClick={() => setOpenMenuId(null)}
+                              className="block px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] flex items-center gap-2"
+                            >
+                              <HiEye className="h-4 w-4" />
+                              View
+                            </Link>
+                            <Link
+                              href={`/admin/courses/${course.id}/edit`}
+                              onClick={() => setOpenMenuId(null)}
+                              className="block px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)] flex items-center gap-2"
+                            >
+                              <HiPencil className="h-4 w-4" />
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => {
+                                handleDelete(course.id, course.title);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <HiTrash className="h-4 w-4" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="px-6 py-4 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={8} className="px-4 py-4 text-center text-[var(--muted-foreground)]">
                     No courses found
                   </td>
                 </tr>
