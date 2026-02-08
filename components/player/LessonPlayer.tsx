@@ -66,6 +66,8 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     key={videoSrc}
                                     src={videoSrc}
                                     controls
+                                    preload="auto"
+                                    playsInline
                                     className="w-full h-full"
                                     onEnded={onComplete}
                                 />

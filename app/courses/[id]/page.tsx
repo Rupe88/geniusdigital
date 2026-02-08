@@ -50,6 +50,7 @@ export default function CourseDetailPage() {
   const [promoStreamUrl, setPromoStreamUrl] = useState<string | null>(null);
   const [promoStreamError, setPromoStreamError] = useState<string | null>(null);
   const promoFetchedForCourseId = useRef<string | null>(null);
+  const promoVideoRef = useRef<HTMLVideoElement>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -97,9 +98,16 @@ export default function CourseDetailPage() {
     }
   }, [course?.id]);
 
-  // Prefetch secure stream URL as soon as course loads (so first play is instant and we don't change src after load)
+  // Use promo URL from course when API already returns signed URL (faster); otherwise fetch from video-token
   useEffect(() => {
-    if (!course?.id || !course?.videoUrl || !isSecureStreamPath(course.videoUrl)) return;
+    if (!course?.id || !course?.videoUrl) return;
+    if (course.videoUrl.startsWith('http')) {
+      setPromoStreamUrl(course.videoUrl);
+      setPromoStreamError(null);
+      promoFetchedForCourseId.current = course.id;
+      return;
+    }
+    if (!isSecureStreamPath(course.videoUrl)) return;
     if (promoFetchedForCourseId.current === course.id) return;
     promoFetchedForCourseId.current = course.id;
     let cancelled = false;
@@ -116,6 +124,12 @@ export default function CourseDetailPage() {
       });
     return () => { cancelled = true; };
   }, [course?.id, course?.videoUrl]);
+
+  useEffect(() => {
+    if (demoVideoPlaying && promoVideoRef.current) {
+      promoVideoRef.current.play().catch(() => {});
+    }
+  }, [demoVideoPlaying]);
 
   const fetchCourse = async (id: string) => {
     try {
@@ -431,61 +445,59 @@ export default function CourseDetailPage() {
             {/* Main Course Media */}
             <div className={`relative aspect-video rounded-lg overflow-hidden bg-black ${!demoVideoPlaying ? 'cursor-pointer' : ''}`}
               onClick={() => !demoVideoPlaying && setDemoVideoPlaying(true)}>
-              {demoVideoPlaying ? (
-                <div className="w-full h-full">
-                  {course.videoUrl && getYouTubeEmbedUrl(course.videoUrl) ? (
-                    <iframe
-                      src={`${getYouTubeEmbedUrl(course.videoUrl)}?autoplay=1`}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  ) : promoStreamError ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
-                      <HiVideoCamera className="w-16 h-16 opacity-20" />
-                      <p className="font-medium">{promoStreamError}</p>
-                    </div>
-                  ) : isSecureStreamPath(course.videoUrl) ? (
-                    promoStreamUrl ? (
-                      <video
-                        key={promoStreamUrl}
-                        src={promoStreamUrl}
-                        controls
-                        autoPlay
-                        playsInline
-                        preload="auto"
-                        className="w-full h-full"
-                        onCanPlay={(e) => {
-                          e.currentTarget.play().catch(() => {});
-                        }}
-                        onError={(e) => {
-                          const v = e.currentTarget;
-                          const msg = v.error?.message || 'Video failed to play';
-                          if (typeof window !== 'undefined') console.warn('Video error:', msg);
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
-                        <HiVideoCamera className="w-16 h-16 opacity-20 animate-pulse" />
-                        <p className="font-medium">Loading video...</p>
-                      </div>
-                    )
-                  ) : course.videoUrl ? (
-                    <video
-                      src={course.videoUrl}
-                      controls
-                      autoPlay
-                      className="w-full h-full"
-                      playsInline
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
-                      <HiVideoCamera className="w-16 h-16 opacity-20" />
-                      <p className="font-medium">Preview video not available</p>
-                    </div>
-                  )}
+              {course.videoUrl && getYouTubeEmbedUrl(course.videoUrl) && demoVideoPlaying ? (
+                <iframe
+                  src={`${getYouTubeEmbedUrl(course.videoUrl)}?autoplay=1`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : null}
+              {!getYouTubeEmbedUrl(course.videoUrl) && promoStreamError ? (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                  <HiVideoCamera className="w-16 h-16 opacity-20" />
+                  <p className="font-medium">{promoStreamError}</p>
                 </div>
-              ) : (
+              ) : null}
+              {!getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && (isSecureStreamPath(course.videoUrl) || course.videoUrl?.startsWith?.('http')) ? (
+                promoStreamUrl ? (
+                  <video
+                    ref={promoVideoRef}
+                    key={promoStreamUrl}
+                    src={promoStreamUrl}
+                    preload="auto"
+                    playsInline
+                    controls
+                    className={`w-full h-full absolute inset-0 object-contain ${!demoVideoPlaying ? 'opacity-0 pointer-events-none' : 'z-10'}`}
+                    onCanPlay={() => demoVideoPlaying && promoVideoRef.current?.play().catch(() => {})}
+                    onError={(e) => {
+                      const v = e.currentTarget;
+                      if (typeof window !== 'undefined') console.warn('Video error:', v.error?.message || 'Video failed to play');
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                    <HiVideoCamera className="w-16 h-16 opacity-20 animate-pulse" />
+                    <p className="font-medium">Loading video...</p>
+                  </div>
+                )
+              ) : null}
+              {demoVideoPlaying && !getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && !isSecureStreamPath(course.videoUrl) && course.videoUrl && (
+                <video
+                  src={course.videoUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full"
+                  playsInline
+                />
+              )}
+              {!course.videoUrl && !promoStreamUrl && !promoStreamError ? (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                  <HiVideoCamera className="w-16 h-16 opacity-20" />
+                  <p className="font-medium">Preview video not available</p>
+                </div>
+              ) : null}
+              {!demoVideoPlaying && (
                 <>
                   {course.thumbnail && (
                     <StorageImage
@@ -497,7 +509,7 @@ export default function CourseDetailPage() {
                       priority
                     />
                   )}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
                     <button className="flex items-center gap-3 px-8 py-4 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] text-white font-semibold text-lg rounded-lg transition-colors">
                       <HiPlay className="w-6 h-6" />
                       Play Preview

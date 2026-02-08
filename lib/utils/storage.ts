@@ -42,21 +42,13 @@ export function isOurS3StorageUrl(url: string | null | undefined): boolean {
 
 /**
  * Returns the URL to use for displaying an image.
- * S3 URLs go through backend proxy so the client never sees S3 or AWS params.
- * API may also return token URLs (e.g. /api/media/image?token=...) which are used as-is.
+ * S3 URLs (including signed URLs from API) are used as-is so the browser loads directly from S3 bucket (no backend proxy).
  */
-const USE_DIRECT_S3_IMAGES =
-  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_DIRECT_S3_IMAGES === 'true';
-
 export function getStorageImageSrc(
   url: string | null | undefined,
-  apiBase: string
+  _apiBase: string
 ): string {
   if (!url || typeof url !== 'string') return '';
-  if (isOurS3StorageUrl(url)) {
-    if (USE_DIRECT_S3_IMAGES) return url;
-    return `${apiBase.replace(/\/$/, '')}/media/image?url=${encodeURIComponent(url)}`;
-  }
   return url;
 }
 
