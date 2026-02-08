@@ -9,13 +9,11 @@ const STORAGE_HOSTNAMES = [
   'res.cloudinary.com', // legacy
 ];
 
-/** Hostnames that are our private S3 – use backend image proxy to avoid 403. */
-const S3_PROXY_HOSTNAMES = ['s3-np1.datahub.com.np', 'datahub.com.np'];
+/** Hostnames for our S3 (DataHub). Use direct S3 base URL when bucket is public. */
+const S3_DIRECT_HOSTNAMES = ['s3-np1.datahub.com.np', 'datahub.com.np'];
 
 /**
  * Returns true if the URL is from our storage (S3 or Cloudinary) or any remote URL.
- * Use for Next/Image unoptimized to avoid optimization errors on external storage.
- * Any absolute http(s) URL from the API is treated as storage so thumbnails always load.
  */
 export function isStorageUrl(url: string | null | undefined): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -30,29 +28,33 @@ export function isStorageUrl(url: string | null | undefined): boolean {
 }
 
 /**
- * Returns true if the URL is from our S3 (DataHub). These need to go through the backend
- * image proxy so private bucket images load without 403.
+ * Returns true if the URL is from our S3 (DataHub). We use direct S3 base URL for images/video.
  */
 export function isOurS3StorageUrl(url: string | null | undefined): boolean {
   if (!url || typeof url !== 'string') return false;
   try {
     const host = new URL(url.trim()).hostname.toLowerCase();
-    return S3_PROXY_HOSTNAMES.some((h) => host === h || host.endsWith('.' + h));
+    return S3_DIRECT_HOSTNAMES.some((h) => host === h || host.endsWith('.' + h));
   } catch {
     return false;
   }
 }
 
 /**
- * Returns the URL to use for displaying an image. S3 URLs are rewritten to the backend
- * proxy so private bucket images load without 403. Pass getApiBaseUrl() from @/lib/api/axios.
+ * Returns the URL to use for displaying an image.
+ * S3 URLs (https://s3-np1.datahub.com.np/...) are used as-is (direct S3 base URL).
+ * Pass getApiBaseUrl() for fallback proxy when USE_DIRECT_S3_IMAGES is false.
  */
+const USE_DIRECT_S3_IMAGES =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_DIRECT_S3_IMAGES !== 'false';
+
 export function getStorageImageSrc(
   url: string | null | undefined,
   apiBase: string
 ): string {
   if (!url || typeof url !== 'string') return '';
   if (isOurS3StorageUrl(url)) {
+    if (USE_DIRECT_S3_IMAGES) return url;
     return `${apiBase.replace(/\/$/, '')}/media/image?url=${encodeURIComponent(url)}`;
   }
   return url;
