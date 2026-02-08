@@ -68,8 +68,15 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     controls
                                     preload="metadata"
                                     playsInline
+                                    crossOrigin="anonymous"
                                     className="w-full h-full"
                                     onEnded={onComplete}
+                                    onError={(e) => {
+                                        const v = e.currentTarget;
+                                        if (typeof window !== 'undefined' && v?.error?.message) {
+                                            console.warn('Lesson video error:', v.error.message);
+                                        }
+                                    }}
                                 />
                             ) : isSecureStreamPath(lesson.videoUrl) ? (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">

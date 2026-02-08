@@ -468,6 +468,7 @@ export default function CourseDetailPage() {
                     preload="metadata"
                     playsInline
                     controls
+                    crossOrigin="anonymous"
                     className={`w-full h-full absolute inset-0 object-contain ${!demoVideoPlaying ? 'opacity-0 pointer-events-none' : 'z-10'}`}
                     onCanPlay={() => demoVideoPlaying && promoVideoRef.current?.play().catch(() => {})}
                     onError={(e) => {
