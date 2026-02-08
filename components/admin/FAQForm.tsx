@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
-import { FAQ, CreateFAQRequest, UpdateFAQRequest } from '@/lib/api/faq';
+import { FAQ, CreateFAQRequest } from '@/lib/api/faq';
 import { getFAQCategoryOptions, FAQ_CATEGORIES } from '@/lib/utils/faqCategories';
 
 const faqSchema = z.object({
@@ -24,7 +24,7 @@ type FAQFormData = z.infer<typeof faqSchema>;
 
 interface FAQFormProps {
   initialData?: FAQ;
-  onSubmit: (data: CreateFAQRequest | UpdateFAQRequest) => Promise<void>;
+  onSubmit: (data: CreateFAQRequest) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
 }

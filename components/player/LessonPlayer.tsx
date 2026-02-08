@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload } from 'react-icons/hi';
 import { getYouTubeEmbedUrl } from '@/lib/utils/helpers';
-import { getVideoStreamUrl, isSecureStreamPath } from '@/lib/api/media';
+import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 
 interface LessonPlayerProps {
     lesson: Lesson;
@@ -15,16 +15,34 @@ interface LessonPlayerProps {
 export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }) => {
     const [secureVideoSrc, setSecureVideoSrc] = useState<string | null>(null);
     const [secureVideoError, setSecureVideoError] = useState<string | null>(null);
+    const fetchedForLessonId = useRef<string | null>(null);
 
     useEffect(() => {
-        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl || !isSecureStreamPath(lesson.videoUrl)) return;
+        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl) return;
+
+        const isS3 = isOurS3Url(lesson.videoUrl);
+        const isStream = isSecureStreamPath(lesson.videoUrl);
+
+        if (!isS3 && !isStream) return;
+
+        if (fetchedForLessonId.current !== null && fetchedForLessonId.current !== lesson.id) {
+            setSecureVideoSrc(null);
+            setSecureVideoError(null);
+            fetchedForLessonId.current = null;
+        }
+        if (fetchedForLessonId.current === lesson.id) return;
+        fetchedForLessonId.current = lesson.id;
         let cancelled = false;
+        setSecureVideoError(null);
         getVideoStreamUrl({ lessonId: lesson.id })
             .then((url) => {
                 if (!cancelled) setSecureVideoSrc(url);
             })
             .catch((err) => {
-                if (!cancelled) setSecureVideoError(err instanceof Error ? err.message : 'Could not load video');
+                if (!cancelled) {
+                    setSecureVideoError(err instanceof Error ? err.message : 'Could not load video');
+                    fetchedForLessonId.current = null;
+                }
             });
         return () => { cancelled = true; };
     }, [lesson.id, lesson.lessonType, lesson.videoUrl]);
@@ -54,8 +72,17 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     key={videoSrc}
                                     src={videoSrc}
                                     controls
+                                    preload="auto"
+                                    playsInline
                                     className="w-full h-full"
                                     onEnded={onComplete}
+                                    autoPlay
+                                    onError={(e) => {
+                                        const v = e.currentTarget;
+                                        const errorMsg = v?.error?.message || 'Video playback failed';
+                                        console.error('Lesson video error:', errorMsg);
+                                        setSecureVideoError(`Playback Error: ${errorMsg}. Please try refreshing the page.`);
+                                    }}
                                 />
                             ) : isSecureStreamPath(lesson.videoUrl) ? (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
