@@ -453,13 +453,13 @@ export default function CourseDetailPage() {
                   allowFullScreen
                 />
               ) : null}
-              {!getYouTubeEmbedUrl(course.videoUrl) && promoStreamError ? (
+              {course.videoUrl && !getYouTubeEmbedUrl(course.videoUrl) && promoStreamError ? (
                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                   <HiVideoCamera className="w-16 h-16 opacity-20" />
                   <p className="font-medium">{promoStreamError}</p>
                 </div>
               ) : null}
-              {!getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && (isSecureStreamPath(course.videoUrl) || course.videoUrl?.startsWith?.('http')) ? (
+              {course.videoUrl && !getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && (isSecureStreamPath(course.videoUrl) || course.videoUrl.startsWith('http')) ? (
                 promoStreamUrl ? (
                   <video
                     ref={promoVideoRef}
@@ -482,7 +482,7 @@ export default function CourseDetailPage() {
                   </div>
                 )
               ) : null}
-              {demoVideoPlaying && !getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && !isSecureStreamPath(course.videoUrl) && course.videoUrl && (
+              {demoVideoPlaying && course.videoUrl && !getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && !isSecureStreamPath(course.videoUrl) && (
                 <video
                   src={course.videoUrl}
                   controls
