@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload } from 'react-icons/hi';
@@ -15,16 +15,28 @@ interface LessonPlayerProps {
 export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }) => {
     const [secureVideoSrc, setSecureVideoSrc] = useState<string | null>(null);
     const [secureVideoError, setSecureVideoError] = useState<string | null>(null);
+    const fetchedForLessonId = useRef<string | null>(null);
 
     useEffect(() => {
         if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl || !isSecureStreamPath(lesson.videoUrl)) return;
+        if (fetchedForLessonId.current !== null && fetchedForLessonId.current !== lesson.id) {
+            setSecureVideoSrc(null);
+            setSecureVideoError(null);
+            fetchedForLessonId.current = null;
+        }
+        if (fetchedForLessonId.current === lesson.id) return;
+        fetchedForLessonId.current = lesson.id;
         let cancelled = false;
+        setSecureVideoError(null);
         getVideoStreamUrl({ lessonId: lesson.id })
             .then((url) => {
                 if (!cancelled) setSecureVideoSrc(url);
             })
             .catch((err) => {
-                if (!cancelled) setSecureVideoError(err instanceof Error ? err.message : 'Could not load video');
+                if (!cancelled) {
+                    setSecureVideoError(err instanceof Error ? err.message : 'Could not load video');
+                    fetchedForLessonId.current = null;
+                }
             });
         return () => { cancelled = true; };
     }, [lesson.id, lesson.lessonType, lesson.videoUrl]);

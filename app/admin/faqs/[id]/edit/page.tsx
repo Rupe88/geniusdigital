@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FAQForm } from '@/components/admin/FAQForm';
-import { UpdateFAQRequest, getFAQById, type FAQ } from '@/lib/api/faq';
+import { CreateFAQRequest, getFAQById, type FAQ } from '@/lib/api/faq';
 import * as faqApi from '@/lib/api/faq';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
@@ -32,7 +32,7 @@ export default function EditFAQPage() {
     }
   };
 
-  const handleSubmit = async (data: UpdateFAQRequest) => {
+  const handleSubmit = async (data: CreateFAQRequest) => {
     try {
       await faqApi.updateFAQ(id, data);
       showSuccess('FAQ updated successfully!');

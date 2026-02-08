@@ -42,11 +42,11 @@ export function isOurS3StorageUrl(url: string | null | undefined): boolean {
 
 /**
  * Returns the URL to use for displaying an image.
- * S3 URLs (https://s3-np1.datahub.com.np/...) are used as-is (direct S3 base URL).
- * Pass getApiBaseUrl() for fallback proxy when USE_DIRECT_S3_IMAGES is false.
+ * S3 URLs go through backend proxy so the client never sees S3 or AWS params.
+ * API may also return token URLs (e.g. /api/media/image?token=...) which are used as-is.
  */
 const USE_DIRECT_S3_IMAGES =
-  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_DIRECT_S3_IMAGES !== 'false';
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_DIRECT_S3_IMAGES === 'true';
 
 export function getStorageImageSrc(
   url: string | null | undefined,

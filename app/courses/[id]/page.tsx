@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -49,6 +49,7 @@ export default function CourseDetailPage() {
   const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
   const [promoStreamUrl, setPromoStreamUrl] = useState<string | null>(null);
   const [promoStreamError, setPromoStreamError] = useState<string | null>(null);
+  const promoFetchedForCourseId = useRef<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -87,9 +88,20 @@ export default function CourseDetailPage() {
     }
   }, [params.id]);
 
-  // Fetch secure stream URL when user clicks play on promo video (stream path). Must run unconditionally (no early return before this).
+  // Clear promo URL when switching to a different course so we don't show the previous course's video
   useEffect(() => {
-    if (!demoVideoPlaying || !course?.videoUrl || !isSecureStreamPath(course.videoUrl)) return;
+    if (course?.id && promoFetchedForCourseId.current !== null && promoFetchedForCourseId.current !== course.id) {
+      setPromoStreamUrl(null);
+      setPromoStreamError(null);
+      promoFetchedForCourseId.current = null;
+    }
+  }, [course?.id]);
+
+  // Prefetch secure stream URL as soon as course loads (so first play is instant and we don't change src after load)
+  useEffect(() => {
+    if (!course?.id || !course?.videoUrl || !isSecureStreamPath(course.videoUrl)) return;
+    if (promoFetchedForCourseId.current === course.id) return;
+    promoFetchedForCourseId.current = course.id;
     let cancelled = false;
     setPromoStreamError(null);
     getVideoStreamUrl({ courseId: course.id, type: 'promo' })
@@ -97,10 +109,13 @@ export default function CourseDetailPage() {
         if (!cancelled) setPromoStreamUrl(url);
       })
       .catch((err) => {
-        if (!cancelled) setPromoStreamError(err instanceof Error ? err.message : 'Could not load video');
+        if (!cancelled) {
+          setPromoStreamError(err instanceof Error ? err.message : 'Could not load video');
+          promoFetchedForCourseId.current = null;
+        }
       });
     return () => { cancelled = true; };
-  }, [demoVideoPlaying, course?.id, course?.videoUrl]);
+  }, [course?.id, course?.videoUrl]);
 
   const fetchCourse = async (id: string) => {
     try {
