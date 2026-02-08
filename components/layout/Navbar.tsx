@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ROUTES } from '@/lib/utils/constants';
+import { generateBreadcrumbs, shouldShowBreadcrumbs } from '@/lib/utils/breadcrumbs';
 import { HiMenu, HiX, HiUser, HiLogout, HiCog, HiChevronDown } from 'react-icons/hi';
 
 export const Navbar: React.FC = () => {
@@ -47,6 +48,10 @@ export const Navbar: React.FC = () => {
   const isMoreMenuActive = () => {
     return moreMenuItems.some((item) => isActive(item.href));
   };
+
+  // Generate breadcrumbs
+  const showBreadcrumbs = shouldShowBreadcrumbs(pathname);
+  const breadcrumbs = showBreadcrumbs ? generateBreadcrumbs(pathname) : [];
 
   // Close desktop More dropdown when clicking outside
   useEffect(() => {
@@ -236,6 +241,35 @@ export const Navbar: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Breadcrumbs */}
+      {showBreadcrumbs && breadcrumbs.length > 0 && (
+        <div className="border-t border-gray-200 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="flex items-center py-3 text-sm">
+              {breadcrumbs.map((crumb, index) => (
+                <React.Fragment key={`${crumb.href}-${index}`}>
+                  {index > 0 && (
+                    <span className="mx-2 text-gray-400" aria-hidden="true">
+                      &gt;
+                    </span>
+                  )}
+                  {index === breadcrumbs.length - 1 ? (
+                    <span className="text-gray-900">{crumb.label}</span>
+                  ) : (
+                    <Link
+                      href={crumb.href}
+                      className="text-gray-900 hover:text-[var(--primary-700)] transition-colors"
+                    >
+                      {crumb.label}
+                    </Link>
+                  )}
+                </React.Fragment>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (

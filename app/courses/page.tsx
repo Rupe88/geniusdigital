@@ -108,7 +108,7 @@ export default function CoursesPage() {
     <div className="min-h-screen bg-[var(--muted)] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 space-y-4">
-          <h1 className="text-4xl font-bold text-[var(--foreground)]">All Courses</h1>
+          {/* <h1 className="text-4xl font-bold text-[var(--foreground)]">All Courses</h1> */}
 
           {/* Search bar */}
           <form onSubmit={handleSearchSubmit} className="max-w-lg">
