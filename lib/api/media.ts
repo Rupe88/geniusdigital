@@ -28,3 +28,11 @@ export function isSecureStreamPath(url: string | null | undefined): boolean {
   if (!url || typeof url !== 'string') return false;
   return url.startsWith('/api/media/stream/') || url.includes('/api/media/stream/');
 }
+
+/** True if the URL is from our S3 storage bucket. */
+export function isOurS3Url(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const s3Host = 's3-np1.datahub.com.np';
+  const bucket = 'vaastu-lms';
+  return url.includes(s3Host) && url.includes(bucket);
+}

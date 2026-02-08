@@ -5,7 +5,7 @@ import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload } from 'react-icons/hi';
 import { getYouTubeEmbedUrl } from '@/lib/utils/helpers';
-import { getVideoStreamUrl, isSecureStreamPath } from '@/lib/api/media';
+import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 
 interface LessonPlayerProps {
     lesson: Lesson;
@@ -18,7 +18,13 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     const fetchedForLessonId = useRef<string | null>(null);
 
     useEffect(() => {
-        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl || !isSecureStreamPath(lesson.videoUrl)) return;
+        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl) return;
+
+        const isS3 = isOurS3Url(lesson.videoUrl);
+        const isStream = isSecureStreamPath(lesson.videoUrl);
+
+        if (!isS3 && !isStream) return;
+
         if (fetchedForLessonId.current !== null && fetchedForLessonId.current !== lesson.id) {
             setSecureVideoSrc(null);
             setSecureVideoError(null);
@@ -66,16 +72,16 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     key={videoSrc}
                                     src={videoSrc}
                                     controls
-                                    preload="metadata"
+                                    preload="auto"
                                     playsInline
-                                    crossOrigin="anonymous"
                                     className="w-full h-full"
                                     onEnded={onComplete}
+                                    autoPlay
                                     onError={(e) => {
                                         const v = e.currentTarget;
-                                        if (typeof window !== 'undefined' && v?.error?.message) {
-                                            console.warn('Lesson video error:', v.error.message);
-                                        }
+                                        const errorMsg = v?.error?.message || 'Video playback failed';
+                                        console.error('Lesson video error:', errorMsg);
+                                        setSecureVideoError(`Playback Error: ${errorMsg}. Please try refreshing the page.`);
                                     }}
                                 />
                             ) : isSecureStreamPath(lesson.videoUrl) ? (

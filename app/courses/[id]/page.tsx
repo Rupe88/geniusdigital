@@ -17,7 +17,7 @@ import { reviewsApi } from '@/lib/api/reviews';
 import { Course, Lesson, Review, Chapter } from '@/lib/types/course';
 import { formatPrice, formatCurrency, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
 import { useAuth } from '@/lib/context/AuthContext';
-import { getVideoStreamUrl, isSecureStreamPath } from '@/lib/api/media';
+import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { ROUTES } from '@/lib/utils/constants';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiClipboardCheck, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
@@ -101,14 +101,22 @@ export default function CourseDetailPage() {
   // Use promo URL from course when API already returns signed URL (faster); otherwise fetch from video-token
   useEffect(() => {
     if (!course?.id || !course?.videoUrl) return;
-    if (course.videoUrl.startsWith('http')) {
+
+    const isS3 = isOurS3Url(course.videoUrl);
+    const isStream = isSecureStreamPath(course.videoUrl);
+
+    // If it's a generic public URL (not S3, not stream), use it directly
+    if (course.videoUrl.startsWith('http') && !isS3 && !isStream) {
       setPromoStreamUrl(course.videoUrl);
       setPromoStreamError(null);
       promoFetchedForCourseId.current = course.id;
       return;
     }
-    if (!isSecureStreamPath(course.videoUrl)) return;
+
+    // If it's an S3 URL or a stream path, we NEED a tokenized stream URL
+    if (!isS3 && !isStream) return;
     if (promoFetchedForCourseId.current === course.id) return;
+
     promoFetchedForCourseId.current = course.id;
     let cancelled = false;
     setPromoStreamError(null);
@@ -127,7 +135,7 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     if (demoVideoPlaying && promoVideoRef.current) {
-      promoVideoRef.current.play().catch(() => {});
+      promoVideoRef.current.play().catch(() => { });
     }
   }, [demoVideoPlaying]);
 
@@ -465,15 +473,17 @@ export default function CourseDetailPage() {
                     ref={promoVideoRef}
                     key={promoStreamUrl}
                     src={promoStreamUrl}
-                    preload="metadata"
+                    preload="auto"
                     playsInline
                     controls
-                    crossOrigin="anonymous"
                     className={`w-full h-full absolute inset-0 object-contain ${!demoVideoPlaying ? 'opacity-0 pointer-events-none' : 'z-10'}`}
-                    onCanPlay={() => demoVideoPlaying && promoVideoRef.current?.play().catch(() => {})}
+                    onCanPlay={() => demoVideoPlaying && promoVideoRef.current?.play().catch(() => { })}
+                    autoPlay
                     onError={(e) => {
                       const v = e.currentTarget;
-                      if (typeof window !== 'undefined') console.warn('Video error:', v.error?.message || 'Video failed to play');
+                      const msg = v.error?.message || 'Video failed to play';
+                      console.warn('Promo video error:', msg);
+                      setPromoStreamError(`Playback error: ${msg}. Refreshing might help.`);
                     }}
                   />
                 ) : (
