@@ -16,35 +16,134 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     const [secureVideoSrc, setSecureVideoSrc] = useState<string | null>(null);
     const [secureVideoError, setSecureVideoError] = useState<string | null>(null);
     const fetchedForLessonId = useRef<string | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
-        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl) return;
+        console.log('[LessonPlayer] useEffect triggered', {
+            lessonId: lesson.id,
+            lessonType: lesson.lessonType,
+            videoUrl: lesson.videoUrl,
+        });
+
+        if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl) {
+            console.log('[LessonPlayer] Skipping - not a video lesson or no videoUrl');
+            return;
+        }
 
         const isS3 = isOurS3Url(lesson.videoUrl);
         const isStream = isSecureStreamPath(lesson.videoUrl);
 
-        if (!isS3 && !isStream) return;
+        console.log('[LessonPlayer] URL analysis', {
+            videoUrl: lesson.videoUrl,
+            isS3,
+            isStream,
+        });
 
+        if (!isS3 && !isStream) {
+            console.log('[LessonPlayer] Skipping - URL is not S3 or stream path');
+            return;
+        }
+
+        // If lesson changed, reset state and cancel previous request
         if (fetchedForLessonId.current !== null && fetchedForLessonId.current !== lesson.id) {
+            console.log('[LessonPlayer] Lesson changed, resetting state');
             setSecureVideoSrc(null);
             setSecureVideoError(null);
             fetchedForLessonId.current = null;
+            // Cancel previous request if it exists
+            if (abortControllerRef.current) {
+                console.log('[LessonPlayer] Aborting previous request');
+                abortControllerRef.current.abort();
+                abortControllerRef.current = null;
+            }
         }
-        if (fetchedForLessonId.current === lesson.id) return;
+        
+        // Only skip if we already have a result (success or error) for this lesson
+        if (fetchedForLessonId.current === lesson.id && (secureVideoSrc || secureVideoError)) {
+            console.log('[LessonPlayer] Already fetched for this lesson, skipping');
+            return;
+        }
+        
+        // If we're already fetching for this lesson, don't start another request
+        if (abortControllerRef.current && fetchedForLessonId.current === lesson.id) {
+            console.log('[LessonPlayer] Already fetching for this lesson, skipping');
+            return;
+        }
+        
+        // Mark as fetching to prevent duplicate requests
         fetchedForLessonId.current = lesson.id;
-        let cancelled = false;
+        
+        // Create abort controller for this request
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
+        
         setSecureVideoError(null);
+        
+        console.log('[LessonPlayer] Fetching video stream URL for lesson:', lesson.id);
+        const startTime = Date.now();
+        
         getVideoStreamUrl({ lessonId: lesson.id })
             .then((url) => {
-                if (!cancelled) setSecureVideoSrc(url);
+                // Check if request was aborted
+                if (abortController.signal.aborted) {
+                    console.log('[LessonPlayer] Request was aborted, ignoring response');
+                    return;
+                }
+                
+                const duration = Date.now() - startTime;
+                console.log('[LessonPlayer] Video stream URL received', {
+                    url,
+                    duration: `${duration}ms`,
+                });
+                
+                // Verify we're still on the same lesson
+                if (fetchedForLessonId.current !== lesson.id) {
+                    console.log('[LessonPlayer] Lesson changed during fetch, ignoring response');
+                    return;
+                }
+                
+                console.log('[LessonPlayer] Setting secureVideoSrc');
+                setSecureVideoSrc(url);
+                abortControllerRef.current = null;
             })
             .catch((err) => {
-                if (!cancelled) {
-                    setSecureVideoError(err instanceof Error ? err.message : 'Could not load video');
-                    fetchedForLessonId.current = null;
+                // Check if request was aborted
+                if (abortController.signal.aborted) {
+                    console.log('[LessonPlayer] Request was aborted, ignoring error');
+                    return;
                 }
+                
+                const duration = Date.now() - startTime;
+                console.error('[LessonPlayer] Failed to get video stream URL', {
+                    error: err,
+                    message: err instanceof Error ? err.message : String(err),
+                    duration: `${duration}ms`,
+                });
+                
+                // Verify we're still on the same lesson
+                if (fetchedForLessonId.current !== lesson.id) {
+                    console.log('[LessonPlayer] Lesson changed during fetch, ignoring error');
+                    return;
+                }
+                
+                const errorMessage = err instanceof Error ? err.message : 'Could not load video';
+                console.log('[LessonPlayer] Setting error state:', errorMessage);
+                setSecureVideoError(errorMessage);
+                // Reset on error so we can retry
+                fetchedForLessonId.current = null;
+                abortControllerRef.current = null;
             });
-        return () => { cancelled = true; };
+            
+        return () => {
+            // Only abort if the lesson has actually changed
+            if (fetchedForLessonId.current !== lesson.id) {
+                console.log('[LessonPlayer] Cleanup: aborting request (lesson changed)');
+                abortController.abort();
+                abortControllerRef.current = null;
+            } else {
+                console.log('[LessonPlayer] Cleanup: not aborting (same lesson)');
+            }
+        };
     }, [lesson.id, lesson.lessonType, lesson.videoUrl]);
 
     const renderContent = () => {
@@ -52,6 +151,16 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
             case 'VIDEO': {
                 const youtubeUrl = lesson.videoUrl ? getYouTubeEmbedUrl(lesson.videoUrl) : null;
                 const videoSrc = isSecureStreamPath(lesson.videoUrl) ? secureVideoSrc : lesson.videoUrl;
+                
+                console.log('[LessonPlayer] Rendering video', {
+                    youtubeUrl,
+                    videoSrc,
+                    secureVideoSrc,
+                    secureVideoError,
+                    isSecureStream: isSecureStreamPath(lesson.videoUrl),
+                    originalVideoUrl: lesson.videoUrl,
+                });
+                
                 return (
                     <div className="space-y-6">
                         <div className="aspect-video bg-black shadow-2xl">
@@ -72,16 +181,69 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     key={videoSrc}
                                     src={videoSrc}
                                     controls
-                                    preload="auto"
+                                    preload="metadata"
                                     playsInline
                                     className="w-full h-full"
                                     onEnded={onComplete}
                                     autoPlay
+                                    onLoadStart={() => {
+                                        console.log('[Video] onLoadStart - Starting to load video', {
+                                            src: videoSrc,
+                                            networkState: (document.querySelector('video') as HTMLVideoElement)?.networkState,
+                                        });
+                                    }}
+                                    onLoadedMetadata={(e) => {
+                                        const v = e.currentTarget;
+                                        console.log('[Video] onLoadedMetadata - Metadata loaded', {
+                                            duration: v.duration,
+                                            videoWidth: v.videoWidth,
+                                            videoHeight: v.videoHeight,
+                                            readyState: v.readyState,
+                                            networkState: v.networkState,
+                                        });
+                                    }}
+                                    onLoadedData={() => {
+                                        console.log('[Video] onLoadedData - First frame loaded');
+                                    }}
+                                    onCanPlay={() => {
+                                        console.log('[Video] onCanPlay - Video can start playing');
+                                    }}
+                                    onCanPlayThrough={() => {
+                                        console.log('[Video] onCanPlayThrough - Video can play through without buffering');
+                                    }}
+                                    onWaiting={() => {
+                                        console.log('[Video] onWaiting - Waiting for data');
+                                    }}
+                                    onStalled={() => {
+                                        console.log('[Video] onStalled - Media loading stalled');
+                                    }}
+                                    onProgress={() => {
+                                        const v = document.querySelector('video') as HTMLVideoElement;
+                                        if (v) {
+                                            const buffered = v.buffered;
+                                            if (buffered.length > 0) {
+                                                console.log('[Video] onProgress - Buffered ranges:', {
+                                                    length: buffered.length,
+                                                    start: buffered.start(0),
+                                                    end: buffered.end(buffered.length - 1),
+                                                    duration: v.duration,
+                                                });
+                                            }
+                                        }
+                                    }}
                                     onError={(e) => {
                                         const v = e.currentTarget;
                                         const errorMsg = v?.error?.message || 'Video playback failed';
-                                        console.error('Lesson video error:', errorMsg);
-                                        setSecureVideoError(`Playback Error: ${errorMsg}. Please try refreshing the page.`);
+                                        const errorCode = v?.error?.code;
+                                        console.error('[Video] onError - Video playback error', {
+                                            message: errorMsg,
+                                            code: errorCode,
+                                            networkState: v?.networkState,
+                                            readyState: v?.readyState,
+                                            src: videoSrc,
+                                            error: v?.error,
+                                        });
+                                        setSecureVideoError(`Playback Error: ${errorMsg}${errorCode ? ` (Code: ${errorCode})` : ''}. Please try refreshing the page.`);
                                     }}
                                 />
                             ) : isSecureStreamPath(lesson.videoUrl) ? (

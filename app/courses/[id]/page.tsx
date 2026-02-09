@@ -473,7 +473,7 @@ export default function CourseDetailPage() {
                     ref={promoVideoRef}
                     key={promoStreamUrl}
                     src={promoStreamUrl}
-                    preload="auto"
+                    preload="metadata"
                     playsInline
                     controls
                     className={`w-full h-full absolute inset-0 object-contain ${!demoVideoPlaying ? 'opacity-0 pointer-events-none' : 'z-10'}`}

@@ -92,6 +92,8 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
   const [chapters, setChapters] = useState<(Chapter | LocalChapter)[]>(initialChapters || []);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Modal states
   const [showChapterModal, setShowChapterModal] = useState(false);
@@ -340,6 +342,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
       if (courseId) {
         // Save to API if course exists
+        setIsUploading(true);
+        setUploadProgress(0);
+        
         const lessonData: CreateLessonData = {
           courseId,
           chapterId: selectedChapterId || undefined,
@@ -354,6 +359,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           videoFile: lessonForm.videoFile || undefined,
           attachmentFile: lessonForm.attachmentFile || undefined,
           quizData: lessonForm.lessonType === 'QUIZ' ? lessonForm.quizData : undefined,
+          onProgress: (progress: number) => {
+            requestAnimationFrame(() => setUploadProgress(progress));
+          },
         };
 
         if (editingLesson) {
@@ -407,6 +415,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
     } catch (error) {
       console.error('Error saving lesson:', error);
       showError('Failed to save lesson');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -788,7 +799,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       {/* Lesson Modal */}
       <Modal
         isOpen={showLessonModal}
-        onClose={() => setShowLessonModal(false)}
+        onClose={() => !isUploading && setShowLessonModal(false)}
         title={editingLesson ? 'Edit Lesson' : 'Create Lesson'}
         size="lg"
       >
@@ -844,6 +855,8 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                     value={lessonForm.videoFile}
                     onChange={(file) => setLessonForm(prev => ({ ...prev, videoFile: file || null, videoUrl: file ? '' : prev.videoUrl }))}
                     helperText="MP4, WebM, etc. Up to 3GB. Upload and link are alternatives."
+                    isUploading={isUploading}
+                    uploadProgress={uploadProgress}
                   />
                 </div>
               </div>
@@ -979,11 +992,21 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => setShowLessonModal(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowLessonModal(false)}
+              disabled={isUploading}
+            >
               Cancel
             </Button>
-            <Button type="button" variant="primary" onClick={handleSaveLesson}>
-              {editingLesson ? 'Update' : 'Create'} Lesson
+            <Button 
+              type="button" 
+              variant="primary" 
+              onClick={handleSaveLesson}
+              disabled={isUploading}
+            >
+              {isUploading ? `Uploading... ${uploadProgress}%` : editingLesson ? 'Update' : 'Create'} Lesson
             </Button>
           </div>
         </div>

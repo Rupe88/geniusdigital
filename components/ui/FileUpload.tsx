@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef, useState, useId } from 'react';
-import { HiUpload, HiX, HiPhotograph } from 'react-icons/hi';
+import React, { useRef, useState, useId, useMemo } from 'react';
+import { HiUpload, HiX, HiPhotograph, HiVideoCamera } from 'react-icons/hi';
 import { classNames } from '@/lib/utils/helpers';
 
 interface FileUploadProps {
@@ -14,6 +14,8 @@ interface FileUploadProps {
   onChange?: (file: File | null) => void;
   onRemove?: () => void;
   className?: string;
+  isUploading?: boolean;
+  uploadProgress?: number; // 0-100
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
@@ -26,6 +28,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   onChange,
   onRemove,
   className,
+  isUploading = false,
+  uploadProgress = 0,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -33,6 +37,37 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     typeof value === 'string' ? value : null
   );
   const generatedId = useId();
+
+  // Detect file type from accept prop
+  const fileTypeInfo = useMemo(() => {
+    const acceptLower = accept.toLowerCase();
+    
+    if (acceptLower.includes('video') || acceptLower.includes('mp4') || acceptLower.includes('webm') || acceptLower.includes('ogg') || acceptLower.includes('quicktime')) {
+      return {
+        type: 'video',
+        icon: HiVideoCamera,
+        uploadText: 'Upload video',
+        formatText: 'MP4, WebM, OGG, MOV',
+        aspectRatio: ''
+      };
+    } else if (acceptLower.includes('pdf') || acceptLower.includes('doc') || acceptLower.includes('document')) {
+      return {
+        type: 'document',
+        icon: HiUpload,
+        uploadText: 'Upload document',
+        formatText: 'PDF, DOC, DOCX',
+        aspectRatio: ''
+      };
+    } else {
+      return {
+        type: 'image',
+        icon: HiPhotograph,
+        uploadText: 'Upload thumbnail',
+        formatText: 'PNG, JPG',
+        aspectRatio: '16:9 recommended'
+      };
+    }
+  }, [accept]);
 
   const handleFile = (file: File) => {
     // Validate file type
@@ -61,6 +96,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleDrag = (e: React.DragEvent) => {
+    if (isUploading) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -71,6 +111,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    if (isUploading) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -81,6 +126,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isUploading) {
+      e.preventDefault();
+      return;
+    }
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
@@ -103,42 +152,87 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </label>
       )}
 
-      {preview ? (
+      {preview && fileTypeInfo.type === 'image' ? (
         <div className="relative inline-block">
           <div className="relative w-40 h-24 rounded-none overflow-hidden border-2 border-[var(--border)] shadow-sm hover:shadow-md transition-shadow">
             <img
               src={preview}
-              alt="Course Thumbnail"
+              alt="Preview"
               className="w-full h-full object-cover"
             />
             <button
               type="button"
               onClick={handleRemove}
               className="absolute -top-2 -right-2 p-1 bg-red-600 text-white rounded-none hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-lg"
-              aria-label="Remove thumbnail"
+              aria-label="Remove file"
             >
               <HiX className="h-3 w-3" />
             </button>
           </div>
           <p className="mt-2 text-xs text-[var(--muted-foreground)] text-center">
-            Course Thumbnail
+            {fileTypeInfo.type === 'image' ? 'Thumbnail Preview' : 'File Preview'}
           </p>
+        </div>
+      ) : value && typeof value === 'object' && value instanceof File ? (
+        <div className="relative inline-block w-full">
+          <div className="relative w-full rounded-none overflow-hidden border-2 border-[var(--border)] shadow-sm hover:shadow-md transition-shadow p-4 bg-[var(--muted)]/30">
+            <div className="flex items-center gap-3">
+              {React.createElement(fileTypeInfo.icon, { className: "h-8 w-8 text-[var(--muted-foreground)]" })}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[var(--foreground)] truncate">
+                  {value.name}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  {(value.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+              {!isUploading && (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="p-1 bg-red-600 text-white rounded-none hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-lg"
+                  aria-label="Remove file"
+                >
+                  <HiX className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {isUploading && (
+              <div className="mt-3 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-[var(--muted-foreground)]">Uploading...</span>
+                  <span className="text-[var(--primary-600)] font-semibold tabular-nums">{uploadProgress}%</span>
+                </div>
+                <div className="h-2 bg-[var(--muted)] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[var(--primary-600)] rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div
           className={classNames(
-            'relative border-2 border-dashed rounded-none p-4 text-center transition-colors cursor-pointer',
-            dragActive
+            'relative border-2 border-dashed rounded-none p-4 text-center transition-colors',
+            isUploading
+              ? 'cursor-not-allowed opacity-60 border-[var(--muted)]'
+              : 'cursor-pointer',
+            !isUploading && dragActive
               ? 'border-[var(--primary-500)] bg-[var(--primary-50)]'
-              : error
+              : !isUploading && error
               ? 'border-[var(--error)]'
-              : 'border-[var(--border)] hover:border-[var(--primary-300)]',
+              : !isUploading
+              ? 'border-[var(--border)] hover:border-[var(--primary-300)]'
+              : '',
           )}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
         >
           <input
             ref={fileInputRef}
@@ -147,13 +241,27 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             onChange={handleChange}
             className="hidden"
             id={generatedId}
+            disabled={isUploading}
           />
-          <HiPhotograph className="mx-auto h-6 w-6 text-[var(--muted-foreground)]" />
+          {React.createElement(fileTypeInfo.icon, { 
+            className: classNames(
+              "mx-auto h-6 w-6",
+              isUploading ? "text-[var(--muted-foreground)]" : "text-[var(--muted-foreground)]"
+            )
+          })}
           <p className="mt-2 text-sm text-[var(--foreground)]">
-            <span className="font-medium text-[var(--primary-600)]">Upload thumbnail</span>
+            <span className={classNames(
+              "font-medium",
+              isUploading ? "text-[var(--muted-foreground)]" : "text-[var(--primary-600)]"
+            )}>
+              {isUploading ? 'Uploading...' : fileTypeInfo.uploadText}
+            </span>
           </p>
           <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-            PNG, JPG up to {maxSize}MB • 16:9 recommended
+            {isUploading 
+              ? `Please wait, uploading ${uploadProgress}%...`
+              : `${fileTypeInfo.formatText} up to ${maxSize}MB${fileTypeInfo.aspectRatio ? ` • ${fileTypeInfo.aspectRatio}` : ''}`
+            }
           </p>
         </div>
       )}

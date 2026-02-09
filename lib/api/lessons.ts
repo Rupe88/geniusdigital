@@ -64,6 +64,7 @@ export interface CreateLessonData {
   videoFile?: File | null;
   attachmentFile?: File | null;
   quizData?: QuizData;
+  onProgress?: (progress: number) => void;
 }
 
 export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
@@ -92,10 +93,20 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
     if (data.attachmentFile) formData.append('attachment', data.attachmentFile);
 
     const uploadTimeout = (data.videoFile || data.attachmentFile) ? 7200000 : 60000; // 2 hours for large video uploads
+    data.onProgress?.(0);
     const response = await apiClient.post<ApiResponse<Lesson>>(API_ENDPOINTS.LESSONS.LIST, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: uploadTimeout,
+      onUploadProgress: (progressEvent) => {
+        if (data.onProgress && progressEvent.total && progressEvent.total > 0) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          data.onProgress(Math.min(percent, 99));
+        } else if (data.onProgress && progressEvent.loaded) {
+          data.onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        }
+      },
     });
+    data.onProgress?.(100);
 
     const responseData = response.data;
     if (responseData.success && responseData.data) {
@@ -141,10 +152,21 @@ export const updateLesson = async (id: string, data: Partial<CreateLessonData>):
     if (data.attachmentFile) formData.append('attachment', data.attachmentFile);
 
     const uploadTimeout = (data.videoFile || data.attachmentFile) ? 7200000 : 60000;
+    const onProgress = (data as CreateLessonData).onProgress;
+    onProgress?.(0);
     const response = await apiClient.put<ApiResponse<Lesson>>(API_ENDPOINTS.LESSONS.BY_ID(id), formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: uploadTimeout,
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total && progressEvent.total > 0) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+          onProgress(Math.min(percent, 99));
+        } else if (onProgress && progressEvent.loaded) {
+          onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        }
+      },
     });
+    onProgress?.(100);
 
     const responseData = response.data;
     if (responseData.success && responseData.data) {

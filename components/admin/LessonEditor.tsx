@@ -51,6 +51,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
   );
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -66,6 +67,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
     }
 
     try {
+      setIsSaving(true);
       await onSave({
         courseId,
         chapterId: chapterId || undefined,
@@ -87,6 +89,8 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
       console.error('Error saving lesson:', error);
       const message = error instanceof Error ? error.message : 'Failed to save lesson';
       alert(message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -103,12 +107,12 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
           </h3>
           <div className="flex gap-2">
             {onCancel && (
-              <Button variant="outline" onClick={onCancel}>
+              <Button variant="outline" onClick={onCancel} disabled={isSaving}>
                 Cancel
               </Button>
             )}
-            <Button variant="primary" onClick={handleSave}>
-              {lesson ? 'Update Lesson' : 'Create Lesson'}
+            <Button variant="primary" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : lesson ? 'Update Lesson' : 'Create Lesson'}
             </Button>
           </div>
         </div>
@@ -208,6 +212,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
                 value={videoFile}
                 label="Select Video"
                 helperText="MP4, WebM, OGG. Large videos supported."
+                isUploading={isSaving}
               />
               {videoFile && (
                 <p className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">
