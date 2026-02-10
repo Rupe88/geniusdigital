@@ -201,7 +201,7 @@ export const HeroCarousel: React.FC = () => {
             aria-label="Previous slide"
             disabled={isTransitioning}
           >
-            <HiChevronLeft className="h-6 w-6 md:h-7 md:w-7" />
+            <HiChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
           </button>
           <button
             onClick={nextSlide}
@@ -209,7 +209,7 @@ export const HeroCarousel: React.FC = () => {
             aria-label="Next slide"
             disabled={isTransitioning}
           >
-            <HiChevronRight className="h-6 w-6 md:h-7 md:w-7" />
+            <HiChevronRight className="h-4 w-4 md:h-5 md:w-5" />
           </button>
           </div>
         </div>
@@ -230,6 +230,8 @@ export const HeroCarousel: React.FC = () => {
           position: relative;
           width: 100%;
           overflow: visible;
+          display: flex;
+          align-items: center;
         }
 
         .hero-carousel-container {
@@ -303,8 +305,8 @@ export const HeroCarousel: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 44px;
-          height: 44px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           background: rgba(190, 18, 60, 0.95); /* primary-700 red */
           backdrop-filter: blur(4px);
@@ -315,23 +317,31 @@ export const HeroCarousel: React.FC = () => {
         }
 
         .hero-nav-btn-left {
-          left: -22px;
+          left: 10px;
         }
 
         .hero-nav-btn-right {
-          right: -22px;
+          right: 10px;
         }
 
         @media (min-width: 768px) {
           .hero-nav-btn {
-            width: 52px;
-            height: 52px;
+            width: 40px;
+            height: 40px;
           }
           .hero-nav-btn-left {
-            left: -26px;
+            left: 16px;
           }
           .hero-nav-btn-right {
-            right: -26px;
+            right: 16px;
+          }
+        }
+
+        /* Ensure consistent desktop size to visually match other carousels */
+        @media (min-width: 1024px) {
+          .hero-nav-btn {
+            width: 40px;
+            height: 40px;
           }
         }
 

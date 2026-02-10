@@ -210,67 +210,69 @@ export const Gallery: React.FC = () => {
           <h2 className="section-title text-gray-900">Our Gallery</h2>
         </div>
 
-        <div className="relative space-y-6">
+        <div className="relative min-h-[320px] flex items-center">
         {showButtons && (
           <>
             <button
               onClick={() => scrollGallery('left')}
               disabled={!hasScrollableContent}
-              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg ${
+              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-all shadow-lg flex items-center justify-center ${
                 !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               aria-label="Previous gallery"
             >
-              <HiChevronLeft className="h-6 w-6" />
+              <HiChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
             </button>
             <button
               onClick={() => scrollGallery('right')}
               disabled={!hasScrollableContent}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg ${
+              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-all shadow-lg flex items-center justify-center ${
                 !hasScrollableContent ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               aria-label="Next gallery"
             >
-              <HiChevronRight className="h-6 w-6" />
+              <HiChevronRight className="h-4 w-4 md:h-5 md:w-5" />
             </button>
           </>
         )}
 
-          <div
-            ref={row1Ref}
-            className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasScrollableContent ? 'scroll-smooth' : 'justify-start'
-            } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-          >
-            {row1Items.map((item, index) => renderCard(item, 'row1', index))}
-          </div>
-          <div
-            ref={row2Ref}
-            className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasScrollableContent ? 'scroll-smooth' : 'justify-start'
-            } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-          >
-            {row2Items.map((item, index) => renderCard(item, 'row2', index))}
-          </div>
-          <div
-            ref={row3Ref}
-            className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasScrollableContent ? 'scroll-smooth' : 'justify-start'
-            } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-          >
-            {row3Items.map((item, index) => renderCard(item, 'row3', index))}
+          <div className="space-y-6 w-full">
+            <div
+              ref={row1Ref}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
+                hasScrollableContent ? 'scroll-smooth' : 'justify-start'
+              } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+            >
+              {row1Items.map((item, index) => renderCard(item, 'row1', index))}
+            </div>
+            <div
+              ref={row2Ref}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
+                hasScrollableContent ? 'scroll-smooth' : 'justify-start'
+              } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+            >
+              {row2Items.map((item, index) => renderCard(item, 'row2', index))}
+            </div>
+            <div
+              ref={row3Ref}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
+                hasScrollableContent ? 'scroll-smooth' : 'justify-start'
+              } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+            >
+              {row3Items.map((item, index) => renderCard(item, 'row3', index))}
+            </div>
           </div>
         </div>
       </div>

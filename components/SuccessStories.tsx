@@ -56,23 +56,23 @@ export const SuccessStories: React.FC = () => {
         </div>
 
         {/* Stories Carousel with YouTube videos */}
-        <div className="relative">
+        <div className="relative min-h-[320px] flex items-center">
           {/* Navigation Arrows - Only show if more than 1 story */}
           {hasCarousel && (
             <>
               <button
                 onClick={() => scroll('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-[var(--primary-700)] text-white w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-all shadow-lg flex items-center justify-center"
                 aria-label="Previous success story"
               >
-                <HiChevronLeft className="h-6 w-6" />
+                <HiChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
               </button>
               <button
                 onClick={() => scroll('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white p-3 rounded-full hover:bg-[var(--primary-800)] transition-all shadow-lg"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-[var(--primary-700)] text-white w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-all shadow-lg flex items-center justify-center"
                 aria-label="Next success story"
               >
-                <HiChevronRight className="h-6 w-6" />
+                <HiChevronRight className="h-4 w-4 md:h-5 md:w-5" />
               </button>
             </>
           )}

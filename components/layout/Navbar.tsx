@@ -103,7 +103,7 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`transition-colors font-medium text-base whitespace-nowrap ${
+                  className={`transition-colors font-sm text-base whitespace-nowrap ${
                     active
                       ? 'text-[var(--primary-700)]'
                       : 'text-gray-700 hover:text-[var(--primary-700)]'
@@ -119,7 +119,7 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className={`flex items-center gap-1 transition-colors font-medium text-base whitespace-nowrap ${
+                className={`flex items-center gap-1 transition-colors font-normal text-base whitespace-nowrap ${
                   isMoreMenuActive() || isMoreMenuOpen
                     ? 'text-[var(--primary-700)]'
                     : 'text-gray-700 hover:text-[var(--primary-700)]'
@@ -281,7 +281,7 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-none font-medium ${
+                  className={`block px-3 py-2 rounded-none font-normal ${
                     active
                       ? 'text-red-600 bg-red-50'
                       : 'text-gray-700 hover:bg-gray-50'
@@ -298,7 +298,7 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsMobileMoreOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between px-3 py-2 rounded-none font-medium text-gray-700 hover:bg-gray-50"
+                className="flex w-full items-center justify-between px-3 py-2 rounded-none font-normal text-gray-700 hover:bg-gray-50"
               >
                 <span>More</span>
                 <HiChevronDown
