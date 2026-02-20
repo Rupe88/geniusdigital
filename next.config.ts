@@ -43,6 +43,8 @@ const nextConfig: NextConfig = {
     ],
     // Allow unoptimized images for external domains that might not be configured
     unoptimized: false,
+    // Configure image qualities to fix warnings
+    qualities: [75, 90],
   },
   // Optimize compilation and prevent hanging
   experimental: {
