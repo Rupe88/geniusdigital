@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { CategoryForm } from '@/components/admin/CategoryForm';
 import { Category, CreateCategoryData } from '@/lib/api/categories';
 import * as categoryApi from '@/lib/api/categories';
@@ -10,9 +10,13 @@ import { showSuccess, showError } from '@/lib/utils/toast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
-export default function EditCategoryPage() {
+export default function EditCategoryPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const id = params?.id as string;
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);

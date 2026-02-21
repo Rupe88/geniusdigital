@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { HiArrowLeft, HiPencil, HiTrash } from 'react-icons/hi';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -10,8 +10,12 @@ import { couponApi, Coupon } from '@/lib/api/coupon';
 import { ROUTES } from '@/lib/utils/constants';
 import toast from 'react-hot-toast';
 
-export default function CouponDetailPage() {
-  const params = useParams();
+export default function CouponDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const couponId = params?.id as string;
   const [coupon, setCoupon] = useState<Coupon | null>(null);

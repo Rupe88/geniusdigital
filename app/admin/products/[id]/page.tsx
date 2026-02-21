@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { HiArrowLeft, HiPencil, HiTrash, HiStar, HiShoppingCart } from 'react-icons/hi';
@@ -50,9 +50,13 @@ interface ProductWithCategory {
   totalReviews?: number;
 }
 
-export default function ViewProductPage() {
-  const router = useParams();
-  const productId = router.id as string;
+export default function ViewProductPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const params = use(paramsPromise);
+  const productId = params.id as string;
   const navigate = useRouter();
   const [product, setProduct] = useState<ProductWithCategory | null>(null);
   const [loading, setLoading] = useState(true);

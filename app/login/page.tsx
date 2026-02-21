@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { use, useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,15 +21,17 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-function LoginForm() {
+type SearchParamsLike = Record<string, string | string[] | undefined>;
+function getParam(sp: SearchParamsLike | null, key: string): string | null {
+  if (!sp || !(key in sp)) return null;
+  const v = sp[key];
+  return Array.isArray(v) ? v[0] ?? null : (v ?? null);
+}
+
+function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, refreshUser } = useAuth();
-  const [error, setError] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    const err = new URLSearchParams(window.location.search).get('error');
-    return err ? decodeURIComponent(err) : '';
-  });
+  const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [callbackProcessing, setCallbackProcessing] = useState(false);
@@ -42,8 +44,8 @@ function LoginForm() {
     const hashIndex = href.indexOf('#');
     const hashPart = hashIndex >= 0 ? href.slice(hashIndex + 1) : '';
     const hashParams = hashPart ? new URLSearchParams(hashPart) : null;
-    const accessToken = hashParams?.get('accessToken') ?? searchParams.get('accessToken');
-    const refreshToken = hashParams?.get('refreshToken') ?? searchParams.get('refreshToken');
+    const accessToken = hashParams?.get('accessToken') ?? getParam(searchParams, 'accessToken');
+    const refreshToken = hashParams?.get('refreshToken') ?? getParam(searchParams, 'refreshToken');
     return { accessToken, refreshToken };
   };
 
@@ -51,7 +53,7 @@ function LoginForm() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const err = searchParams.get('error');
+    const err = getParam(searchParams, 'error');
     if (err) {
       setError(decodeURIComponent(err));
       window.history.replaceState({}, '', window.location.pathname);
@@ -242,10 +244,15 @@ function LoginFallback() {
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams: searchParamsPromise,
+}: {
+  searchParams: Promise<SearchParamsLike>;
+}) {
+  const searchParams = use(searchParamsPromise);
   return (
     <Suspense fallback={<LoginFallback />}>
-      <LoginForm />
+      <LoginForm searchParams={searchParams} />
     </Suspense>
   );
 }

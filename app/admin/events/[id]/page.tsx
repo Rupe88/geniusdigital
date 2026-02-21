@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
@@ -18,8 +18,12 @@ import { formatDate, formatDateTime } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiArrowLeft, HiPencil, HiUserGroup, HiCheck } from 'react-icons/hi';
 
-export default function AdminEventDetailPage() {
-  const params = useParams();
+export default function AdminEventDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const eventId = params?.id as string;
   const [event, setEvent] = useState<Event | null>(null);

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,9 +11,13 @@ import type { HeroCarouselSlide } from '@/lib/api/carousel';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { ROUTES } from '@/lib/utils/constants';
 
-export default function EditCarouselSlidePage() {
+export default function EditCarouselSlidePage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const id = params?.id as string;
   const [slide, setSlide] = useState<HeroCarouselSlide | null>(null);
   const [loading, setLoading] = useState(true);

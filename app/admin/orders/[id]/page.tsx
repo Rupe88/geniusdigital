@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { HiArrowLeft, HiCheckCircle, HiXCircle, HiTruck, HiCreditCard } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
@@ -13,8 +13,12 @@ import { ordersApi, Order } from '@/lib/api/orders';
 import { ROUTES } from '@/lib/utils/constants';
 import toast from 'react-hot-toast';
 
-export default function OrderDetailPage() {
-  const params = useParams();
+export default function OrderDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const orderId = params?.id as string;
   const [order, setOrder] = useState<Order | null>(null);

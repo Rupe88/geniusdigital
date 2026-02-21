@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { use, useEffect, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { HiCheckCircle, HiXCircle, HiRefresh } from 'react-icons/hi';
@@ -9,8 +9,14 @@ import * as paymentApi from '@/lib/api/payments';
 import { ROUTES } from '@/lib/utils/constants';
 import { formatCurrency } from '@/lib/utils/helpers';
 
-function PaymentSuccessContent() {
-    const searchParams = useSearchParams();
+type SearchParamsLike = Record<string, string | string[] | undefined>;
+function getParam(sp: SearchParamsLike | null, key: string): string | null {
+    if (!sp || !(key in sp)) return null;
+    const v = sp[key];
+    return Array.isArray(v) ? v[0] ?? null : (v ?? null);
+}
+
+function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLike }) {
     const router = useRouter();
     const [verifying, setVerifying] = useState(true);
     const [status, setStatus] = useState<'success' | 'failed' | 'error'>('success');
@@ -18,7 +24,7 @@ function PaymentSuccessContent() {
     const [paymentData, setPaymentData] = useState<any>(null);
 
     useEffect(() => {
-        const data = searchParams.get('data');
+        const data = getParam(searchParams, 'data');
         if (data) {
             verifyPayment(data);
         } else {
@@ -127,7 +133,12 @@ function PaymentSuccessContent() {
     );
 }
 
-export default function PaymentSuccessPage() {
+export default function PaymentSuccessPage({
+    searchParams: searchParamsPromise,
+}: {
+    searchParams: Promise<SearchParamsLike>;
+}) {
+    const searchParams = use(searchParamsPromise);
     return (
         <Suspense fallback={
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -139,7 +150,7 @@ export default function PaymentSuccessPage() {
                 </Card>
             </div>
         }>
-            <PaymentSuccessContent />
+            <PaymentSuccessContent searchParams={searchParams} />
         </Suspense>
     );
 }

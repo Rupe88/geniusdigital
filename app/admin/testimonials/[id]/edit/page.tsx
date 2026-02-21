@@ -1,16 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { TestimonialForm } from '@/components/admin/TestimonialForm';
 import { Testimonial, UpdateTestimonialData } from '@/lib/api/testimonials';
 import * as testimonialApi from '@/lib/api/testimonials';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { Card } from '@/components/ui/Card';
 
-export default function EditTestimonialPage() {
+export default function EditTestimonialPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const testimonialId = params?.id as string;
   const [testimonial, setTestimonial] = useState<Testimonial | null>(null);
   const [loading, setLoading] = useState(true);

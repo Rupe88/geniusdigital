@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useForm, type Resolver } from 'react-hook-form';
@@ -43,9 +43,13 @@ function toLocalDateTime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function EditEventPage() {
+export default function EditEventPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const eventId = params?.id as string;
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);

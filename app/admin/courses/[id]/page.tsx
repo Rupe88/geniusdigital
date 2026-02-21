@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { StorageImage } from '@/components/ui/StorageImage';
@@ -15,9 +15,13 @@ import { formatPrice, formatDate, formatDuration } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiPencil, HiTrash, HiArrowLeft, HiUser, HiFolder, HiTag, HiClock, HiGlobeAlt, HiStar, HiUsers } from 'react-icons/hi';
 
-export default function CourseDetailPage() {
+export default function CourseDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const courseId = params.id as string;
 
   const [course, setCourse] = useState<Course | null>(null);

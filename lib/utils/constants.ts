@@ -97,10 +97,10 @@ export const API_ENDPOINTS = {
     LIST: '/coupons',
     BY_ID: (id: string) => `/coupons/${id}`,
   },
-  // Categories
+  // Categories (backend route is /api/category)
   CATEGORIES: {
-    LIST: '/categories',
-    BY_ID: (id: string) => `/categories/${id}`,
+    LIST: '/category',
+    BY_ID: (id: string) => `/category/${id}`,
   },
   // Chapters
   CHAPTERS: {

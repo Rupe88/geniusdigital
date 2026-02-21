@@ -3,8 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { CartProvider } from "@/lib/context/CartContext";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
-import PromotionalPopup from "@/components/layout/PromotionalPopup";
-import ContentProtection from "@/components/ContentProtection";
+import { ToasterProvider } from "@/components/ToasterProvider";
 
 export const metadata: Metadata = {
     title: "Sanskar Academy - Master in Scientific Vastu & Modern Numerology",
@@ -25,6 +24,7 @@ export default function RootLayout({
                 {/* <ContentProtection /> */}
                 <AuthProvider>
                     <CartProvider>
+                        <ToasterProvider />
                         <LayoutWrapper>
                             {children}
                         </LayoutWrapper>

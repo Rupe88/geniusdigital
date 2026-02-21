@@ -1,16 +1,20 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { InstructorForm } from '@/components/admin/InstructorForm';
 import { Instructor, CreateInstructorData } from '@/lib/api/instructors';
 import * as instructorApi from '@/lib/api/instructors';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
-export default function EditInstructorPage() {
+export default function EditInstructorPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const instructorId = params.id as string;
 
   const [instructor, setInstructor] = useState<Instructor | null>(null);

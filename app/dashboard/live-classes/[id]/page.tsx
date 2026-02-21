@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -54,8 +54,12 @@ function formatTime(dateString: string): string {
   }
 }
 
-export default function DashboardLiveClassDetailPage() {
-  const params = useParams();
+export default function DashboardLiveClassDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const id = params.id as string;

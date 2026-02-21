@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { StorageImage } from '@/components/ui/StorageImage';
@@ -17,8 +17,12 @@ import { ROUTES } from '@/lib/utils/constants';
 import toast from 'react-hot-toast';
 import { HiCalendar, HiLocationMarker, HiUsers, HiClock, HiCheck, HiArrowLeft, HiShare } from 'react-icons/hi';
 
-export default function EventDetailPage() {
-  const params = useParams();
+export default function EventDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ slug?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const slug = params?.slug as string;

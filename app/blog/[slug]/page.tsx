@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { StorageImage } from '@/components/ui/StorageImage';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { HiArrowLeft, HiCalendar, HiUser } from 'react-icons/hi';
 import { blogsApi, Blog } from '@/lib/api/blog';
 
-export default function BlogDetailPage() {
-    const params = useParams();
+export default function BlogDetailPage({
+    params: paramsPromise,
+}: {
+    params: Promise<{ slug?: string }>;
+}) {
+    const params = use(paramsPromise);
     const router = useRouter();
     const slug = params?.slug as string;
     const [blog, setBlog] = useState<Blog | null>(null);

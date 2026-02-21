@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { HiArrowLeft, HiUpload } from 'react-icons/hi';
@@ -23,9 +23,13 @@ interface BlogForm {
     seoDescription: string;
 }
 
-export default function EditBlogPage() {
+export default function EditBlogPage({
+    params: paramsPromise,
+}: {
+    params: Promise<{ id?: string }>;
+}) {
     const router = useRouter();
-    const params = useParams();
+    const params = use(paramsPromise);
     const id = params?.id as string;
 
     const [loading, setLoading] = useState(true);

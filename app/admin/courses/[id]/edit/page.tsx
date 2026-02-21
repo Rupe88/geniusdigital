@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { CourseForm } from '@/components/admin/CourseForm';
 import { Course } from '@/lib/types/course';
 import { Category } from '@/lib/types/course';
@@ -13,9 +13,13 @@ import * as categoryApi from '@/lib/api/categories';
 import * as instructorApi from '@/lib/api/instructors';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
-export default function EditCoursePage() {
+export default function EditCoursePage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const courseId = params.id as string;
 
   const [course, setCourse] = useState<Course | null>(null);

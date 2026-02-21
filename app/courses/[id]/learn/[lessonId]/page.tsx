@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import * as lessonApi from '@/lib/api/lessons';
 import * as progressApi from '@/lib/api/progress';
 import * as quizApi from '@/lib/api/quizzes';
@@ -12,8 +12,12 @@ import { HiCheckCircle, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { showSuccess } from '@/lib/utils/toast';
 import { useLearn } from '@/lib/context/LearnContext';
 
-export default function LessonPage() {
-  const params = useParams();
+export default function LessonPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string; lessonId?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const { course, getNextLesson, getPrevLesson, refreshProgress } = useLearn();
   const [lesson, setLesson] = useState<Lesson | null>(null);

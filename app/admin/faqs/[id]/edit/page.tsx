@@ -1,15 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FAQForm } from '@/components/admin/FAQForm';
 import { CreateFAQRequest, getFAQById, type FAQ } from '@/lib/api/faq';
 import * as faqApi from '@/lib/api/faq';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
-export default function EditFAQPage() {
+export default function EditFAQPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const id = params.id as string;
   const [faq, setFaq] = useState<FAQ | null>(null);
   const [loading, setLoading] = useState(true);

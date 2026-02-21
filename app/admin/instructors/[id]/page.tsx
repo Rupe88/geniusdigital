@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
@@ -14,9 +14,13 @@ import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiPencil, HiTrash, HiArrowLeft } from 'react-icons/hi';
 
-export default function InstructorDetailPage() {
+export default function InstructorDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const instructorId = params.id as string;
 
   const [instructor, setInstructor] = useState<Instructor | null>(null);

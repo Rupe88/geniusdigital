@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useRouter, usePathname } from 'next/navigation';
+import React, { use, useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import * as courseApi from '@/lib/api/courses';
 import * as chapterApi from '@/lib/api/chapters';
@@ -13,8 +13,13 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { showError } from '@/lib/utils/toast';
 import { LearnProvider, useLearn } from '@/lib/context/LearnContext';
 
-function LearnLayoutInner({ children }: { children: React.ReactNode }) {
-  const params = useParams();
+function LearnLayoutInner({
+  children,
+  params: resolvedParams,
+}: {
+  children: React.ReactNode;
+  params: { id?: string; lessonId?: string };
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -28,7 +33,7 @@ function LearnLayoutInner({ children }: { children: React.ReactNode }) {
     getPrevLesson,
   } = useLearn();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const currentLessonId = params.lessonId as string;
+  const currentLessonId = resolvedParams.lessonId as string;
 
   const getLessonIcon = (type: string) => {
     switch (type) {
@@ -156,8 +161,14 @@ function LearnLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function LearnLayout({ children }: { children: React.ReactNode }) {
-  const params = useParams();
+export default function LearnLayout({
+  children,
+  params: paramsPromise,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ id?: string; lessonId?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -283,7 +294,7 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
 
   return (
     <LearnProvider value={contextValue}>
-      <LearnLayoutInner>{children}</LearnLayoutInner>
+      <LearnLayoutInner params={params}>{children}</LearnLayoutInner>
     </LearnProvider>
   );
 }

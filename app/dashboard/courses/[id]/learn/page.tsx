@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { use, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLearn } from '@/lib/context/LearnContext';
 import * as lessonApi from '@/lib/api/lessons';
 import { Button } from '@/components/ui/Button';
 
-export default function DashboardCourseLearnIndexPage() {
-  const params = useParams();
+export default function DashboardCourseLearnIndexPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const { course, lessons, completedLessonIds } = useLearn();
   const [fallbackTried, setFallbackTried] = useState(false);

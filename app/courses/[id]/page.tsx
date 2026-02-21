@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import React, { use, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { StorageImage } from '@/components/ui/StorageImage';
@@ -33,8 +33,22 @@ import { ShareButton } from '@/components/referrals/ShareButton';
 
 type TabType = 'overview' | 'chapters' | 'instructors' | 'reviews';
 
-export default function CourseDetailPage() {
-  const params = useParams();
+type SearchParamsLike = Record<string, string | string[] | undefined>;
+function getParam(sp: SearchParamsLike | null, key: string): string | null {
+  if (!sp || !(key in sp)) return null;
+  const v = sp[key];
+  return Array.isArray(v) ? v[0] ?? null : (v ?? null);
+}
+
+export default function CourseDetailPage({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+  searchParams?: Promise<SearchParamsLike>;
+}) {
+  const params = use(paramsPromise);
+  const searchParams = use(searchParamsPromise ?? Promise.resolve({}));
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
@@ -231,12 +245,11 @@ export default function CourseDetailPage() {
   /* --------------------------------------------------------------------------------
    * REFERRAL TRACKING LOGIC
    * -------------------------------------------------------------------------------- */
-  const searchParams = useSearchParams();
   const [referralClickId, setReferralClickId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleReferral = async () => {
-      const refCode = searchParams.get('ref');
+      const refCode = getParam(searchParams, 'ref');
       if (refCode) {
         try {
           // Track the click

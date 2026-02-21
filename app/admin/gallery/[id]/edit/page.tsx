@@ -1,16 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { GalleryForm } from '@/components/admin/GalleryForm';
 import { GalleryItem, UpdateGalleryItemData } from '@/lib/api/gallery';
 import * as galleryApi from '@/lib/api/gallery';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { Card } from '@/components/ui/Card';
 
-export default function EditGalleryPage() {
+export default function EditGalleryPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const galleryId = params?.id as string;
   const [galleryItem, setGalleryItem] = useState<GalleryItem | null>(null);
   const [loading, setLoading] = useState(true);

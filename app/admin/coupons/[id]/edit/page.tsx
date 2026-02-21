@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { use, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -100,9 +100,13 @@ const couponSchema = z.object({
 
 type CouponFormData = z.infer<typeof couponSchema>;
 
-export default function EditCouponPage() {
+export default function EditCouponPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id?: string }>;
+}) {
   const router = useRouter();
-  const params = useParams();
+  const params = use(paramsPromise);
   const couponId = params?.id as string;
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
