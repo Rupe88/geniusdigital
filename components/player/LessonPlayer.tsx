@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
-import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload } from 'react-icons/hi';
+import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload, HiRefresh } from 'react-icons/hi';
+import { Button } from '@/components/ui/Button';
 import { getYouTubeEmbedUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 
@@ -15,8 +16,20 @@ interface LessonPlayerProps {
 export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }) => {
     const [secureVideoSrc, setSecureVideoSrc] = useState<string | null>(null);
     const [secureVideoError, setSecureVideoError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
     const fetchedForLessonId = useRef<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+
+    const retryVideo = () => {
+        setSecureVideoError(null);
+        setSecureVideoSrc(null);
+        fetchedForLessonId.current = null;
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setRetryCount((c) => c + 1);
+    };
 
     useEffect(() => {
         console.log('[LessonPlayer] useEffect triggered', {
@@ -44,7 +57,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
             return;
         }
 
-        // If lesson changed, reset state and cancel previous request
+        // If lesson changed (or retry), reset state and cancel previous request
         if (fetchedForLessonId.current !== null && fetchedForLessonId.current !== lesson.id) {
             console.log('[LessonPlayer] Lesson changed, resetting state');
             setSecureVideoSrc(null);
@@ -144,7 +157,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 console.log('[LessonPlayer] Cleanup: not aborting (same lesson)');
             }
         };
-    }, [lesson.id, lesson.lessonType, lesson.videoUrl]);
+    }, [lesson.id, lesson.lessonType, lesson.videoUrl, retryCount]);
 
     const renderContent = () => {
         switch (lesson.lessonType) {
@@ -172,9 +185,14 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     allowFullScreen
                                 />
                             ) : secureVideoError ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4 p-6">
                                     <HiVideoCamera className="w-16 h-16 opacity-20" />
-                                    <p className="font-bold">{secureVideoError}</p>
+                                    <p className="font-bold text-center">Video couldn’t load. The link may have expired or the source is temporarily unavailable.</p>
+                                    <p className="text-sm text-center opacity-80">Refreshing the page or trying again often fixes this.</p>
+                                    <Button type="button" variant="primary" onClick={retryVideo} className="inline-flex items-center gap-2">
+                                        <HiRefresh className="w-5 h-5" />
+                                        Try again
+                                    </Button>
                                 </div>
                             ) : videoSrc ? (
                                 <video
@@ -243,7 +261,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                             src: videoSrc,
                                             error: v?.error,
                                         });
-                                        setSecureVideoError(`Playback Error: ${errorMsg}${errorCode ? ` (Code: ${errorCode})` : ''}. Please try refreshing the page.`);
+                                        setSecureVideoError(`${errorMsg}${errorCode ? ` (${errorCode})` : ''}`);
                                     }}
                                 />
                             ) : isSecureStreamPath(lesson.videoUrl) ? (

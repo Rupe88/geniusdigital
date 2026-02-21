@@ -18,6 +18,7 @@ import { CurriculumBuilder } from './CurriculumBuilder';
 import { Course, Category, Instructor } from '@/lib/types/course';
 import { CreateCourseData } from '@/lib/api/courses';
 import { generateSlug } from '@/lib/utils/helpers';
+import { showError } from '@/lib/utils/toast';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
 const courseSchema = z.object({
@@ -30,11 +31,11 @@ const courseSchema = z.object({
   // Step 2
   shortDescription: z.string().max(500, 'Short description must be less than 500 characters').optional(),
   description: z.string().optional(),
-  price: z.number().min(0, 'Price must be positive').optional(),
-  originalPrice: z.number().min(0, 'Original price must be positive').optional(),
+  price: z.preprocess((val) => (typeof val === 'number' && Number.isNaN(val) ? undefined : val), z.number().min(0, 'Price must be positive').optional()),
+  originalPrice: z.preprocess((val) => (typeof val === 'number' && Number.isNaN(val) ? undefined : val), z.number().min(0, 'Original price must be positive').optional()),
   isFree: z.boolean().optional(),
   level: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional(),
-  duration: z.number().min(0, 'Duration must be positive').optional(),
+  duration: z.preprocess((val) => (typeof val === 'number' && Number.isNaN(val) ? undefined : val), z.number().min(0, 'Duration must be positive').optional()),
   language: z.enum(['en', 'ne', 'hi', 'mr', 'bn', 'te', 'ta', 'gu', 'kn', 'ml', 'pa', 'or', 'as', 'mai', 'bh']).optional(),
   tags: z.array(z.string()).optional(),
   learningOutcomes: z.array(z.string()).optional(),
@@ -301,12 +302,12 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         categoryId: data.categoryId && data.categoryId.trim() ? data.categoryId.trim() : undefined,
         shortDescription: data.shortDescription || undefined,
         description: data.description || undefined,
-        price: data.price !== undefined ? Number(data.price) : undefined,
-        originalPrice: data.originalPrice !== undefined ? Number(data.originalPrice) : undefined,
+        price: data.price !== undefined && !Number.isNaN(Number(data.price)) ? Number(data.price) : undefined,
+        originalPrice: data.originalPrice !== undefined && !Number.isNaN(Number(data.originalPrice)) ? Number(data.originalPrice) : undefined,
         isFree: data.isFree || false,
         status: data.status || 'PUBLISHED',
         level: data.level || undefined,
-        duration: data.duration !== undefined ? Number(data.duration) : undefined,
+        duration: data.duration !== undefined && !Number.isNaN(Number(data.duration)) ? Number(data.duration) : undefined,
         language: data.language || 'en',
         featured: data.featured || false,
         isOngoing: data.isOngoing || false,
@@ -348,8 +349,17 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   // Removed automatic advance to ensure Step 2 (Details) remains accessible
   // when a course object is already present (e.g., on the Edit page).
 
+  const onValidationError = (errors: Record<string, { message?: string }>) => {
+    const firstError = Object.values(errors)[0]?.message;
+    showError(firstError || 'Please fix the errors in the form before submitting.');
+  };
+
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+    <form
+      onSubmit={handleSubmit(onFormSubmit, onValidationError)}
+      noValidate
+      className="space-y-6"
+    >
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -1009,18 +1019,27 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           ) : (
             <>
               <Button
-                type="submit"
+                type="button"
                 variant="outline"
                 onClick={async (e) => {
                   e.preventDefault();
                   setValue('status', 'DRAFT');
-                  await handleSubmit(onFormSubmit)(e);
+                  await handleSubmit(onFormSubmit, onValidationError)(e);
                 }}
                 disabled={isLoading || isSubmitting}
               >
                 Save as Draft
               </Button>
-              <Button type="submit" variant="primary" disabled={isLoading || isSubmitting} isLoading={isLoading || isSubmitting}>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isLoading || isSubmitting}
+                isLoading={isLoading || isSubmitting}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(onFormSubmit, onValidationError)(e);
+                }}
+              >
                 {course ? 'Update Course' : 'Create Course'}
               </Button>
             </>
