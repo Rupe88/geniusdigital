@@ -316,11 +316,12 @@ export const Navbar: React.FC = () => {
                 </button>
               );
             }
-            const active = isActive(item.href);
+            const href = (('href' in item ? item.href : undefined) ?? '') as string;
+            const active = isActive(href);
             return (
               <Link
-                key={item.href}
-                href={item.href}
+                key={href}
+                href={href}
                 className={`flex flex-col items-center justify-center flex-1 py-2 min-w-0 gap-0.5 transition-colors ${
                   active ? 'text-[var(--primary-700)]' : 'text-gray-500'
                 }`}
