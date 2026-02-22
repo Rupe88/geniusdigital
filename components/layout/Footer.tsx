@@ -39,7 +39,7 @@ export const Footer: React.FC = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto bg-[#0d1625] text-white">
+    <footer className="mt-auto mb-20 lg:mb-0 bg-[#0d1625] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-5">
           {/* Brand + Social */}
