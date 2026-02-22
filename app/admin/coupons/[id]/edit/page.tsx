@@ -165,6 +165,19 @@ export default function EditCouponPage({
       const validFrom = couponData.validFrom ? new Date(couponData.validFrom).toISOString().slice(0, 16) : '';
       const validUntil = couponData.validUntil ? new Date(couponData.validUntil).toISOString().slice(0, 16) : '';
       
+      const parseJsonArray = (val: unknown): string[] => {
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+          try {
+            const parsed = JSON.parse(val);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      };
+
       reset({
         code: couponData.code,
         description: couponData.description || '',
@@ -177,8 +190,8 @@ export default function EditCouponPage({
         validFrom,
         validUntil,
         status: couponData.status,
-        applicableCourses: couponData.applicableCourses || [],
-        applicableProducts: couponData.applicableProducts || [],
+        applicableCourses: parseJsonArray(couponData.applicableCourses),
+        applicableProducts: parseJsonArray(couponData.applicableProducts),
       });
     } catch (error: any) {
       console.error('Error fetching coupon:', error);
