@@ -294,7 +294,7 @@ export default function CourseDetailPage({
         setAppliedPromo({ code, discountAmount: result.discountAmount, finalAmount: result.finalAmount });
       } else {
         setAppliedPromo(null);
-        setPromoError(result.message || 'Invalid or expired promo code');
+        setPromoError(result.valid === false ? result.message : 'Invalid or expired promo code');
       }
     } catch {
       setAppliedPromo(null);
