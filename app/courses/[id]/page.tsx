@@ -13,6 +13,7 @@ import * as lessonApi from '@/lib/api/lessons';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import * as paymentApi from '@/lib/api/payments';
 import * as chapterApi from '@/lib/api/chapters';
+import { validateCoupon } from '@/lib/api/coupon';
 import { reviewsApi } from '@/lib/api/reviews';
 import { Course, Lesson, Review, Chapter } from '@/lib/types/course';
 import { formatPrice, formatCurrency, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
@@ -68,6 +69,10 @@ export default function CourseDetailPage({
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountAmount: number; finalAmount: number } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +275,41 @@ export default function CourseDetailPage({
   }, [searchParams]);
 
 
+  const applyPromoCode = async () => {
+    if (!course || course.isFree) return;
+    const code = promoCodeInput.trim().toUpperCase();
+    if (!code) {
+      setPromoError('Enter a promo code');
+      return;
+    }
+    setPromoError(null);
+    setApplyingPromo(true);
+    try {
+      const result = await validateCoupon({
+        code,
+        amount: Number(course.price),
+        courseId: course.id,
+      });
+      if (result.valid && result.discountAmount != null && result.finalAmount != null) {
+        setAppliedPromo({ code, discountAmount: result.discountAmount, finalAmount: result.finalAmount });
+      } else {
+        setAppliedPromo(null);
+        setPromoError(result.message || 'Invalid or expired promo code');
+      }
+    } catch {
+      setAppliedPromo(null);
+      setPromoError('Could not validate promo code');
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoCodeInput('');
+    setPromoError(null);
+  };
+
   const handleEnroll = async () => {
     if (!isAuthenticated) {
       router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(`/courses/${params.id}`)}`);
@@ -309,6 +349,7 @@ export default function CourseDetailPage({
         courseId: course.id,
         amount: priceNum,
         paymentMethod: 'ESEWA',
+        couponCode: appliedPromo?.code || undefined,
         referralClickId: referralClickId || undefined,
         successUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/success`,
         failureUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/failure`,
@@ -847,6 +888,53 @@ export default function CourseDetailPage({
                     </p>
                   )}
                 </div>
+
+                {/* Promo code (paid courses only) */}
+                {!course.isFree && course.price != null && (
+                  <div className="space-y-2">
+                    {appliedPromo ? (
+                      <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-green-800">Promo {appliedPromo.code} applied</span>
+                          <button
+                            type="button"
+                            onClick={removePromoCode}
+                            className="text-xs text-green-700 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <p className="text-sm text-green-700 mt-1">
+                          Discount: Rs. {appliedPromo.discountAmount.toLocaleString()} · You pay: Rs. {appliedPromo.finalAmount.toLocaleString()}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-600">Have a promo code?</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={promoCodeInput}
+                            onChange={(e) => { setPromoCodeInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                            placeholder="Enter code"
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-500)]"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={applyPromoCode}
+                            isLoading={applyingPromo}
+                            disabled={applyingPromo}
+                          >
+                            Apply
+                          </Button>
+                        </div>
+                        {promoError && <p className="text-sm text-red-600">{promoError}</p>}
+                      </>
+                    )}
+                  </div>
+                )}
 
                 {/* Main Actions */}
                 <div className="space-y-3">

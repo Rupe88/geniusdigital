@@ -222,6 +222,12 @@ export default function AdminEventDetailPage({
                   Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
+                  How did you find us
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider max-w-[180px]">
+                  Message
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                   Registered
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
@@ -232,7 +238,7 @@ export default function AdminEventDetailPage({
             <tbody className="divide-y divide-[var(--border)]">
               {loadingRegs ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={7} className="px-6 py-8 text-center text-[var(--muted-foreground)]">
                     Loading registrations...
                   </td>
                 </tr>
@@ -242,6 +248,8 @@ export default function AdminEventDetailPage({
                     <td className="px-6 py-4 font-medium text-[var(--foreground)]">{reg.name}</td>
                     <td className="px-6 py-4 text-sm text-[var(--muted-foreground)]">{reg.email}</td>
                     <td className="px-6 py-4 text-sm">{reg.phone || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-[var(--muted-foreground)]">{reg.referralSource || '—'}</td>
+                    <td className="px-6 py-4 text-sm text-[var(--muted-foreground)] max-w-[180px] truncate" title={reg.message || undefined}>{reg.message || '—'}</td>
                     <td className="px-6 py-4 text-sm text-[var(--muted-foreground)]">
                       {formatDate(reg.createdAt)}
                     </td>
@@ -264,7 +272,7 @@ export default function AdminEventDetailPage({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={7} className="px-6 py-12 text-center text-[var(--muted-foreground)]">
                     No registrations yet.
                   </td>
                 </tr>

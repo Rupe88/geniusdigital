@@ -9,6 +9,7 @@ import * as courseApi from '@/lib/api/courses';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import * as paymentAnalyticsApi from '@/lib/api/paymentAnalytics';
 import * as referralApi from '@/lib/api/referrals';
+import { getAllEventRegistrations } from '@/lib/api/events';
 import {
   HiUsers,
   HiBookOpen,
@@ -20,8 +21,8 @@ import {
   HiShare,
   HiArrowTrendingUp,
   HiDocumentText,
-  HiClock,
-  HiCheckCircle
+  HiCheckCircle,
+  HiCalendar
 } from 'react-icons/hi2';
 import { ROUTES } from '@/lib/utils/constants';
 import { getApiBaseUrl } from '@/lib/api/axios';
@@ -35,7 +36,6 @@ interface DashboardStats {
   referralClicks: number;
   referralConversions: number;
   publishedCourses: number;
-  draftCourses: number;
 }
 
 export default function AdminDashboardPage() {
@@ -47,10 +47,10 @@ export default function AdminDashboardPage() {
     referralClicks: 0,
     referralConversions: 0,
     publishedCourses: 0,
-    draftCourses: 0,
   });
   const [loading, setLoading] = useState(true);
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
+  const [eventRegistrationsTotal, setEventRegistrationsTotal] = useState(0);
 
   useEffect(() => {
     fetchStats();
@@ -65,10 +65,9 @@ export default function AdminDashboardPage() {
         courseApi.getAllCourses({ limit: 5 }).catch(() => ({ data: [], pagination: { total: 0 } })),
       ]);
 
-      // Get published/draft counts
-      const [publishedData, draftData] = await Promise.all([
+      // Get published count
+      const [publishedData] = await Promise.all([
         courseApi.getAllCourses({ status: 'PUBLISHED', limit: 1 }).catch(() => ({ pagination: { total: 0 } })),
-        courseApi.getAllCourses({ status: 'DRAFT', limit: 1 }).catch(() => ({ pagination: { total: 0 } })),
       ]);
 
       if (dashboardStats) {
@@ -80,7 +79,6 @@ export default function AdminDashboardPage() {
           referralClicks: referralStats?.totalClicks || 0,
           referralConversions: referralStats?.totalConversions || 0,
           publishedCourses: publishedData.pagination?.total || 0,
-          draftCourses: draftData.pagination?.total || 0,
         });
       } else {
         // Fallback to old method
@@ -99,7 +97,6 @@ export default function AdminDashboardPage() {
           referralClicks: referralStats?.totalClicks || 0,
           referralConversions: referralStats?.totalConversions || 0,
           publishedCourses: publishedData.pagination?.total || 0,
-          draftCourses: draftData.pagination?.total || 0,
         });
       }
 
@@ -107,6 +104,10 @@ export default function AdminDashboardPage() {
       if (coursesData.data) {
         setRecentCourses(coursesData.data.slice(0, 5));
       }
+
+      // Fetch event registrations total count
+      const bookingsRes = await getAllEventRegistrations({ page: 1, limit: 1 }).catch(() => ({ pagination: { total: 0 } }));
+      setEventRegistrationsTotal(bookingsRes.pagination?.total ?? 0);
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
@@ -169,6 +170,13 @@ export default function AdminDashboardPage() {
       color: 'bg-gradient-to-r from-blue-500 to-blue-600',
     },
     {
+      title: 'Event Registrations',
+      description: 'View upcoming event registered users',
+      icon: HiCalendar,
+      href: `${ROUTES.ADMIN}/event-registrations`,
+      color: 'bg-gradient-to-r from-teal-500 to-cyan-600',
+    },
+    {
       title: 'View Referrals',
       description: 'Track social sharing analytics',
       icon: HiShare,
@@ -229,55 +237,71 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Secondary Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card padding="md" className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-indigo-600 font-medium">Referral Clicks</p>
-              <p className="text-xl font-bold text-indigo-900">
-                {loading ? '...' : stats.referralClicks.toLocaleString()}
-              </p>
+      {/* Secondary Stats Row – same size and layout as main stat cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Link href={`${ROUTES.ADMIN}/referrals`}>
+          <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center">
+              <div className="p-3 bg-indigo-100 rounded-none mr-4">
+                <HiArrowTrendingUp className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--muted-foreground)]">Referral Clicks</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? <span className="animate-pulse">...</span> : stats.referralClicks.toLocaleString()}
+                </p>
+              </div>
             </div>
-            <HiArrowTrendingUp className="h-8 w-8 text-indigo-400" />
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card padding="md" className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-green-600 font-medium">Referral Conversions</p>
-              <p className="text-xl font-bold text-green-900">
-                {loading ? '...' : stats.referralConversions.toLocaleString()}
-              </p>
+        <Link href={`${ROUTES.ADMIN}/referrals`}>
+          <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-none mr-4">
+                <HiCheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--muted-foreground)]">Referral Conversions</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? <span className="animate-pulse">...</span> : stats.referralConversions.toLocaleString()}
+                </p>
+              </div>
             </div>
-            <HiCheckCircle className="h-8 w-8 text-green-400" />
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card padding="md" className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-600 font-medium">Published Courses</p>
-              <p className="text-xl font-bold text-blue-900">
-                {loading ? '...' : stats.publishedCourses.toLocaleString()}
-              </p>
+        <Link href={`${ROUTES.ADMIN}/courses`}>
+          <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-none mr-4">
+                <HiDocumentText className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--muted-foreground)]">Published Courses</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? <span className="animate-pulse">...</span> : stats.publishedCourses.toLocaleString()}
+                </p>
+              </div>
             </div>
-            <HiDocumentText className="h-8 w-8 text-blue-400" />
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card padding="md" className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-orange-600 font-medium">Draft Courses</p>
-              <p className="text-xl font-bold text-orange-900">
-                {loading ? '...' : stats.draftCourses.toLocaleString()}
-              </p>
+        <Link href={`${ROUTES.ADMIN}/event-registrations`}>
+          <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center">
+              <div className="p-3 bg-teal-100 rounded-none mr-4">
+                <HiCalendar className="h-6 w-6 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--muted-foreground)]">Event Registrations</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? <span className="animate-pulse">...</span> : eventRegistrationsTotal.toLocaleString()}
+                </p>
+              </div>
             </div>
-            <HiClock className="h-8 w-8 text-orange-400" />
-          </div>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       {/* Quick Actions and Recent Activity */}

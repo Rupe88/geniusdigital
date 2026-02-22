@@ -211,7 +211,7 @@ export const deleteEvent = async (id: string): Promise<void> => {
 };
 
 /**
- * Register for event
+ * Register for event (guests: send name, email, phone; optional referralSource, message)
  */
 export const registerForEvent = async (
   id: string,
@@ -219,6 +219,8 @@ export const registerForEvent = async (
     name?: string;
     email?: string;
     phone?: string;
+    referralSource?: string;
+    message?: string;
   }
 ): Promise<void> => {
   try {
@@ -276,10 +278,49 @@ export interface EventRegistration {
   name: string;
   email: string;
   phone: string;
+  referralSource?: string | null;
+  message?: string | null;
   attended: boolean;
   createdAt: string;
   user?: { id: string; fullName?: string; email: string; profileImage?: string };
+  event?: { id: string; title: string; slug: string; startDate: string };
 }
+
+/**
+ * Get all event registrations across events (admin only)
+ */
+export const getAllEventRegistrations = async (
+  params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    q?: string;
+    eventId?: string;
+    referralSource?: string;
+  }
+): Promise<PaginatedResponse<EventRegistration>> => {
+  try {
+    const response = await apiClient.get<ApiResponse<EventRegistration[]>>(
+      API_ENDPOINTS.EVENTS.ADMIN_REGISTRATIONS,
+      { params }
+    );
+    const responseData = response.data;
+    if (responseData.success && responseData.data) {
+      return {
+        data: responseData.data,
+        pagination: (responseData as any).pagination || {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          total: responseData.data.length,
+          pages: 1,
+        },
+      };
+    }
+    throw new Error(responseData.message || 'Failed to fetch registrations');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
 
 /**
  * Get event registrations (admin only)
@@ -341,5 +382,6 @@ export const eventsApi = {
   register: registerForEvent,
   unregister: unregisterFromEvent,
   getEventRegistrations,
+  getAllEventRegistrations,
   markEventAttendance,
 };

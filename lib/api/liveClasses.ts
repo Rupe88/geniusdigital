@@ -41,6 +41,8 @@ export const getAllLiveClasses = async (params?: {
   instructorId?: string;
   courseId?: string;
   upcoming?: boolean;
+  search?: string;
+  q?: string;
   page?: number;
   limit?: number;
 }): Promise<PaginatedResponse<LiveClass>> => {

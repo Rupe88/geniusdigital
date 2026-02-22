@@ -59,12 +59,18 @@ export interface UpdateCouponRequest {
 export interface ValidateCouponRequest {
   code: string;
   amount: number;
+  courseId?: string;
+  productIds?: string[];
 }
 
 export interface ValidateCouponResponse {
-  valid: boolean;
-  discount: number;
-  message: string;
+  success: boolean;
+  data?: {
+    coupon: { id: string; code: string; couponType: string; discountValue: number };
+    discountAmount: number;
+    finalAmount: number;
+  };
+  message?: string;
 }
 
 /**
@@ -169,15 +175,29 @@ export const getActiveCoupons = async (): Promise<Coupon[]> => {
   }
 };
 
+/** Result of validateCoupon: either valid with data or invalid with message. */
+export type ValidateCouponResult =
+  | { valid: true; coupon: { id: string; code: string; couponType: string; discountValue: number }; discountAmount: number; finalAmount: number }
+  | { valid: false; message: string };
+
 /**
- * Validate coupon
+ * Validate coupon for a course or cart. Pass courseId when validating for a course purchase.
  */
-export const validateCoupon = async (data: ValidateCouponRequest): Promise<ValidateCouponResponse> => {
+export const validateCoupon = async (data: ValidateCouponRequest): Promise<ValidateCouponResult> => {
   try {
-    const response = await apiClient.post<ApiResponse<ValidateCouponResponse>>(API_ENDPOINTS.COUPONS.VALIDATE, data);
-    return handleApiResponse<ValidateCouponResponse>(response);
-  } catch (error) {
-    throw new Error(handleApiError(error));
+    const response = await apiClient.post<{ success: boolean; data?: ValidateCouponResponse['data']; message?: string }>(
+      API_ENDPOINTS.COUPONS.VALIDATE,
+      { code: data.code.trim().toUpperCase(), amount: data.amount, courseId: data.courseId, productIds: data.productIds }
+    );
+    const res = response.data;
+    if (res.success && res.data) {
+      return { valid: true, ...res.data };
+    }
+    return { valid: false, message: res.message || 'Invalid coupon' };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    const message = err.response?.data?.message || handleApiError(error);
+    return { valid: false, message };
   }
 };
 

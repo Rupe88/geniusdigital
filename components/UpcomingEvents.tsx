@@ -2,9 +2,10 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
-import { getUpcomingEvents } from '@/lib/api/events';
+import { HiChevronLeft, HiChevronRight, HiX } from 'react-icons/hi';
+import { getUpcomingEvents, registerForEvent } from '@/lib/api/events';
 import type { Event } from '@/lib/api/events';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop&q=80';
 
@@ -16,6 +17,15 @@ function formatEventDate(startDate: string): string {
   });
 }
 
+const REFERRAL_OPTIONS = [
+  { value: '', label: 'Select...' },
+  { value: 'GOOGLE', label: 'Google' },
+  { value: 'FACEBOOK', label: 'Facebook' },
+  { value: 'FRIEND_REFERRAL', label: 'Friend / Referral' },
+  { value: 'WEBSITE', label: 'Website' },
+  { value: 'OTHER', label: 'Other' },
+];
+
 export const UpcomingEvents: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -24,6 +34,9 @@ export const UpcomingEvents: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [bookingEvent, setBookingEvent] = useState<Event | null>(null);
+  const [bookingForm, setBookingForm] = useState({ name: '', email: '', phone: '', eventId: '', referralSource: '', message: '' });
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +106,65 @@ export const UpcomingEvents: React.FC = () => {
     }
   };
 
+  const openBookingPopup = (e: React.MouseEvent, event: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBookingEvent(event);
+    setBookingForm({
+      name: '',
+      email: '',
+      phone: '',
+      eventId: event.id,
+      referralSource: '',
+      message: '',
+    });
+  };
+
+  const closeBookingPopup = () => {
+    setBookingEvent(null);
+    setBookingSubmitting(false);
+  };
+
+  const handleBookingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingEvent) return;
+    const { name, email, phone, eventId, referralSource, message } = bookingForm;
+    const eventIdToRegister = eventId || bookingEvent.id;
+    if (!name?.trim()) {
+      showError('Please enter your name');
+      return;
+    }
+    if (!email?.trim()) {
+      showError('Please enter your email');
+      return;
+    }
+    if (!phone?.trim()) {
+      showError('Please enter your phone number');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showError('Please enter a valid email address');
+      return;
+    }
+    setBookingSubmitting(true);
+    try {
+      await registerForEvent(eventIdToRegister, {
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        referralSource: referralSource?.trim() || undefined,
+        message: message?.trim() || undefined,
+      });
+      showSuccess('Successfully registered! We will contact you soon.');
+      closeBookingPopup();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } finally {
+      setBookingSubmitting(false);
+    }
+  };
+
   return (
     <section className="pt-16 pb-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -157,44 +229,142 @@ export const UpcomingEvents: React.FC = () => {
               </div>
             )}
             {!loading && !error && events.map((event) => (
-              <Link
+              <div
                 key={event.id}
-                href={`/events/${event.slug}`}
-                className="flex-shrink-0 w-[400px] block bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
+                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg flex flex-col"
               >
-                {/* Thumbnail */}
-                <div className="relative w-full h-52 p-2">
-                  <img
-                    src={event.image || PLACEHOLDER_IMAGE}
-                    alt={event.title}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  {event.featured && (
-                    <div className="absolute top-4 right-4 bg-yellow-500 text-white px-2 py-1 text-xs font-semibold rounded">
-                      Featured
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="px-5 pt-0 pb-0">
-                  {/* Date */}
-                  <div className="mb-1">
-                    <span className="inline-block pl-0 pr-3 py-0 rounded-none bg-white text-xs font-medium text-gray-700">
-                      {formatEventDate(event.startDate)}
-                    </span>
+                <Link href={`/events/${event.slug}`} className="block flex-1 min-h-0">
+                  {/* Thumbnail */}
+                  <div className="relative w-full h-52 p-2">
+                    <img
+                      src={event.image || PLACEHOLDER_IMAGE}
+                      alt={event.title}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    {event.featured && (
+                      <div className="absolute top-4 right-4 bg-yellow-500 text-white px-2 py-1 text-xs font-semibold rounded">
+                        Featured
+                      </div>
+                    )}
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-base md:text-lg  font-lg tracking-wide text-gray-900 mb-1 line-clamp-2 ">
-                    {event.title}
-                  </h3>
+                  {/* Content */}
+                  <div className="px-5 pt-0 pb-2">
+                    <div className="mb-1">
+                      <span className="inline-block pl-0 pr-3 py-0 rounded-none bg-white text-xs font-medium text-gray-700">
+                        {formatEventDate(event.startDate)}
+                      </span>
+                    </div>
+                    <h3 className="text-base md:text-lg font-lg tracking-wide text-gray-900 mb-1 line-clamp-2">
+                      {event.title}
+                    </h3>
+                  </div>
+                </Link>
+                <div className="px-5 pb-4 pt-0">
+                  <button
+                    type="button"
+                    onClick={(e) => openBookingPopup(e, event)}
+                    className="w-full py-2.5 px-4 rounded-none text-sm font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-colors"
+                  >
+                    Book Now
+                  </button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Book Now popup form */}
+      {bookingEvent && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60"
+          aria-modal="true"
+          role="dialog"
+          onClick={closeBookingPopup}
+        >
+          <div
+            className="bg-gray-900 text-white rounded-lg shadow-xl w-full max-w-md border border-gray-700 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+              <h3 className="text-lg font-semibold">Fill the Form For More Update</h3>
+              <button
+                type="button"
+                onClick={closeBookingPopup}
+                className="p-1 rounded hover:bg-gray-700 transition-colors"
+                aria-label="Close"
+              >
+                <HiX className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+              <input
+                type="text"
+                placeholder="Enter your name"
+                value={bookingForm.name}
+                onChange={(e) => setBookingForm((f) => ({ ...f, name: e.target.value }))}
+                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                required
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={bookingForm.email}
+                  onChange={(e) => setBookingForm((f) => ({ ...f, email: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={bookingForm.phone}
+                  onChange={(e) => setBookingForm((f) => ({ ...f, phone: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={bookingForm.eventId}
+                  onChange={(e) => setBookingForm((f) => ({ ...f, eventId: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                >
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.title.length > 35 ? ev.title.slice(0, 35) + '…' : ev.title}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={bookingForm.referralSource}
+                  onChange={(e) => setBookingForm((f) => ({ ...f, referralSource: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                >
+                  {REFERRAL_OPTIONS.map((opt) => (
+                    <option key={opt.value || 'empty'} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <textarea
+                placeholder="Enter your message"
+                value={bookingForm.message}
+                onChange={(e) => setBookingForm((f) => ({ ...f, message: e.target.value }))}
+                rows={3}
+                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] resize-none"
+              />
+              <button
+                type="submit"
+                disabled={bookingSubmitting}
+                className="w-full py-3 px-4 rounded-none font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-60 transition-colors"
+              >
+                {bookingSubmitting ? 'Submitting...' : 'Book Your Seat Now'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

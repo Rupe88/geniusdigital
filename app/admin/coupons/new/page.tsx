@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
 import { couponApi } from '@/lib/api/coupon';
+import { getAllCourses } from '@/lib/api/courses';
+import { Course } from '@/lib/types/course';
 import { ROUTES } from '@/lib/utils/constants';
 import toast from 'react-hot-toast';
 
@@ -74,19 +76,44 @@ type CouponFormData = z.infer<typeof couponSchema>;
 export default function NewCouponPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CouponFormData>({
     resolver: zodResolver(couponSchema) as Resolver<CouponFormData>,
     defaultValues: {
       couponType: 'PERCENTAGE',
+      applicableCourses: [],
     },
   });
 
   const couponType = watch('couponType');
+  const applicableCourses = watch('applicableCourses') ?? [];
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getAllCourses({ limit: 500 });
+        if (!cancelled && res.data) setCourses(res.data);
+      } catch {
+        if (!cancelled) setCourses([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleCourse = (courseId: string) => {
+    const current = applicableCourses as string[];
+    const next = current.includes(courseId)
+      ? current.filter((id) => id !== courseId)
+      : [...current, courseId];
+    setValue('applicableCourses', next);
+  };
 
   const onSubmit = async (data: CouponFormData) => {
     try {
@@ -265,6 +292,30 @@ export default function NewCouponPage() {
                     required
                   />
                 </div>
+              </div>
+            </Card>
+
+            {/* Applicable to courses */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">Applicable to courses</h2>
+              <p className="text-sm text-gray-500 mb-4">Select which courses this promo code can be used for. Leave empty to allow all courses.</p>
+              <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-3">
+                {courses.length === 0 ? (
+                  <p className="text-sm text-gray-500">Loading courses…</p>
+                ) : (
+                  courses.map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={(applicableCourses as string[]).includes(c.id)}
+                        onChange={() => toggleCourse(c.id)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm text-gray-900">{c.title}</span>
+                      {c.price != null && <span className="text-xs text-gray-500">Rs. {Number(c.price).toLocaleString()}</span>}
+                    </label>
+                  ))
+                )}
               </div>
             </Card>
           </div>

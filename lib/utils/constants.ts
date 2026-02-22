@@ -188,6 +188,7 @@ export const API_ENDPOINTS = {
   EVENTS: {
     LIST: '/events',
     BY_ID: (id: string) => `/events/${id}`,
+    ADMIN_REGISTRATIONS: '/events/admin/registrations',
   },
   // FAQs
   FAQS: {
