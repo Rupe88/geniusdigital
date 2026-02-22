@@ -7,11 +7,12 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ROUTES } from '@/lib/utils/constants';
 import { generateBreadcrumbs, shouldShowBreadcrumbs } from '@/lib/utils/breadcrumbs';
-import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash } from 'react-icons/hi';
+import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash, HiDotsHorizontal } from 'react-icons/hi';
 
 export const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
@@ -71,12 +72,17 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     setIsMoreMenuOpen(false);
     setIsUserMenuOpen(false);
+    setIsMobileMoreOpen(false);
   }, [pathname]);
 
   const bottomNavItems = [
     { label: 'Home', href: ROUTES.HOME, icon: HiHome },
     { label: 'Courses', href: ROUTES.COURSES, icon: HiAcademicCap },
     { label: 'Events', href: ROUTES.EVENTS, icon: HiCalendar },
+    { label: 'More', icon: HiDotsHorizontal, isMore: true },
+  ];
+
+  const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
     { label: 'Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     { label: isAuthenticated ? 'Account' : 'Login', href: isAuthenticated ? ROUTES.DASHBOARD : ROUTES.LOGIN, icon: HiUser },
@@ -290,16 +296,33 @@ export const Navbar: React.FC = () => {
       >
         <div className="flex items-center justify-around h-16">
           {bottomNavItems.map((item) => {
-            const active = isActive(item.href);
             const Icon = item.icon;
+            if ('isMore' in item && item.isMore) {
+              return (
+                <button
+                  key="more"
+                  type="button"
+                  onClick={() => setIsMobileMoreOpen((prev) => !prev)}
+                  className={`flex flex-col items-center justify-center flex-1 py-2 min-w-0 gap-0.5 transition-colors ${
+                    isMobileMoreOpen ? 'text-[var(--primary-700)]' : 'text-gray-500'
+                  }`}
+                  aria-expanded={isMobileMoreOpen}
+                  aria-haspopup="true"
+                >
+                  <HiDotsHorizontal className="w-6 h-6 flex-shrink-0" />
+                  <span className="text-[10px] font-medium truncate max-w-full px-0.5">
+                    More
+                  </span>
+                </button>
+              );
+            }
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`flex flex-col items-center justify-center flex-1 py-2 min-w-0 gap-0.5 transition-colors ${
-                  active
-                    ? 'text-[var(--primary-700)]'
-                    : 'text-gray-500'
+                  active ? 'text-[var(--primary-700)]' : 'text-gray-500'
                 }`}
               >
                 <Icon className="w-6 h-6 flex-shrink-0" />
@@ -310,6 +333,40 @@ export const Navbar: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Mobile More menu overlay + panel */}
+        {isMobileMoreOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/40 z-[60] lg:hidden"
+              aria-hidden="true"
+              onClick={() => setIsMobileMoreOpen(false)}
+            />
+            <div
+              className="fixed bottom-16 left-2 right-2 z-[61] bg-white rounded-lg shadow-lg border border-gray-200 py-2 lg:hidden"
+              role="menu"
+            >
+              {mobileMoreMenuItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    className={`flex items-center gap-3 px-4 py-3 text-sm ${
+                      active ? 'text-[var(--primary-700)] bg-[var(--primary-50)]' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMobileMoreOpen(false)}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        )}
       </nav>
     </>
   );
