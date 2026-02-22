@@ -199,14 +199,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             </div>
             {isUploading && (
               <div className="mt-3 space-y-2">
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between items-center text-xs">
                   <span className="text-[var(--muted-foreground)]">Uploading...</span>
-                  <span className="text-[var(--primary-600)] font-semibold tabular-nums">{uploadProgress}%</span>
+                  <span className="text-[var(--primary-600)] font-semibold tabular-nums" aria-live="polite">
+                    {Math.min(100, Math.round(uploadProgress))}%
+                  </span>
                 </div>
-                <div className="h-2 bg-[var(--muted)] rounded-full overflow-hidden">
+                <div className="h-2.5 bg-[var(--muted)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[var(--primary-600)] rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${uploadProgress}%` }}
+                    style={{ width: `${Math.min(100, uploadProgress)}%` }}
+                    role="progressbar"
+                    aria-valuenow={Math.min(100, Math.round(uploadProgress))}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
                   />
                 </div>
               </div>
@@ -259,7 +265,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           </p>
           <p className="mt-1 text-xs text-[var(--muted-foreground)]">
             {isUploading 
-              ? `Please wait, uploading ${uploadProgress}%...`
+              ? `Please wait, uploading ${Math.min(100, Math.round(uploadProgress))}%...`
               : `${fileTypeInfo.formatText} up to ${maxSize}MB${fileTypeInfo.aspectRatio ? ` • ${fileTypeInfo.aspectRatio}` : ''}`
             }
           </p>

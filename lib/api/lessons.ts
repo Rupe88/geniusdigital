@@ -98,11 +98,15 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
-        if (data.onProgress && progressEvent.total && progressEvent.total > 0) {
+        if (!data.onProgress) return;
+        if (progressEvent.total != null && progressEvent.total > 0) {
           const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
           data.onProgress(Math.min(percent, 99));
-        } else if (data.onProgress && progressEvent.loaded) {
-          data.onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        } else if (progressEvent.loaded != null) {
+          // No total (e.g. chunked encoding): estimate 5–95% by bytes (200 MB = 95%)
+          const loadedMB = progressEvent.loaded / (1024 * 1024);
+          const estimatedPercent = 5 + 90 * Math.min(1, loadedMB / 200);
+          data.onProgress(Math.min(Math.round(estimatedPercent), 99));
         }
       },
     });
@@ -158,11 +162,14 @@ export const updateLesson = async (id: string, data: Partial<CreateLessonData>):
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total && progressEvent.total > 0) {
+        if (!onProgress) return;
+        if (progressEvent.total != null && progressEvent.total > 0) {
           const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
           onProgress(Math.min(percent, 99));
-        } else if (onProgress && progressEvent.loaded) {
-          onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        } else if (progressEvent.loaded != null) {
+          const loadedMB = progressEvent.loaded / (1024 * 1024);
+          const estimatedPercent = 5 + 90 * Math.min(1, loadedMB / 200);
+          onProgress(Math.min(Math.round(estimatedPercent), 99));
         }
       },
     });

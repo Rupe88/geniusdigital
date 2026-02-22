@@ -1006,7 +1006,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
               onClick={handleSaveLesson}
               disabled={isUploading}
             >
-              {isUploading ? `Uploading... ${uploadProgress}%` : editingLesson ? 'Update' : 'Create'} Lesson
+              {isUploading ? `Uploading... ${Math.min(100, Math.round(uploadProgress))}%` : editingLesson ? 'Update' : 'Create'} Lesson
             </Button>
           </div>
         </div>

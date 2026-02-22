@@ -221,7 +221,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       });
     }
 
-    data.onProgress?.(1);
+    data.onProgress?.(0);
 
     // Large video uploads (1GB+) can take 1–2+ hours on slow connections
     const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 7200000 : 120000; // 2 hours with file, 2 min without
@@ -231,11 +231,14 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       },
       timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
-        if (progressEvent.total && progressEvent.total > 0) {
+        if (!data.onProgress) return;
+        if (progressEvent.total != null && progressEvent.total > 0) {
           const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
-          data.onProgress?.(Math.min(percent, 99));
-        } else if (progressEvent.loaded) {
-          data.onProgress?.(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+          data.onProgress(Math.min(percent, 99));
+        } else if (progressEvent.loaded != null) {
+          const loadedMB = progressEvent.loaded / (1024 * 1024);
+          const estimatedPercent = 5 + 90 * Math.min(1, loadedMB / 200);
+          data.onProgress(Math.min(Math.round(estimatedPercent), 99));
         }
       },
     });
@@ -355,11 +358,14 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
       },
       timeout: uploadTimeout,
       onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total && progressEvent.total > 0) {
+        if (!onProgress) return;
+        if (progressEvent.total != null && progressEvent.total > 0) {
           const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
           onProgress(Math.min(percent, 99));
-        } else if (onProgress && progressEvent.loaded) {
-          onProgress(Math.min(10 + Math.round(progressEvent.loaded / 1024 / 1024), 95));
+        } else if (progressEvent.loaded != null) {
+          const loadedMB = progressEvent.loaded / (1024 * 1024);
+          const estimatedPercent = 5 + 90 * Math.min(1, loadedMB / 200);
+          onProgress(Math.min(Math.round(estimatedPercent), 99));
         }
       },
     });

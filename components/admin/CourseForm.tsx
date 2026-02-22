@@ -414,41 +414,48 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         )}
       </div>
 
-      {/* YouTube-style upload overlay: real percentage, smooth bar */}
+      {/* Upload overlay: accurate percentage, clear progress bar */}
       {(isUploading || isLoading) && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
           aria-modal="true"
           role="dialog"
           aria-label="Upload progress"
+          aria-busy="true"
         >
           <div className="bg-[var(--card)] border border-[var(--border)] shadow-2xl rounded-xl p-8 w-full max-w-md mx-4 animate-in fade-in duration-300">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                {uploadProgress < 100 ? 'Uploading course...' : 'Almost done...'}
+                {uploadProgress >= 100 ? 'Finishing...' : 'Uploading course'}
               </h3>
               <p className="text-sm text-[var(--muted-foreground)] mt-1">
                 {uploadProgress < 5
                   ? 'Preparing files...'
                   : uploadProgress < 100
-                    ? 'Uploading video & files'
+                    ? 'Uploading video & files — please wait'
                     : 'Saving course'}
               </p>
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between items-center text-sm">
                 <span className="font-medium text-[var(--foreground)]">Progress</span>
-                <span className="tabular-nums text-[var(--primary-600)] font-semibold">{uploadProgress}%</span>
+                <span className="tabular-nums text-[var(--primary-600)] font-bold text-base" aria-live="polite">
+                  {Math.min(100, Math.round(uploadProgress))}%
+                </span>
               </div>
               <div className="h-3 bg-[var(--muted)] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[var(--primary-600)] rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${uploadProgress}%` }}
+                  style={{ width: `${Math.min(100, uploadProgress)}%` }}
+                  role="progressbar"
+                  aria-valuenow={Math.round(uploadProgress)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
                 />
               </div>
             </div>
             <p className="text-xs text-[var(--muted-foreground)] mt-4 text-center">
-              Don&apos;t close this page. Videos over 1GB can take 15–30+ min depending on connection.
+              Don&apos;t close this page. Large videos (1GB+) can take 15–30+ min depending on connection.
             </p>
           </div>
         </div>
