@@ -22,10 +22,10 @@ import { showError } from '@/lib/utils/toast';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
 const courseSchema = z.object({
-  // Step 1
+  // Step 1 – only title required; thumbnail validated on submit
   title: z.string().min(1, 'Title is required').max(255, 'Title must be less than 255 characters'),
   slug: z.string().optional(),
-  instructorId: z.string().min(1, 'Instructor is required').uuid('Invalid instructor'),
+  instructorId: z.string().uuid().optional().or(z.literal('')),
   categoryId: z.string().uuid().optional().or(z.literal('')),
 
   // Step 2
@@ -282,23 +282,22 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
       const learningOutcomes = data.learningOutcomes;
       const skills = data.skills;
 
-      // Validate required fields before submission
+      // Required: title and thumbnail (for new course)
       if (!data.title || !data.title.trim()) {
         throw new Error('Title is required');
       }
-      if (!data.instructorId || !data.instructorId.trim() || data.instructorId === '') {
-        throw new Error('Please select an instructor');
+      if (!course && !thumbnailFile) {
+        throw new Error('Thumbnail is required');
       }
-      // Validate UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(data.instructorId.trim())) {
-        throw new Error('Invalid instructor selected. Please select a valid instructor.');
+      if (data.instructorId && data.instructorId.trim() && !uuidRegex.test(data.instructorId.trim())) {
+        throw new Error('Invalid instructor selected.');
       }
 
       const submitData: CreateCourseData & { curriculumData?: { chapters: any[], lessons: any[] } } = {
         title: data.title.trim(),
         slug: data.slug?.trim() || undefined,
-        instructorId: data.instructorId.trim(),
+        instructorId: data.instructorId?.trim() || undefined,
         categoryId: data.categoryId && data.categoryId.trim() ? data.categoryId.trim() : undefined,
         shortDescription: data.shortDescription || undefined,
         description: data.description || undefined,
@@ -533,24 +532,11 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
             />
 
             <Select
-              label="Instructor *"
-              {...register('instructorId', { 
-                required: 'Instructor is required',
-                validate: (value) => {
-                  if (!value || value === '') {
-                    return 'Please select an instructor';
-                  }
-                  // Check if it's a valid UUID format
-                  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                  if (!uuidRegex.test(value)) {
-                    return 'Invalid instructor selected';
-                  }
-                  return true;
-                }
-              })}
+              label="Instructor"
+              {...register('instructorId')}
               error={errors.instructorId?.message}
               options={[
-                { value: '', label: 'Select an instructor' },
+                { value: '', label: 'Select an instructor (optional)' },
                 ...instructors.map((inst) => ({ value: inst.id, label: inst.name })),
               ]}
             />
@@ -566,7 +552,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
             />
 
             <FileUpload
-              label="Thumbnail"
+              label="Thumbnail *"
               accept="image/*"
               maxSize={10}
               value={thumbnailPreview || thumbnailFile}

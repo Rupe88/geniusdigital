@@ -133,7 +133,7 @@ export interface CreateCourseData {
   tags?: string;
   learningOutcomes?: string[];
   skills?: string[];
-  instructorId: string;
+  instructorId?: string;
   categoryId?: string;
   videoUrl?: string;
   thumbnailFile?: File;
@@ -145,18 +145,16 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
   try {
     data.onProgress?.(0);
 
-    // Validate required fields
+    // Validate required fields (title and thumbnail are required; thumbnail is validated via backend)
     if (!data.title || !data.title.trim()) {
       throw new Error('Title is required');
-    }
-    if (!data.instructorId || !data.instructorId.trim()) {
-      throw new Error('Instructor ID is required');
     }
 
     const formData = new FormData();
 
     // Add all fields to FormData
     formData.append('title', data.title.trim());
+    if (data.instructorId?.trim()) formData.append('instructorId', data.instructorId.trim());
     if (data.slug) formData.append('slug', data.slug.trim());
     if (data.description) formData.append('description', data.description);
     if (data.shortDescription) formData.append('shortDescription', data.shortDescription);
@@ -182,17 +180,6 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     if (data.videoUrl && data.videoUrl.trim()) {
       formData.append('videoUrl', data.videoUrl.trim());
     }
-    
-    // CRITICAL: instructorId is required and must be a valid UUID
-    if (!data.instructorId || !data.instructorId.trim() || data.instructorId === '') {
-      throw new Error('Instructor ID is required. Please select an instructor.');
-    }
-    // Validate UUID format before sending
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(data.instructorId.trim())) {
-      throw new Error('Invalid instructor ID format. Please select a valid instructor.');
-    }
-    formData.append('instructorId', data.instructorId.trim());
     
     // categoryId is optional but must be valid UUID if provided
     if (data.categoryId && data.categoryId.trim()) {
