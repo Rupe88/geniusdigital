@@ -917,7 +917,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
               </div>
 
               <div className="space-y-8">
-                {lessonForm.quizData.questions.map((q, qIndex) => {
+                    {lessonForm.quizData.questions.map((q, qIndex) => {
                   const questionType = q.questionType || 'multiple_choice';
                   const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(questionType);
                   const options = isObjective && q.options?.length ? q.options : (questionType === 'true_false' ? ['True', 'False'] : ['', '', '', '']);
@@ -989,20 +989,11 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                         />
                       )}
 
-                      <div className="flex items-center space-x-4">
-                        <Input
-                          label="Points"
-                          type="number"
-                          value={q.points}
-                          onChange={(e) => updateQuizQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
-                          className="w-24"
-                        />
-                        {isObjective && (
-                          <div className="text-xs text-gray-500 pt-6">
-                            * Select the radio button next to the correct option
-                          </div>
-                        )}
-                      </div>
+                      {isObjective && (
+                        <div className="text-xs text-gray-500">
+                          * Select the radio button next to the correct option
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -59,7 +59,10 @@ const courseSchema = z.object({
   isOngoing: z.boolean().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  videoUrl: z.union([z.string().url('Invalid URL'), z.literal('')]).optional(),
+  // Allow both full URLs (YouTube, https://...) and internal paths (/api/media/...)
+  videoUrl: z
+    .string()
+    .optional(),
 });
 
 type CourseFormData = z.infer<typeof courseSchema> & {
@@ -102,26 +105,18 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const MAX_PROMO_VIDEOS = 5;
-  const initialPromoSlots = (): Array<{ url: string; file: File | null }> => {
-    const urls = course?.promoVideos?.length
-      ? [...course.promoVideos]
-      : course?.videoUrl
-        ? [course.videoUrl]
-        : [];
-    const slots = urls.slice(0, MAX_PROMO_VIDEOS).map((url) => ({ url: url || '', file: null as File | null }));
-    while (slots.length < MAX_PROMO_VIDEOS) slots.push({ url: '', file: null });
-    return slots;
-  };
+  // For promo videos we now use file uploads only.
+  // Start with empty slots; existing promo videos stay on the backend
+  // unless the admin uploads new files to replace them.
+  const initialPromoSlots = (): Array<{ url: string; file: File | null }> =>
+    Array.from({ length: MAX_PROMO_VIDEOS }, () => ({ url: '', file: null }));
   const [promoSlots, setPromoSlots] = useState<Array<{ url: string; file: File | null }>>(initialPromoSlots);
 
   useEffect(() => {
-    if (course) {
-      const urls = course.promoVideos?.length ? [...course.promoVideos] : course.videoUrl ? [course.videoUrl] : [];
-      const slots = urls.slice(0, MAX_PROMO_VIDEOS).map((url) => ({ url: url || '', file: null as File | null }));
-      while (slots.length < MAX_PROMO_VIDEOS) slots.push({ url: '', file: null });
-      setPromoSlots(slots);
-    }
-  }, [course?.id, course?.promoVideos?.length, course?.videoUrl]);
+    // When course changes, reset promo slots to empty; existing promos
+    // are preserved by backend until new files are uploaded.
+    setPromoSlots(initialPromoSlots());
+  }, [course?.id]);
 
   // Curriculum state
   const [curriculumChapters, setCurriculumChapters] = useState<any[]>([]);
@@ -354,22 +349,23 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           requestAnimationFrame(() => setUploadProgress(progress));
         },
       };
+      // Backend requires thumbnail on update too; if admin didn't pick a new file,
+      // send the existing thumbnail URL (S3/signed URL) so validation passes.
+      if (course && !thumbnailFile && course.thumbnail) {
+        submitData.thumbnail = course.thumbnail;
+      }
 
       const builtSlots = promoSlots
         .slice(0, MAX_PROMO_VIDEOS)
-        .map((s) =>
-          s.file ? ({ type: 'file' } as const) : s.url.trim() ? ({ type: 'url' as const, url: s.url.trim() }) : null
-        )
-        .filter((x): x is { type: 'url'; url: string } | { type: 'file' } => x != null);
+        .map((s) => (s.file ? ({ type: 'file' } as const) : null))
+        .filter((x): x is { type: 'file' } => x != null);
       const builtFiles = promoSlots.filter((s) => s.file).map((s) => s.file!);
+
+      // Only send promo video payload when user has selected new files.
+      // Existing promo videos (stored as URLs on the course) are kept as-is by the backend.
       if (builtSlots.length > 0) {
         submitData.promoVideoSlots = builtSlots;
         submitData.videoFiles = builtFiles;
-      } else {
-        submitData.promoVideoSlots = [];
-        const first = promoSlots[0];
-        if (first?.url.trim()) submitData.videoUrl = first.url.trim();
-        if (first?.file) submitData.videoFile = first.file;
       }
 
       // Add curriculum data if it exists
@@ -623,25 +619,25 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           <div className="space-y-6">
             <div className="space-y-4">
               <p className="text-sm font-medium text-[var(--foreground)]">
-                Promo videos (optional, up to 5) – YouTube links or uploads for course preview
+                Promo videos (optional, up to 5) – upload video files for course preview
               </p>
               {promoSlots.map((slot, index) => (
-                <div key={index} className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4 space-y-2">
-                  <label className="text-sm font-medium text-[var(--foreground)]">Video {index + 1}</label>
-                  <Input
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={slot.url}
-                    onChange={(e) => {
-                      setPromoSlots((prev) => {
-                        const next = [...prev];
-                        next[index] = { ...next[index], url: e.target.value, file: null };
-                        return next;
-                      });
-                    }}
-                    disabled={!!slot.file}
-                  />
+                <div
+                  key={index}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4 space-y-2"
+                >
+                  <label className="text-sm font-medium text-[var(--foreground)]">
+                    Video {index + 1}
+                  </label>
+
+                  {slot.url && !slot.file && (
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Existing promo video is already saved for this slot. Upload a new file below only
+                      if you want to replace it.
+                    </p>
+                  )}
+
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-[var(--muted-foreground)]">or</span>
                     <input
                       type="file"
                       accept="video/mp4,video/webm,video/ogg,video/quicktime"
@@ -650,13 +646,14 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                         const f = e.target.files?.[0];
                         setPromoSlots((prev) => {
                           const next = [...prev];
-                          next[index] = { url: '', file: f || null };
+                          next[index] = { url: slot.url, file: f || null };
                           return next;
                         });
                         e.target.value = '';
                       }}
                     />
                   </div>
+
                   {slot.file && (
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Selected: {slot.file.name} ({(slot.file.size / 1024 / 1024).toFixed(2)} MB)

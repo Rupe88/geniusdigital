@@ -312,22 +312,6 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
                   />
                 )}
 
-                {/* Points */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
-                    Points
-                  </label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={selectedQuestion.points.toString()}
-                    onChange={(e) =>
-                      updateQuestion(selectedQuestionIndex!, {
-                        points: parseInt(e.target.value) || 1,
-                      })
-                    }
-                  />
-                </div>
               </div>
             </Card>
           ) : (

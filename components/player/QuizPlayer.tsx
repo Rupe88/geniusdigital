@@ -119,7 +119,11 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                         {result.passed ? 'Excellent Work!' : 'Keep Practicing!'}
                     </h2>
                     <p className="text-lg font-bold text-gray-600">
-                        You scored <span className="text-[var(--primary-700)] text-3xl mx-1">{result.score}</span> out of {result.totalPoints} points
+                        You answered{' '}
+                        <span className="text-[var(--primary-700)] text-3xl mx-1">
+                            {result.correctAnswers}
+                        </span>
+                        out of {result.totalQuestions} questions correctly
                     </p>
                     <div className="mt-4 inline-block px-6 py-2 rounded-none font-black uppercase tracking-widest text-sm bg-white shadow-sm">
                         {result.percentage.toFixed(0)}% Accuracy • {result.correctAnswers}/{result.totalQuestions} Correct
