@@ -9,7 +9,7 @@ export interface AdminStats {
     thisMonth: number;
     total: number;
   };
-  totalRevenue?: number; // For P/L calculations
+  totalRevenue?: number; 
   expenses: number;
   profit: number;
   pendingSalaries: number;
