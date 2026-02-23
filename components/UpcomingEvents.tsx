@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import Link from 'next/link';
 import { HiChevronLeft, HiChevronRight, HiX } from 'react-icons/hi';
 import { getUpcomingEvents, registerForEvent } from '@/lib/api/events';
 import type { Event } from '@/lib/api/events';
@@ -231,9 +230,10 @@ export const UpcomingEvents: React.FC = () => {
             {!loading && !error && events.map((event) => (
               <div
                 key={event.id}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg flex flex-col"
+                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] overflow-hidden rounded-lg flex flex-col cursor-default"
               >
-                <Link href={`/events/${event.slug}`} className="block flex-1 min-h-0">
+                {/* Card content – not clickable */}
+                <div className="flex-1 min-h-0">
                   {/* Thumbnail */}
                   <div className="relative w-full h-52 p-2">
                     <img
@@ -259,12 +259,12 @@ export const UpcomingEvents: React.FC = () => {
                       {event.title}
                     </h3>
                   </div>
-                </Link>
+                </div>
                 <div className="px-5 pb-4 pt-0">
                   <button
                     type="button"
                     onClick={(e) => openBookingPopup(e, event)}
-                    className="w-full py-2.5 px-4 rounded-none text-sm font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-colors"
+                    className="w-full py-2.5 px-4 rounded-none text-sm font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-colors cursor-pointer"
                   >
                     Book Now
                   </button>

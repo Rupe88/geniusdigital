@@ -10,18 +10,13 @@ import { z } from 'zod';
 import { HiArrowLeft, HiCloudUpload, HiX } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
 import { Card } from '@/components/ui/Card';
 import { eventsApi, CreateEventRequest } from '@/lib/api/events';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  slug: z.string().min(1, 'Slug is required'),
   startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().optional(),
-  description: z.string().optional(),
-  shortDescription: z.string().max(500).optional(),
   venue: z.string().optional(),
   location: z.string().optional(),
   price: z.coerce.number().min(0).optional(),
@@ -31,15 +26,6 @@ const eventSchema = z.object({
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 const ACCEPTED_IMAGE = 'image/jpeg,image/png,image/webp,image/gif';
 const MAX_IMAGE_MB = 10;
@@ -54,18 +40,12 @@ export default function NewEventPage() {
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema) as Resolver<EventFormData>,
     defaultValues: {
       title: '',
-      slug: '',
       startDate: '',
-      endDate: '',
-      description: '',
-      shortDescription: '',
       venue: '',
       location: '',
       price: 0,
@@ -75,13 +55,6 @@ export default function NewEventPage() {
     },
     mode: 'onBlur',
   });
-
-  const title = watch('title');
-  React.useEffect(() => {
-    if (title && !watch('slug')) {
-      setValue('slug', slugify(title));
-    }
-  }, [title, setValue, watch]);
 
   const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,14 +83,10 @@ export default function NewEventPage() {
     try {
       setLoading(true);
       const payload: CreateEventRequest = {
-        title: data.title,
-        slug: data.slug,
+        title: data.title.trim(),
         startDate: data.startDate,
-        description: data.description || undefined,
-        shortDescription: data.shortDescription || undefined,
-        venue: data.venue || undefined,
-        location: data.location || undefined,
-        endDate: data.endDate || undefined,
+        venue: data.venue?.trim() || undefined,
+        location: data.location?.trim() || undefined,
         price: typeof data.price === 'number' && !isNaN(data.price) ? data.price : undefined,
         isFree: data.isFree,
         maxAttendees:
@@ -155,47 +124,20 @@ export default function NewEventPage() {
 
       <Card padding="lg">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Title *</label>
-              <Input {...register('title')} placeholder="Event title" />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Slug *</label>
-              <Input {...register('slug')} placeholder="event-slug" />
-              {errors.slug && (
-                <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Start Date *</label>
-              <Input type="datetime-local" {...register('startDate')} />
-              {errors.startDate && (
-                <p className="mt-1 text-sm text-red-600">{errors.startDate.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">End Date</label>
-              <Input type="datetime-local" {...register('endDate')} />
-            </div>
-          </div>
-
           <div>
-            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Short Description (max 500)</label>
-            <Textarea {...register('shortDescription')} rows={2} placeholder="Brief summary" />
-            {errors.shortDescription && (
-              <p className="mt-1 text-sm text-red-600">{errors.shortDescription.message}</p>
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Title *</label>
+            <Input {...register('title')} placeholder="Event title" />
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
             )}
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Description</label>
-            <Textarea {...register('description')} rows={4} placeholder="Full description" />
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Start Date *</label>
+            <Input type="datetime-local" {...register('startDate')} />
+            {errors.startDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.startDate.message}</p>
+            )}
           </div>
 
           <div>

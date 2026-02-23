@@ -28,7 +28,7 @@ export interface Event {
 
 export interface CreateEventRequest {
   title: string;
-  slug: string;
+  slug?: string;
   description?: string;
   shortDescription?: string;
   image?: string;
