@@ -136,6 +136,9 @@ export interface CreateCourseData {
   instructorId?: string;
   categoryId?: string;
   videoUrl?: string;
+  /** Up to 5 promo videos: order-preserved slots (URLs and/or file placeholders). Backend expects files as multipart 'video'. */
+  promoVideoSlots?: Array<{ type: 'url'; url: string } | { type: 'file' }>;
+  videoFiles?: File[];
   thumbnailFile?: File;
   videoFile?: File;
   onProgress?: (progress: number) => void;
@@ -177,10 +180,13 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     if (data.skills && Array.isArray(data.skills)) {
       formData.append('skills', JSON.stringify(data.skills));
     }
-    if (data.videoUrl && data.videoUrl.trim()) {
+    if (data.promoVideoSlots && data.promoVideoSlots.length > 0) {
+      formData.append('promoVideoSlots', JSON.stringify(data.promoVideoSlots));
+      data.videoFiles?.forEach((file) => formData.append('video', file));
+    } else if (data.videoUrl && data.videoUrl.trim()) {
       formData.append('videoUrl', data.videoUrl.trim());
     }
-    
+
     // categoryId is optional but must be valid UUID if provided
     if (data.categoryId && data.categoryId.trim()) {
       formData.append('categoryId', data.categoryId.trim());
@@ -190,8 +196,8 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     if (data.thumbnailFile) {
       formData.append('thumbnail', data.thumbnailFile);
     }
-    // Add video file if provided (optional; alternative to videoUrl)
-    if (data.videoFile) {
+    // Single video file (when not using promoVideoSlots)
+    if (!data.promoVideoSlots?.length && data.videoFile) {
       formData.append('video', data.videoFile);
     }
 
@@ -211,7 +217,8 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     data.onProgress?.(0);
 
     // Large video uploads (1GB+) can take 1–2+ hours on slow connections
-    const uploadTimeout = (data.videoFile || data.thumbnailFile) ? 7200000 : 120000; // 2 hours with file, 2 min without
+    const hasVideoUpload = data.videoFile || data.thumbnailFile || (data.videoFiles && data.videoFiles.length > 0);
+    const uploadTimeout = hasVideoUpload ? 7200000 : 120000; // 2 hours with file(s), 2 min without
     const response = await apiClient.post<ApiResponse<Course>>(API_ENDPOINTS.COURSES.LIST, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -300,8 +307,12 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     if (data.startDate !== undefined) formData.append('startDate', data.startDate || '');
     if (data.endDate !== undefined) formData.append('endDate', data.endDate || '');
     if (data.tags !== undefined) formData.append('tags', data.tags);
-    // Always send videoUrl when defined so backend can save or clear it (empty string → null)
-    if (data.videoUrl !== undefined) {
+    if (data.promoVideoSlots && data.promoVideoSlots.length > 0) {
+      formData.append('promoVideoSlots', JSON.stringify(data.promoVideoSlots));
+      data.videoFiles?.forEach((file) => formData.append('video', file));
+    } else if (data.promoVideoSlots && data.promoVideoSlots.length === 0) {
+      formData.append('promoVideoSlots', '[]');
+    } else if (data.videoUrl !== undefined) {
       formData.append('videoUrl', data.videoUrl !== null ? String(data.videoUrl).trim() : '');
     }
 
@@ -330,15 +341,15 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     if (data.thumbnailFile) {
       formData.append('thumbnail', data.thumbnailFile);
     }
-    // Add video file if provided (optional; alternative to videoUrl)
-    if (data.videoFile) {
+    if (!data.promoVideoSlots?.length && data.videoFile) {
       formData.append('video', data.videoFile);
     }
 
     const onProgress = (data as CreateCourseData).onProgress;
     onProgress?.(0);
 
-    const uploadTimeout = (data.thumbnailFile || data.videoFile) ? 7200000 : 60000; // 2 hours with file
+    const hasVideoUpload = data.thumbnailFile || data.videoFile || (data.videoFiles && data.videoFiles.length > 0);
+    const uploadTimeout = hasVideoUpload ? 7200000 : 60000; // 2 hours with file(s)
     const response = await apiClient.put<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id), formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

@@ -101,6 +101,28 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   );
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
+  const MAX_PROMO_VIDEOS = 5;
+  const initialPromoSlots = (): Array<{ url: string; file: File | null }> => {
+    const urls = course?.promoVideos?.length
+      ? [...course.promoVideos]
+      : course?.videoUrl
+        ? [course.videoUrl]
+        : [];
+    const slots = urls.slice(0, MAX_PROMO_VIDEOS).map((url) => ({ url: url || '', file: null as File | null }));
+    while (slots.length < MAX_PROMO_VIDEOS) slots.push({ url: '', file: null });
+    return slots;
+  };
+  const [promoSlots, setPromoSlots] = useState<Array<{ url: string; file: File | null }>>(initialPromoSlots);
+
+  useEffect(() => {
+    if (course) {
+      const urls = course.promoVideos?.length ? [...course.promoVideos] : course.videoUrl ? [course.videoUrl] : [];
+      const slots = urls.slice(0, MAX_PROMO_VIDEOS).map((url) => ({ url: url || '', file: null as File | null }));
+      while (slots.length < MAX_PROMO_VIDEOS) slots.push({ url: '', file: null });
+      setPromoSlots(slots);
+    }
+  }, [course?.id, course?.promoVideos?.length, course?.videoUrl]);
+
   // Curriculum state
   const [curriculumChapters, setCurriculumChapters] = useState<any[]>([]);
   const [curriculumLessons, setCurriculumLessons] = useState<any[]>([]);
@@ -327,14 +349,28 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         tags: data.tags && data.tags.length > 0 ? data.tags.join(',') : undefined,
         learningOutcomes,
         skills,
-        videoUrl: (data.videoUrl && data.videoUrl.trim()) || undefined,
         thumbnailFile: thumbnailFile || undefined,
-        videoFile: videoFile || undefined,
         onProgress: (progress: number) => {
-          // Use requestAnimationFrame to avoid too many re-renders
           requestAnimationFrame(() => setUploadProgress(progress));
         },
       };
+
+      const builtSlots = promoSlots
+        .slice(0, MAX_PROMO_VIDEOS)
+        .map((s) =>
+          s.file ? ({ type: 'file' } as const) : s.url.trim() ? ({ type: 'url' as const, url: s.url.trim() }) : null
+        )
+        .filter((x): x is { type: 'url'; url: string } | { type: 'file' } => x != null);
+      const builtFiles = promoSlots.filter((s) => s.file).map((s) => s.file!);
+      if (builtSlots.length > 0) {
+        submitData.promoVideoSlots = builtSlots;
+        submitData.videoFiles = builtFiles;
+      } else {
+        submitData.promoVideoSlots = [];
+        const first = promoSlots[0];
+        if (first?.url.trim()) submitData.videoUrl = first.url.trim();
+        if (first?.file) submitData.videoFile = first.file;
+      }
 
       // Add curriculum data if it exists
       if (curriculumChapters.length > 0) {
@@ -583,34 +619,49 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           <h2 className="text-2xl font-bold mb-6 text-[var(--foreground)]">Details & Settings</h2>
 
           <div className="space-y-6">
-            <div className="space-y-3">
-              <Input
-                label="Promo Video – YouTube link (optional)"
-                {...register('videoUrl')}
-                error={errors.videoUrl?.message}
-                helperText="Paste a YouTube URL for the course preview trailer"
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-              <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">
-                  Or upload a video file (optional)
-                </label>
-                <input
-                  type="file"
-                  accept="video/mp4,video/webm,video/ogg,video/quicktime"
-                  className="block w-full text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-[var(--primary-600)] file:text-white file:font-medium hover:file:bg-[var(--primary-700)]"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    setVideoFile(f || null);
-                    if (f) setValue('videoUrl', '', { shouldValidate: true });
-                  }}
-                />
-                {videoFile && (
-                  <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                    Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB). Videos over 1GB supported (up to 3GB).
-                  </p>
-                )}
-              </div>
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-[var(--foreground)]">
+                Promo videos (optional, up to 5) – YouTube links or uploads for course preview
+              </p>
+              {promoSlots.map((slot, index) => (
+                <div key={index} className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4 space-y-2">
+                  <label className="text-sm font-medium text-[var(--foreground)]">Video {index + 1}</label>
+                  <Input
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={slot.url}
+                    onChange={(e) => {
+                      setPromoSlots((prev) => {
+                        const next = [...prev];
+                        next[index] = { ...next[index], url: e.target.value, file: null };
+                        return next;
+                      });
+                    }}
+                    disabled={!!slot.file}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[var(--muted-foreground)]">or</span>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                      className="block w-full max-w-xs text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-[var(--primary-600)] file:text-white file:font-medium hover:file:bg-[var(--primary-700)]"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        setPromoSlots((prev) => {
+                          const next = [...prev];
+                          next[index] = { url: '', file: f || null };
+                          return next;
+                        });
+                        e.target.value = '';
+                      }}
+                    />
+                  </div>
+                  {slot.file && (
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Selected: {slot.file.name} ({(slot.file.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
 
             <Textarea

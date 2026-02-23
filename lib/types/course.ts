@@ -79,6 +79,8 @@ export interface Course {
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'ONGOING';
   level?: 'Beginner' | 'Intermediate' | 'Advanced';
   videoUrl?: string;
+  /** Up to 5 promo video URLs (YouTube or S3). First is also exposed as videoUrl. */
+  promoVideos?: string[];
   duration?: number;
   language: string;
   featured: boolean;
