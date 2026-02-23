@@ -473,14 +473,16 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           <div className="bg-[var(--card)] border border-[var(--border)] shadow-2xl rounded-xl p-8 w-full max-w-md mx-4 animate-in fade-in duration-300">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                {uploadProgress >= 100 ? 'Finishing...' : 'Uploading course'}
+                {uploadProgress >= 100 ? 'Finishing...' : uploadProgress >= 95 ? 'Processing on server...' : 'Uploading course'}
               </h3>
               <p className="text-sm text-[var(--muted-foreground)] mt-1">
                 {uploadProgress < 5
                   ? 'Preparing files...'
-                  : uploadProgress < 100
-                    ? 'Uploading video & files — please wait'
-                    : 'Saving course'}
+                  : uploadProgress < 95
+                    ? 'Sending video & files — please wait'
+                    : uploadProgress < 100
+                      ? 'Server is saving your video. Do not close this page.'
+                      : 'Saving course'}
               </p>
             </div>
             <div className="space-y-3">

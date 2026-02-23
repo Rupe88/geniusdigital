@@ -3,19 +3,22 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { ApiError, ApiResponse } from '@/lib/types/api';
 import { shouldRefreshToken, isTokenExpired } from '@/lib/utils/tokenUtils';
 
-// Production backend URL (DigitalOcean)
+// Production backend URL (DigitalOcean) – used when frontend runs in production (non-localhost)
 const PRODUCTION_API_URL = 'https://goldfish-app-d9t4j.ondigitalocean.app/api';
+const DEFAULT_DEV_API = 'http://localhost:4000/api';
 
-// Use environment variable for API URL, with smart fallbacks for production domains
+// Use env first; then in browser any non-localhost = production backend so data shows correctly.
 const getApiUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL.trim()) {
+    return process.env.NEXT_PUBLIC_API_URL.trim().replace(/\/$/, '');
+  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host === 'sanskarvastu.com' || host === 'www.sanskarvastu.com' || host.endsWith('.vercel.app')) {
+    if (host !== 'localhost' && host !== '127.0.0.1') {
       return PRODUCTION_API_URL;
     }
   }
-  return 'http://localhost:4000/api';
+  return DEFAULT_DEV_API;
 };
 
 const API_URL = getApiUrl();
