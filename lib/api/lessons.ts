@@ -31,8 +31,12 @@ export const getLessonById = async (id: string): Promise<Lesson> => {
   }
 };
 
+/** Objective: multiple_choice, single_choice, true_false. Subjective: short_answer, open_ended. */
+export type QuizQuestionType = 'multiple_choice' | 'single_choice' | 'true_false' | 'short_answer' | 'open_ended';
+
 export interface QuizQuestionData {
   question: string;
+  questionType?: QuizQuestionType;
   options: string[];
   correctAnswer: string;
   points: number;

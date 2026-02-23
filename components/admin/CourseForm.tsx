@@ -31,11 +31,23 @@ const courseSchema = z.object({
   // Step 2
   shortDescription: z.string().max(500, 'Short description must be less than 500 characters').optional(),
   description: z.string().optional(),
-  price: z.preprocess((val) => (typeof val === 'number' && Number.isNaN(val) ? undefined : val), z.number().min(0, 'Price must be positive').optional()),
-  originalPrice: z.preprocess((val) => (typeof val === 'number' && Number.isNaN(val) ? undefined : val), z.number().min(0, 'Original price must be positive').optional()),
+  price: z.preprocess((val) => {
+    if (val === '' || val === undefined || val === null) return undefined;
+    const n = typeof val === 'string' ? Number(val) : val;
+    return typeof n === 'number' && !Number.isNaN(n) ? n : undefined;
+  }, z.number().min(0, 'Price must be positive').optional()),
+  originalPrice: z.preprocess((val) => {
+    if (val === '' || val === undefined || val === null) return undefined;
+    const n = typeof val === 'string' ? Number(val) : val;
+    return typeof n === 'number' && !Number.isNaN(n) ? n : undefined;
+  }, z.number().min(0, 'Original price must be positive').optional()),
   isFree: z.boolean().optional(),
   level: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional(),
-  duration: z.preprocess((val) => (typeof val === 'number' && Number.isNaN(val) ? undefined : val), z.number().min(0, 'Duration must be positive').optional()),
+  duration: z.preprocess((val) => {
+    if (val === '' || val === undefined || val === null) return undefined;
+    const n = typeof val === 'string' ? Number(val) : val;
+    return typeof n === 'number' && !Number.isNaN(n) ? n : undefined;
+  }, z.number().min(0, 'Duration must be positive').optional()),
   language: z.enum(['en', 'ne', 'hi', 'mr', 'bn', 'te', 'ta', 'gu', 'kn', 'ml', 'pa', 'or', 'as', 'mai', 'bh']).optional(),
   tags: z.array(z.string()).optional(),
   learningOutcomes: z.array(z.string()).optional(),

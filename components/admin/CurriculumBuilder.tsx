@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
-import { Lesson, CreateLessonData, QuizData, QuizQuestionData } from '@/lib/api/lessons';
+import { Lesson, CreateLessonData, QuizData, QuizQuestionData, QuizQuestionType } from '@/lib/api/lessons';
 import { Chapter, CreateChapterData } from '@/lib/api/chapters';
 
 // Local curriculum types for when course doesn't exist yet
@@ -123,7 +123,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
     attachmentFile: null,
     quizData: {
       title: '',
-      questions: [{ question: '', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
+      questions: [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
     },
   });
 
@@ -281,7 +281,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       attachmentFile: null,
       quizData: {
         title: '',
-        questions: [{ question: '', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
+        questions: [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
       },
     });
     setShowLessonModal(true);
@@ -303,17 +303,27 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
         description: q.description || '',
         timeLimit: q.timeLimit || 0,
         passingScore: q.passingScore || 70,
-        questions: q.questions?.map((q: any) => ({
-          question: q.question,
-          options: Array.isArray(q.options) ? q.options : (typeof q.options === 'string' ? JSON.parse(q.options) : ['', '', '', '']),
-          correctAnswer: q.correctAnswer || '',
-          points: q.points || 1,
-        })) || [{ question: '', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
+        questions: q.questions?.map((q: any) => {
+          const qt = q.questionType || 'multiple_choice';
+          const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(qt);
+          let options: string[] = [];
+          if (isObjective && q.options != null) {
+            options = Array.isArray(q.options) ? q.options : (typeof q.options === 'string' ? JSON.parse(q.options || '[]') : ['', '', '', '']);
+          }
+          if (isObjective && options.length === 0) options = qt === 'true_false' ? ['True', 'False'] : ['', '', '', ''];
+          return {
+            question: q.question,
+            questionType: qt as QuizQuestionType,
+            options,
+            correctAnswer: q.correctAnswer || '',
+            points: q.points || 1,
+          };
+        }) || [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
       };
     } else {
       quizData = {
         title: '',
-        questions: [{ question: '', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
+        questions: [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
       };
     }
 
@@ -428,7 +438,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
         ...prev.quizData,
         questions: [
           ...prev.quizData.questions,
-          { question: '', options: ['', '', '', ''], correctAnswer: '', points: 1 },
+          { question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 },
         ],
       },
     }));
@@ -447,7 +457,21 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
   const updateQuizQuestion = (index: number, field: string, value: any) => {
     setLessonForm(prev => {
       const newQuestions = [...prev.quizData.questions];
-      newQuestions[index] = { ...newQuestions[index], [field]: value };
+      const current = newQuestions[index];
+      newQuestions[index] = { ...current, [field]: value };
+      if (field === 'questionType') {
+        const qt = value as QuizQuestionType;
+        if (['multiple_choice', 'single_choice'].includes(qt)) {
+          const opts = current.options?.length ? current.options : ['', '', '', ''];
+          newQuestions[index].options = opts.length >= 4 ? opts.slice(0, 4) : [...opts, ...Array(4 - opts.length).fill('')];
+        } else if (qt === 'true_false') {
+          newQuestions[index].options = ['True', 'False'];
+          newQuestions[index].correctAnswer = current.correctAnswer && ['True', 'False'].includes(current.correctAnswer) ? current.correctAnswer : 'True';
+        } else {
+          newQuestions[index].options = [];
+          if (qt === 'open_ended') newQuestions[index].correctAnswer = '';
+        }
+      }
       return {
         ...prev,
         quizData: {
@@ -893,57 +917,95 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
               </div>
 
               <div className="space-y-8">
-                {lessonForm.quizData.questions.map((q, qIndex) => (
-                  <div key={qIndex} className="p-4 border border-gray-200 rounded-none bg-gray-50 space-y-4 relative">
-                    <button
-                      type="button"
-                      onClick={() => removeQuizQuestion(qIndex)}
-                      className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded-none"
-                    >
-                      <HiX className="w-5 h-5" />
-                    </button>
+                {lessonForm.quizData.questions.map((q, qIndex) => {
+                  const questionType = q.questionType || 'multiple_choice';
+                  const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(questionType);
+                  const options = isObjective && q.options?.length ? q.options : (questionType === 'true_false' ? ['True', 'False'] : ['', '', '', '']);
+                  return (
+                    <div key={qIndex} className="p-4 border border-gray-200 rounded-none bg-gray-50 space-y-4 relative">
+                      <button
+                        type="button"
+                        onClick={() => removeQuizQuestion(qIndex)}
+                        className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded-none"
+                      >
+                        <HiX className="w-5 h-5" />
+                      </button>
 
-                    <Input
-                      label={`Question ${qIndex + 1}`}
-                      value={q.question}
-                      onChange={(e) => updateQuizQuestion(qIndex, 'question', e.target.value)}
-                      placeholder="Enter question text"
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {q.options.map((option, oIndex) => (
-                        <div key={oIndex} className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            name={`correct-${qIndex}`}
-                            checked={q.correctAnswer === option && option !== ''}
-                            onChange={() => updateQuizQuestion(qIndex, 'correctAnswer', option)}
-                            className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
-                          />
-                          <Input
-                            value={option}
-                            onChange={(e) => updateQuizOption(qIndex, oIndex, e.target.value)}
-                            placeholder={`Option ${oIndex + 1}`}
-                            className="flex-1"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center space-x-4">
                       <Input
-                        label="Points"
-                        type="number"
-                        value={q.points}
-                        onChange={(e) => updateQuizQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
-                        className="w-24"
+                        label={`Question ${qIndex + 1}`}
+                        value={q.question}
+                        onChange={(e) => updateQuizQuestion(qIndex, 'question', e.target.value)}
+                        placeholder="Enter question text"
                       />
-                      <div className="text-xs text-gray-500 pt-6">
-                        * Select the radio button next to the correct option
+
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Question type</label>
+                        <select
+                          value={questionType}
+                          onChange={(e) => updateQuizQuestion(qIndex, 'questionType', e.target.value as QuizQuestionType)}
+                          className="w-full px-3 py-2 border border-[var(--border)] rounded-none bg-[var(--background)] text-[var(--foreground)]"
+                        >
+                          <optgroup label="Objective">
+                            <option value="multiple_choice">Multiple choice</option>
+                            <option value="single_choice">Single choice</option>
+                            <option value="true_false">True / False</option>
+                          </optgroup>
+                          <optgroup label="Subjective">
+                            <option value="short_answer">Short answer</option>
+                            <option value="open_ended">Open ended (essay)</option>
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      {isObjective && (
+                        <div className="grid grid-cols-2 gap-4">
+                          {options.map((option, oIndex) => (
+                            <div key={oIndex} className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                name={`correct-${qIndex}`}
+                                checked={q.correctAnswer === option && option !== ''}
+                                onChange={() => updateQuizQuestion(qIndex, 'correctAnswer', option)}
+                                className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
+                              />
+                              <Input
+                                value={option}
+                                onChange={(e) => { if (questionType !== 'true_false') updateQuizOption(qIndex, oIndex, e.target.value); }}
+                                placeholder={questionType === 'true_false' ? option : `Option ${oIndex + 1}`}
+                                className="flex-1"
+                                readOnly={questionType === 'true_false'}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {questionType === 'short_answer' && (
+                        <Input
+                          label="Model answer (optional)"
+                          value={q.correctAnswer}
+                          onChange={(e) => updateQuizQuestion(qIndex, 'correctAnswer', e.target.value)}
+                          placeholder="Expected or sample answer for grading reference"
+                        />
+                      )}
+
+                      <div className="flex items-center space-x-4">
+                        <Input
+                          label="Points"
+                          type="number"
+                          value={q.points}
+                          onChange={(e) => updateQuizQuestion(qIndex, 'points', parseInt(e.target.value) || 1)}
+                          className="w-24"
+                        />
+                        {isObjective && (
+                          <div className="text-xs text-gray-500 pt-6">
+                            * Select the radio button next to the correct option
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
