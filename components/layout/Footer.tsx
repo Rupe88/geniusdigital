@@ -195,12 +195,12 @@ export const Footer: React.FC = () => {
           </p>
           <span className="text-center">|</span>
           <a
-            href="https://digitalpathshalanepal.com/dp-lms"
+            href="https://digitalpathshalanepal.com/"
             target="_blank"
             rel="noreferrer"
-            className="text-center"
+            className="text-center font-medium hover:text-white"
           >
-            Powered By floSoftwares
+            Powered by Digital Pathshala
           </a>
         </div>
       </div>
