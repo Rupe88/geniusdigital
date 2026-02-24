@@ -26,7 +26,8 @@ import {
   HiDocumentText,
   HiCheckCircle,
   HiCalendar,
-  HiChatBubbleLeftRight
+  HiChatBubbleLeftRight,
+  HiEllipsisVertical
 } from 'react-icons/hi2';
 import { ROUTES } from '@/lib/utils/constants';
 import { getApiBaseUrl } from '@/lib/api/axios';
@@ -56,6 +57,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
   const [eventBookingsTotal, setEventBookingsTotal] = useState(0);
+  const [recentEventBookings, setRecentEventBookings] = useState<any[]>([]);
   const [affiliateApplicationsTotal, setAffiliateApplicationsTotal] = useState(0);
   const [recentAffiliateApplications, setRecentAffiliateApplications] = useState<any[]>([]);
   const [consultationsTotal, setConsultationsTotal] = useState(0);
@@ -113,9 +115,13 @@ export default function AdminDashboardPage() {
         setRecentCourses(coursesData.data.slice(0, 5));
       }
 
-      // Fetch event bookings total count
-      const bookingsRes = await getAllUpcomingEventBookings({ page: 1, limit: 1 }).catch(() => ({ pagination: { total: 0 } }));
+      // Fetch event bookings total count + recent list
+      const bookingsRes = await getAllUpcomingEventBookings({ page: 1, limit: 5 }).catch(() => ({
+        data: [],
+        pagination: { total: 0, page: 1, limit: 5, pages: 1 },
+      }));
       setEventBookingsTotal(bookingsRes.pagination?.total ?? 0);
+      setRecentEventBookings(bookingsRes.data ?? []);
 
       // Fetch affiliate applications count and recent list
       const affiliateRes = await getAllAffiliateApplications({ page: 1, limit: 5 }).catch(() => ({ data: [], pagination: { total: 0 } }));
@@ -466,99 +472,157 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Affiliate Applications – overview bottom (table with all user data) */}
-      <Card padding="lg">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">Recent Affiliate Applications</h2>
-          <Link href={`${ROUTES.ADMIN}/affiliate-applications`}>
-            <Button variant="ghost" size="sm">View All →</Button>
-          </Link>
-        </div>
-        {loading ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px]">
-              <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
-                <tr>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Name</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Email</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Phone</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">DOB</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Country</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">City</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occupation</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Affiliate exp.</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Experience details</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occult</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Why join</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Applied</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border)]">
-                {[1, 2, 3].map((i) => (
-                  <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 12 }).map((_, j) => (
-                      <td key={j} className="px-3 py-3"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : recentAffiliateApplications.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px]">
-              <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
-                <tr>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Name</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Email</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Phone</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">DOB</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Country</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">City</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occupation</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Affiliate exp.</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Experience details</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occult</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Why join</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Applied</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border)]">
-                {recentAffiliateApplications.map((app) => (
-                  <tr
-                    key={app.id}
-                    className="hover:bg-[var(--muted)]/50 transition-colors cursor-pointer"
-                    onClick={() => router.push(`${ROUTES.ADMIN}/affiliate-applications`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && router.push(`${ROUTES.ADMIN}/affiliate-applications`)}
-                  >
-                    <td className="px-3 py-3 font-medium text-[var(--foreground)] whitespace-nowrap">{app.fullName}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.email}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.phone || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.dateOfBirth || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)]">{app.country || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)]">{app.city || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[120px] truncate" title={app.currentOccupation || undefined}>{app.currentOccupation || '—'}</td>
-                    <td className="px-3 py-3 text-sm">{app.hasAffiliateExperience ? <span className="text-green-600 font-medium">Yes</span> : <span className="text-[var(--muted-foreground)]">No</span>}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[160px] truncate" title={app.experienceDetails || undefined}>{app.experienceDetails || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[100px] truncate" title={[app.occultKnowledge, app.occultOther].filter(Boolean).join(' / ') || undefined}>{app.occultKnowledge || app.occultOther || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[180px] truncate" title={app.whyJoin || undefined}>{app.whyJoin || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-[var(--muted-foreground)]">
-            <HiDocumentText className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-            <p>No affiliate applications yet.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Affiliate Applications */}
+        <Card padding="lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">Recent Affiliate Applications</h2>
             <Link href={`${ROUTES.ADMIN}/affiliate-applications`}>
-              <Button variant="ghost" size="sm" className="mt-2">View applications</Button>
+              <Button variant="ghost" size="sm">View All →</Button>
             </Link>
           </div>
-        )}
-      </Card>
+          {loading ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[750px]">
+                <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
+                  <tr>
+                    {['Name', 'Email', 'Phone', 'Applied', ''].map((h) => (
+                      <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {[1, 2, 3].map((i) => (
+                    <tr key={i} className="animate-pulse">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <td key={j} className="px-3 py-3"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : recentAffiliateApplications.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[750px]">
+                <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
+                  <tr>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Name</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Email</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Phone</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Applied</th>
+                    <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {recentAffiliateApplications.map((app) => (
+                    <tr key={app.id} className="hover:bg-[var(--muted)]/50 transition-colors">
+                      <td className="px-3 py-3 font-medium text-[var(--foreground)] whitespace-nowrap">{app.fullName}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.email}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.phone || '—'}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}</td>
+                      <td className="px-3 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`${ROUTES.ADMIN}/affiliate-applications`)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--muted)] text-[var(--muted-foreground)]"
+                          aria-label="View affiliate application details"
+                        >
+                          <HiEllipsisVertical className="h-5 w-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[var(--muted-foreground)]">
+              <HiDocumentText className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <p>No affiliate applications yet.</p>
+              <Link href={`${ROUTES.ADMIN}/affiliate-applications`}>
+                <Button variant="ghost" size="sm" className="mt-2">View applications</Button>
+              </Link>
+            </div>
+          )}
+        </Card>
+
+        {/* Recent Bookings */}
+        <Card padding="lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">Recent Bookings</h2>
+            <Link href={`${ROUTES.ADMIN}/event-bookings`}>
+              <Button variant="ghost" size="sm">View All →</Button>
+            </Link>
+          </div>
+          {loading ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[750px]">
+                <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
+                  <tr>
+                    {['Name', 'Email', 'Phone', 'Type', 'Date', ''].map((h) => (
+                      <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {[1, 2, 3].map((i) => (
+                    <tr key={i} className="animate-pulse">
+                      {Array.from({ length: 6 }).map((_, j) => (
+                        <td key={j} className="px-3 py-3"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : recentEventBookings.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[750px]">
+                <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
+                  <tr>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Name</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Email</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Phone</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Type</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Booked</th>
+                    <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {recentEventBookings.map((b) => (
+                    <tr key={b.id} className="hover:bg-[var(--muted)]/50 transition-colors">
+                      <td className="px-3 py-3 font-medium text-[var(--foreground)] whitespace-nowrap">{b.name}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{b.email}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{b.phone || '—'}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{b.eventId ? 'Event' : b.courseId ? 'Course' : '—'}</td>
+                      <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{b.createdAt ? new Date(b.createdAt).toLocaleDateString() : '—'}</td>
+                      <td className="px-3 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`${ROUTES.ADMIN}/event-bookings`)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-[var(--muted)] text-[var(--muted-foreground)]"
+                          aria-label="View booking details"
+                        >
+                          <HiEllipsisVertical className="h-5 w-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[var(--muted-foreground)]">
+              <HiCalendar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <p>No bookings yet.</p>
+              <Link href={`${ROUTES.ADMIN}/event-bookings`}>
+                <Button variant="ghost" size="sm" className="mt-2">View bookings</Button>
+              </Link>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
