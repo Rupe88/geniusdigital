@@ -84,7 +84,7 @@ export const Navbar: React.FC = () => {
 
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
-    { label: 'Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
+    { label: 'Become A Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     {
       label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',
       href: isAuthenticated ? (user?.role === 'ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD) : ROUTES.LOGIN,
@@ -172,22 +172,17 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
-            {/* Affiliate Program - right of More */}
-            <Link
-              href={ROUTES.AFFILIATE}
-              className={`transition-colors font-normal text-base whitespace-nowrap ${
-                isActive(ROUTES.AFFILIATE)
-                  ? 'text-[var(--primary-700)]'
-                  : 'text-gray-700 hover:text-[var(--primary-700)]'
-              }`}
-            >
-              Affiliate Program
-            </Link>
           </div>
 
-          {/* Right Section - Auth */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-3 ml-auto flex-shrink-0">
-            {/* Auth buttons / user menu */}
+          {/* Right Section - Become A Affiliate + Auth (aligned from right with consistent spacing) */}
+          <div className="hidden lg:flex lg:items-center lg:gap-4 lg:ml-auto flex-shrink-0">
+            <Link
+              href={ROUTES.AFFILIATE}
+              className="px-4 py-2 text-base font-medium whitespace-nowrap bg-white border border-[var(--primary-700)] text-[var(--primary-700)] hover:bg-[var(--primary-50)] rounded transition-colors"
+            >
+              Become A Affiliate
+            </Link>
+            {/* Auth / user menu */}
             {isAuthenticated ? (
               <div className="relative">
                 <button

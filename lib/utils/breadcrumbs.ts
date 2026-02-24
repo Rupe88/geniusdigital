@@ -18,6 +18,7 @@ const routeLabels: Record<string, string> = {
   [ROUTES.GALLERY]: 'Gallery',
   [ROUTES.CONTACT]: 'Contact',
   [ROUTES.LIVE_CLASSES]: 'Live Classes',
+  [ROUTES.AFFILIATE]: 'Become A Affiliate',
 };
 
 /**
@@ -46,6 +47,11 @@ export function shouldShowBreadcrumbs(pathname: string | null): boolean {
 
   // Don't show on payment pages
   if (pathname.startsWith('/payment')) {
+    return false;
+  }
+
+  // Don't show on affiliate application page
+  if (pathname === ROUTES.AFFILIATE) {
     return false;
   }
 

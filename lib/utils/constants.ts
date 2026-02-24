@@ -191,6 +191,7 @@ export const API_ENDPOINTS = {
     ADMIN_REGISTRATIONS: '/events/admin/registrations',
   },
   UPCOMING_EVENT_BOOKINGS: '/upcoming-event-bookings',
+  AFFILIATE_APPLICATIONS: '/affiliate-applications',
   // FAQs
   FAQS: {
     LIST: '/faqs',
