@@ -128,7 +128,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const handleStatusChange = async (courseId: string, newStatus: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS') => {
+  const handleStatusChange = async (courseId: string, newStatus: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS' | 'POPULAR') => {
     setStatusUpdatingId(courseId);
     try {
       await courseApi.updateCourseStatus(courseId, newStatus);
@@ -164,6 +164,8 @@ export default function AdminCoursesPage() {
       DRAFT: 'warning',
       ARCHIVED: 'default',
       ONGOING: 'info',
+      UPCOMING_EVENTS: 'info',
+      POPULAR: 'success',
     };
     return (
       <Badge variant={variants[status] || 'default'} size="sm">
@@ -219,6 +221,7 @@ export default function AdminCoursesPage() {
               { value: 'ONGOING', label: 'Ongoing' },
               { value: 'ARCHIVED', label: 'Archived' },
               { value: 'UPCOMING_EVENTS', label: 'Upcoming Events' },
+              { value: 'POPULAR', label: 'Popular' },
             ]}
             value={statusFilter}
             onChange={(e) => {
@@ -304,7 +307,7 @@ export default function AdminCoursesPage() {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Select
                         value={course.status}
-                        onChange={(e) => handleStatusChange(course.id, e.target.value as 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS')}
+                        onChange={(e) => handleStatusChange(course.id, e.target.value as 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS' | 'POPULAR')}
                         disabled={statusUpdatingId === course.id}
                         className="min-w-[120px] text-sm"
                         options={[
@@ -313,6 +316,7 @@ export default function AdminCoursesPage() {
                           { value: 'ONGOING', label: 'Ongoing' },
                           { value: 'ARCHIVED', label: 'Archived' },
                           { value: 'UPCOMING_EVENTS', label: 'Upcoming Events' },
+                          { value: 'POPULAR', label: 'Popular' },
                         ]}
                       />
                       {statusUpdatingId === course.id && (

@@ -76,7 +76,7 @@ export interface Course {
   price: number;
   originalPrice?: number;
   isFree: boolean;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'ONGOING' | 'UPCOMING_EVENTS';
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'ONGOING' | 'UPCOMING_EVENTS' | 'POPULAR';
   level?: 'Beginner' | 'Intermediate' | 'Advanced';
   videoUrl?: string;
   /** Up to 5 promo video URLs (YouTube or S3). First is also exposed as videoUrl. */
