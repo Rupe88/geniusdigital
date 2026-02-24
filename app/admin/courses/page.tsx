@@ -128,7 +128,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const handleStatusChange = async (courseId: string, newStatus: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED') => {
+  const handleStatusChange = async (courseId: string, newStatus: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS') => {
     setStatusUpdatingId(courseId);
     try {
       await courseApi.updateCourseStatus(courseId, newStatus);
@@ -218,6 +218,7 @@ export default function AdminCoursesPage() {
               { value: 'PUBLISHED', label: 'Published' },
               { value: 'ONGOING', label: 'Ongoing' },
               { value: 'ARCHIVED', label: 'Archived' },
+              { value: 'UPCOMING_EVENTS', label: 'Upcoming Events' },
             ]}
             value={statusFilter}
             onChange={(e) => {
@@ -303,7 +304,7 @@ export default function AdminCoursesPage() {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Select
                         value={course.status}
-                        onChange={(e) => handleStatusChange(course.id, e.target.value as 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED')}
+                        onChange={(e) => handleStatusChange(course.id, e.target.value as 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS')}
                         disabled={statusUpdatingId === course.id}
                         className="min-w-[120px] text-sm"
                         options={[
@@ -311,6 +312,7 @@ export default function AdminCoursesPage() {
                           { value: 'PUBLISHED', label: 'Published' },
                           { value: 'ONGOING', label: 'Ongoing' },
                           { value: 'ARCHIVED', label: 'Archived' },
+                          { value: 'UPCOMING_EVENTS', label: 'Upcoming Events' },
                         ]}
                       />
                       {statusUpdatingId === course.id && (

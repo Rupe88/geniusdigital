@@ -100,6 +100,16 @@ export const getOngoingCourses = async (): Promise<Course[]> => {
   }
 };
 
+/** Courses marked as "Upcoming Events" by admin – shown in homepage Upcoming Events section */
+export const getUpcomingEventCourses = async (): Promise<Course[]> => {
+  try {
+    const res = await getAllCourses({ status: 'UPCOMING_EVENTS', limit: 20 });
+    return res.data || [];
+  } catch {
+    return [];
+  }
+};
+
 export const getCourseById = async (id: string): Promise<Course> => {
   try {
     const response = await apiClient.get<ApiResponse<Course>>(API_ENDPOINTS.COURSES.BY_ID(id));
@@ -122,7 +132,7 @@ export interface CreateCourseData {
   price?: number;
   originalPrice?: number;
   isFree?: boolean;
-  status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'ONGOING';
+  status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'ONGOING' | 'UPCOMING_EVENTS';
   level?: 'Beginner' | 'Intermediate' | 'Advanced';
   duration?: number;
   language?: string;
@@ -391,7 +401,7 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
  */
 export const updateCourseStatus = async (
   id: string,
-  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED'
+  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'ARCHIVED' | 'UPCOMING_EVENTS'
 ): Promise<Course> => {
   try {
     const response = await apiClient.patch<ApiResponse<Course>>(API_ENDPOINTS.COURSES.STATUS(id), { status });

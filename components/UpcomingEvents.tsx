@@ -4,6 +4,10 @@ import React, { useRef, useState, useEffect } from 'react';
 import { HiChevronLeft, HiChevronRight, HiX } from 'react-icons/hi';
 import { getUpcomingEvents, registerForEvent } from '@/lib/api/events';
 import type { Event } from '@/lib/api/events';
+import { getUpcomingEventCourses } from '@/lib/api/courses';
+import type { Course } from '@/lib/types/course';
+import { CourseCard } from '@/components/CourseCard';
+import { formatPrice } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop&q=80';
@@ -28,6 +32,7 @@ const REFERRAL_OPTIONS = [
 export const UpcomingEvents: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [upcomingCourses, setUpcomingCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -39,23 +44,30 @@ export const UpcomingEvents: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    const fetchEvents = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await getUpcomingEvents();
-        if (!cancelled) setEvents(data);
+        const [eventsData, coursesData] = await Promise.all([
+          getUpcomingEvents(),
+          getUpcomingEventCourses(),
+        ]);
+        if (!cancelled) {
+          setEvents(eventsData);
+          setUpcomingCourses(coursesData);
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load upcoming events');
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchEvents();
+    fetchData();
     return () => { cancelled = true; };
   }, []);
 
-  const showCarousel = events.length > 3;
+  const totalItems = events.length + upcomingCourses.length;
+  const showCarousel = totalItems > 3;
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -222,7 +234,7 @@ export const UpcomingEvents: React.FC = () => {
                 <p>{error}</p>
               </div>
             )}
-            {!loading && !error && events.length === 0 && (
+            {!loading && !error && totalItems === 0 && (
               <div className="w-full py-12 text-center text-gray-600">
                 <p>No upcoming events at the moment. Check back soon!</p>
               </div>
@@ -269,6 +281,19 @@ export const UpcomingEvents: React.FC = () => {
                     Book Now
                   </button>
                 </div>
+              </div>
+            ))}
+            {!loading && !error && upcomingCourses.map((course) => (
+              <div key={`course-${course.id}`} className="flex-shrink-0 w-[400px]">
+                <CourseCard
+                  id={course.id}
+                  title={course.title}
+                  thumbnail={course.thumbnail}
+                  price={course.isFree ? 'Free' : formatPrice(course.price)}
+                  oldPrice={course.originalPrice ? formatPrice(course.originalPrice) : undefined}
+                  slug={course.slug}
+                  className="w-full"
+                />
               </div>
             ))}
           </div>
