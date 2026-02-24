@@ -27,18 +27,28 @@ export interface UpcomingEventBooking {
   course?: { id: string; title: string; slug: string } | null;
 }
 
+export type SubmitBookingResult =
+  | { booking: UpcomingEventBooking; alreadyBooked: false }
+  | { alreadyBooked: true; message: string };
+
 export async function submitUpcomingEventBooking(
   payload: UpcomingEventBookingPayload
-): Promise<UpcomingEventBooking> {
+): Promise<SubmitBookingResult> {
   try {
-    const response = await apiClient.post<ApiResponse<UpcomingEventBooking>>(
-      API_ENDPOINTS.UPCOMING_EVENT_BOOKINGS,
-      payload
-    );
-    if (response.data.success && response.data.data) {
-      return response.data.data;
+    const response = await apiClient.post<
+      ApiResponse<UpcomingEventBooking> & { alreadyBooked?: boolean }
+    >(API_ENDPOINTS.UPCOMING_EVENT_BOOKINGS, payload);
+    const data = response.data;
+    if (data.success && data.alreadyBooked) {
+      return {
+        alreadyBooked: true,
+        message: data.message || 'Already booked. We will contact you soon.',
+      };
     }
-    throw new Error(response.data.message || 'Failed to submit booking');
+    if (data.success && data.data) {
+      return { booking: data.data, alreadyBooked: false };
+    }
+    throw new Error(data.message || 'Failed to submit booking');
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string; errors?: Array<{ msg?: string; message?: string }> } }; message?: string };
     if (err.response?.data) {

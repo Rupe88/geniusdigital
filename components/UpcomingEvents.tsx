@@ -181,8 +181,12 @@ export const UpcomingEvents: React.FC = () => {
     };
     setBookingSubmitting(true);
     try {
-      await submitUpcomingEventBooking(payload);
-      showSuccess('Booking submitted! We will contact you soon.');
+      const result = await submitUpcomingEventBooking(payload);
+      if (result.alreadyBooked) {
+        showSuccess(result.message);
+      } else {
+        showSuccess('Booking submitted! We will contact you soon.');
+      }
       closeBookingPopup();
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Booking failed. Please try again.');
@@ -356,15 +360,15 @@ export const UpcomingEvents: React.FC = () => {
           onClick={closeBookingPopup}
         >
           <div
-            className="bg-gray-900 text-white rounded-lg shadow-xl w-full max-w-md border border-gray-700 overflow-hidden"
+            className="bg-white text-gray-900 rounded-lg shadow-xl w-full max-w-md border border-gray-200 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-semibold">Book Your Seat</h3>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Book Your Seat</h3>
               <button
                 type="button"
                 onClick={closeBookingPopup}
-                className="p-1 rounded hover:bg-gray-700 transition-colors"
+                className="p-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
                 aria-label="Close"
               >
                 <HiX className="w-6 h-6" />
@@ -376,7 +380,7 @@ export const UpcomingEvents: React.FC = () => {
                 placeholder="Name"
                 value={bookingForm.name}
                 onChange={(e) => setBookingForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                className="w-full px-4 py-2.5 rounded border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
                 required
               />
               <input
@@ -384,7 +388,7 @@ export const UpcomingEvents: React.FC = () => {
                 placeholder="Email"
                 value={bookingForm.email}
                 onChange={(e) => setBookingForm((f) => ({ ...f, email: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                className="w-full px-4 py-2.5 rounded border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
                 required
               />
               <input
@@ -392,15 +396,15 @@ export const UpcomingEvents: React.FC = () => {
                 placeholder="Phone number"
                 value={bookingForm.phone}
                 onChange={(e) => setBookingForm((f) => ({ ...f, phone: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                className="w-full px-4 py-2.5 rounded border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
                 required
               />
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Select event</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Select event</label>
                 <select
                   value={bookingForm.selectedEventOrCourse}
                   onChange={(e) => setBookingForm((f) => ({ ...f, selectedEventOrCourse: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  className="w-full px-4 py-2.5 rounded border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
                   required
                 >
                   <option value="">Select an event or course...</option>
@@ -417,11 +421,11 @@ export const UpcomingEvents: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">How did you find us?</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">How did you find us?</label>
                 <select
                   value={bookingForm.referralSource}
                   onChange={(e) => setBookingForm((f) => ({ ...f, referralSource: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  className="w-full px-4 py-2.5 rounded border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
                 >
                   {REFERRAL_OPTIONS.map((opt) => (
                     <option key={opt.value || 'empty'} value={opt.value}>{opt.label}</option>
@@ -433,12 +437,12 @@ export const UpcomingEvents: React.FC = () => {
                 value={bookingForm.message}
                 onChange={(e) => setBookingForm((f) => ({ ...f, message: e.target.value }))}
                 rows={3}
-                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] resize-none"
+                className="w-full px-4 py-2.5 rounded border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent resize-none"
               />
               <button
                 type="submit"
                 disabled={bookingSubmitting}
-                className="w-full py-3 px-4 rounded-none font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-60 transition-colors"
+                className="w-full py-3 px-4 rounded font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-60 transition-colors"
               >
                 {bookingSubmitting ? 'Submitting...' : 'Book your seat'}
               </button>
