@@ -83,8 +83,15 @@ export default function EditCoursePage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div>Loading...</div>
+      <div className="animate-in fade-in duration-200">
+        <div className="mb-8">
+          <div className="h-9 w-64 bg-[var(--muted)] rounded mb-2 animate-pulse" />
+          <div className="h-5 w-72 bg-[var(--muted)] rounded animate-pulse opacity-80" />
+        </div>
+        <div className="space-y-6">
+          <div className="h-64 bg-[var(--card)] border border-[var(--border)] rounded-xl animate-pulse" />
+          <div className="h-48 bg-[var(--card)] border border-[var(--border)] rounded-xl animate-pulse" />
+        </div>
       </div>
     );
   }

@@ -251,16 +251,27 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     }}
                                     onError={(e) => {
                                         const v = e.currentTarget;
-                                        const errorMsg = v?.error?.message || 'Video playback failed';
-                                        const errorCode = v?.error?.code;
+                                        const mediaError = v?.error;
+                                        const errorMsg = mediaError?.message || 'Video playback failed';
+                                        const errorCode = mediaError?.code;
+
                                         console.error('[Video] onError - Video playback error', {
                                             message: errorMsg,
                                             code: errorCode,
                                             networkState: v?.networkState,
                                             readyState: v?.readyState,
                                             src: videoSrc,
-                                            error: v?.error,
+                                            error: mediaError,
                                         });
+
+                                        // If this is a secure stream URL, first try to refresh the
+                                        // signed link once before showing the permanent error UI.
+                                        if (isSecureStreamPath(lesson.videoUrl) && !secureVideoError) {
+                                            console.log('[Video] onError - secure stream path detected, retrying with fresh token');
+                                            retryVideo();
+                                            return;
+                                        }
+
                                         setSecureVideoError(`${errorMsg}${errorCode ? ` (${errorCode})` : ''}`);
                                     }}
                                 />
