@@ -128,16 +128,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">
-            Welcome back, {user?.fullName ?? 'User'}!
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-[var(--border)] bg-gradient-to-r from-[var(--card)] to-[var(--muted)]/60 px-4 py-4 sm:px-6 sm:py-5 shadow-sm">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]">
+            Welcome back, {user?.fullName ?? 'Learner'}!
           </h1>
-          <p className="text-[var(--muted-foreground)] mt-1">
-            Here’s your learning overview and quick access to all sections.
+          <p className="text-[var(--muted-foreground)] text-sm sm:text-base">
+            Continue your courses and track your progress from this simple overview.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchDashboard} disabled={loading} className="gap-2 self-start sm:self-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchDashboard}
+          disabled={loading}
+          className="gap-2 self-start sm:self-center"
+        >
           <HiRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
@@ -156,7 +162,7 @@ export default function DashboardPage() {
       <section aria-label="Overview statistics">
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Overview</h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card padding="md" className="flex flex-row items-center gap-3">
+          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <div className="p-2.5 rounded-lg bg-[var(--primary-100)] dark:bg-[var(--primary-900)]/40">
               <HiBookOpen className="h-5 w-5 text-[var(--primary-700)] dark:text-[var(--primary-300)]" />
             </div>
@@ -165,7 +171,7 @@ export default function DashboardPage() {
               <p className="text-xs text-[var(--muted-foreground)] truncate">Enrolled</p>
             </div>
           </Card>
-          <Card padding="md" className="flex flex-row items-center gap-3">
+          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <div className="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
               <HiCheckCircle className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
             </div>
@@ -174,7 +180,7 @@ export default function DashboardPage() {
               <p className="text-xs text-[var(--muted-foreground)] truncate">Completed</p>
             </div>
           </Card>
-          <Card padding="md" className="flex flex-row items-center gap-3">
+          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <div className="p-2.5 rounded-lg bg-violet-100 dark:bg-violet-900/40">
               <HiCreditCard className="h-5 w-5 text-violet-700 dark:text-violet-300" />
             </div>
@@ -183,7 +189,7 @@ export default function DashboardPage() {
               <p className="text-xs text-[var(--muted-foreground)] truncate">Payments</p>
             </div>
           </Card>
-          <Card padding="md" className="flex flex-row items-center gap-3">
+          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <div className="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
               <HiShare className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
             </div>
@@ -232,18 +238,39 @@ export default function DashboardPage() {
         <Card padding="lg">
           <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Recent courses</h2>
           {loading ? (
-            <p className="text-[var(--muted-foreground)] text-sm">Loading...</p>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                  <div className="w-12 h-12 rounded bg-[var(--muted)] animate-pulse" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-3/4 bg-[var(--muted)] rounded animate-pulse" />
+                    <div className="h-2 w-1/3 bg-[var(--muted)] rounded animate-pulse" />
+                  </div>
+                  <div className="h-8 w-20 bg-[var(--muted)] rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
           ) : recentEnrollments.length === 0 ? (
             <p className="text-[var(--muted-foreground)] text-sm">No enrollments yet.</p>
           ) : (
             <ul className="space-y-3">
               {recentEnrollments.map((e) => (
                 <li key={e.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--muted)]/50 transition-colors">
-                  {e.course?.thumbnail && (
-                    <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-[var(--muted)]">
-                      <StorageImage src={e.course.thumbnail} alt="" fill className="object-cover" sizes="48px" />
-                    </div>
-                  )}
+                  <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-[var(--muted)]">
+                    {e.course?.thumbnail ? (
+                      <StorageImage
+                        src={e.course.thumbnail}
+                        alt={e.course.title || 'Course thumbnail'}
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)]">
+                        <HiBookOpen className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <Link href={`/dashboard/courses/${e.courseId}/learn`} className="font-medium text-[var(--foreground)] hover:underline line-clamp-1">
                       {e.course?.title ?? 'Course'}
@@ -267,7 +294,17 @@ export default function DashboardPage() {
         <Card padding="lg">
           <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Recent payments</h2>
           {loading ? (
-            <p className="text-[var(--muted-foreground)] text-sm">Loading...</p>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between gap-3 p-2 rounded-lg">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 bg-[var(--muted)] rounded animate-pulse" />
+                    <div className="h-2 w-1/3 bg-[var(--muted)] rounded animate-pulse" />
+                  </div>
+                  <div className="h-4 w-16 bg-[var(--muted)] rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
           ) : recentPayments.length === 0 ? (
             <p className="text-[var(--muted-foreground)] text-sm">No payments yet.</p>
           ) : (
