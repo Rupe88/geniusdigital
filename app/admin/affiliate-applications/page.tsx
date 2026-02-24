@@ -103,67 +103,60 @@ export default function AdminAffiliateApplicationsPage() {
 
       <Card padding="none" className="border border-[var(--border)] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[1200px]">
             <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)] sticky top-0 z-10">
               <tr>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Name</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Email</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Phone</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Country / City</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occupation</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Experience</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occult</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Applied</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Name</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Email</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Phone</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Date of birth</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Country</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">City</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Occupation</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Affiliate exp.</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Experience details</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Occult knowledge</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Occult other</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Why join</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Applied</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)] bg-[var(--background)]">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-28" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-36" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-24" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-24" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-12" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-16" /></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-[var(--muted)] rounded w-24" /></td>
+                    {Array.from({ length: 13 }).map((_, j) => (
+                      <td key={j} className="px-4 py-4"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
+                    ))}
                   </tr>
                 ))
               ) : applications.length > 0 ? (
                 applications.map((app) => (
                   <tr key={app.id} className="hover:bg-[var(--muted)]/50 transition-colors">
-                    <td className="px-5 py-4 font-medium text-[var(--foreground)]">{app.fullName}</td>
-                    <td className="px-5 py-4 text-sm text-[var(--muted-foreground)]">{app.email}</td>
-                    <td className="px-5 py-4 text-sm text-[var(--muted-foreground)]">{app.phone || '—'}</td>
-                    <td className="px-5 py-4 text-sm text-[var(--muted-foreground)]">
-                      {[app.country, app.city].filter(Boolean).join(', ') || '—'}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-[var(--muted-foreground)] max-w-[140px] truncate" title={app.currentOccupation || undefined}>
-                      {app.currentOccupation || '—'}
-                    </td>
-                    <td className="px-5 py-4 text-sm">
+                    <td className="px-4 py-4 font-medium text-[var(--foreground)] whitespace-nowrap">{app.fullName}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.email}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.phone || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.dateOfBirth || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)]">{app.country || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)]">{app.city || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] max-w-[140px] truncate" title={app.currentOccupation || undefined}>{app.currentOccupation || '—'}</td>
+                    <td className="px-4 py-4 text-sm">
                       {app.hasAffiliateExperience ? (
                         <span className="text-green-600 font-medium">Yes</span>
                       ) : (
                         <span className="text-[var(--muted-foreground)]">No</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-sm text-[var(--muted-foreground)]">
-                      {app.occultKnowledge || app.occultOther ? (
-                        <span>{app.occultKnowledge || 'Other'}</span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">
-                      {formatDate(app.createdAt)}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] max-w-[180px] truncate" title={app.experienceDetails || undefined}>{app.experienceDetails || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] max-w-[120px] truncate" title={app.occultKnowledge || undefined}>{app.occultKnowledge || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] max-w-[120px] truncate" title={app.occultOther || undefined}>{app.occultOther || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] max-w-[200px] truncate" title={app.whyJoin || undefined}>{app.whyJoin || '—'}</td>
+                    <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{formatDate(app.createdAt)}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-5 py-16 text-center">
+                  <td colSpan={13} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-[var(--muted-foreground)]">
                       <HiDocumentText className="h-14 w-14 opacity-60" />
                       <p className="font-medium text-[var(--foreground)]">No applications yet</p>

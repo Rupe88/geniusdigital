@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as adminApi from '@/lib/api/admin';
@@ -9,7 +10,9 @@ import * as courseApi from '@/lib/api/courses';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import * as paymentAnalyticsApi from '@/lib/api/paymentAnalytics';
 import * as referralApi from '@/lib/api/referrals';
-import { getAllEventRegistrations } from '@/lib/api/events';
+import { getAllUpcomingEventBookings } from '@/lib/api/upcomingEventBookings';
+import { getAllAffiliateApplications } from '@/lib/api/affiliateApplications';
+import { getAllConsultations } from '@/lib/api/consultation';
 import {
   HiUsers,
   HiBookOpen,
@@ -22,7 +25,8 @@ import {
   HiArrowTrendingUp,
   HiDocumentText,
   HiCheckCircle,
-  HiCalendar
+  HiCalendar,
+  HiChatBubbleLeftRight
 } from 'react-icons/hi2';
 import { ROUTES } from '@/lib/utils/constants';
 import { getApiBaseUrl } from '@/lib/api/axios';
@@ -39,6 +43,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalCourses: 0,
@@ -50,7 +55,10 @@ export default function AdminDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
-  const [eventRegistrationsTotal, setEventRegistrationsTotal] = useState(0);
+  const [eventBookingsTotal, setEventBookingsTotal] = useState(0);
+  const [affiliateApplicationsTotal, setAffiliateApplicationsTotal] = useState(0);
+  const [recentAffiliateApplications, setRecentAffiliateApplications] = useState<any[]>([]);
+  const [consultationsTotal, setConsultationsTotal] = useState(0);
 
   useEffect(() => {
     fetchStats();
@@ -105,9 +113,18 @@ export default function AdminDashboardPage() {
         setRecentCourses(coursesData.data.slice(0, 5));
       }
 
-      // Fetch event registrations total count
-      const bookingsRes = await getAllEventRegistrations({ page: 1, limit: 1 }).catch(() => ({ pagination: { total: 0 } }));
-      setEventRegistrationsTotal(bookingsRes.pagination?.total ?? 0);
+      // Fetch event bookings total count
+      const bookingsRes = await getAllUpcomingEventBookings({ page: 1, limit: 1 }).catch(() => ({ pagination: { total: 0 } }));
+      setEventBookingsTotal(bookingsRes.pagination?.total ?? 0);
+
+      // Fetch affiliate applications count and recent list
+      const affiliateRes = await getAllAffiliateApplications({ page: 1, limit: 5 }).catch(() => ({ data: [], pagination: { total: 0 } }));
+      setAffiliateApplicationsTotal(affiliateRes.pagination?.total ?? 0);
+      setRecentAffiliateApplications(affiliateRes.data ?? []);
+
+      // Fetch consultations total count
+      const consultations = await getAllConsultations().catch(() => []);
+      setConsultationsTotal(Array.isArray(consultations) ? consultations.length : 0);
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
@@ -170,11 +187,25 @@ export default function AdminDashboardPage() {
       color: 'bg-gradient-to-r from-blue-500 to-blue-600',
     },
     {
-      title: 'Event Registrations',
-      description: 'View upcoming event registered users',
+      title: 'Event Bookings',
+      description: 'View upcoming event bookings',
       icon: HiCalendar,
-      href: `${ROUTES.ADMIN}/event-registrations`,
+      href: `${ROUTES.ADMIN}/event-bookings`,
       color: 'bg-gradient-to-r from-teal-500 to-cyan-600',
+    },
+    {
+      title: 'Affiliate Applications',
+      description: 'Review and manage affiliate applications',
+      icon: HiDocumentText,
+      href: `${ROUTES.ADMIN}/affiliate-applications`,
+      color: 'bg-gradient-to-r from-indigo-500 to-indigo-600',
+    },
+    {
+      title: 'Consultations',
+      description: 'View and manage consultation requests',
+      icon: HiChatBubbleLeftRight,
+      href: `${ROUTES.ADMIN}/consultations`,
+      color: 'bg-gradient-to-r from-amber-500 to-amber-600',
     },
     {
       title: 'View Referrals',
@@ -287,16 +318,48 @@ export default function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <Link href={`${ROUTES.ADMIN}/event-registrations`}>
+        <Link href={`${ROUTES.ADMIN}/event-bookings`}>
           <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
             <div className="flex items-center">
               <div className="p-3 bg-teal-100 rounded-none mr-4">
                 <HiCalendar className="h-6 w-6 text-teal-600" />
               </div>
               <div>
-                <p className="text-sm text-[var(--muted-foreground)]">Event Registrations</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Event Bookings</p>
                 <p className="text-2xl font-bold text-[var(--foreground)]">
-                  {loading ? <span className="animate-pulse">...</span> : eventRegistrationsTotal.toLocaleString()}
+                  {loading ? <span className="animate-pulse">...</span> : eventBookingsTotal.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        <Link href={`${ROUTES.ADMIN}/affiliate-applications`}>
+          <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center">
+              <div className="p-3 bg-indigo-100 rounded-none mr-4">
+                <HiDocumentText className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--muted-foreground)]">Affiliate Applications</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? <span className="animate-pulse">...</span> : affiliateApplicationsTotal.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        <Link href={`${ROUTES.ADMIN}/consultations`}>
+          <Card padding="lg" className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center">
+              <div className="p-3 bg-amber-100 rounded-none mr-4">
+                <HiChatBubbleLeftRight className="h-6 w-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-[var(--muted-foreground)]">Consultations</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? <span className="animate-pulse">...</span> : consultationsTotal.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -401,6 +464,101 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Recent Affiliate Applications – overview bottom (table with all user data) */}
+      <Card padding="lg">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">Recent Affiliate Applications</h2>
+          <Link href={`${ROUTES.ADMIN}/affiliate-applications`}>
+            <Button variant="ghost" size="sm">View All →</Button>
+          </Link>
+        </div>
+        {loading ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1100px]">
+              <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
+                <tr>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Name</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Email</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Phone</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">DOB</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Country</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">City</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occupation</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Affiliate exp.</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Experience details</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occult</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Why join</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Applied</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {[1, 2, 3].map((i) => (
+                  <tr key={i} className="animate-pulse">
+                    {Array.from({ length: 12 }).map((_, j) => (
+                      <td key={j} className="px-3 py-3"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : recentAffiliateApplications.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1100px]">
+              <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
+                <tr>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Name</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Email</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Phone</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">DOB</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Country</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">City</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occupation</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Affiliate exp.</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Experience details</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Occult</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Why join</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">Applied</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {recentAffiliateApplications.map((app) => (
+                  <tr
+                    key={app.id}
+                    className="hover:bg-[var(--muted)]/50 transition-colors cursor-pointer"
+                    onClick={() => router.push(`${ROUTES.ADMIN}/affiliate-applications`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && router.push(`${ROUTES.ADMIN}/affiliate-applications`)}
+                  >
+                    <td className="px-3 py-3 font-medium text-[var(--foreground)] whitespace-nowrap">{app.fullName}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.email}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.phone || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.dateOfBirth || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)]">{app.country || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)]">{app.city || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[120px] truncate" title={app.currentOccupation || undefined}>{app.currentOccupation || '—'}</td>
+                    <td className="px-3 py-3 text-sm">{app.hasAffiliateExperience ? <span className="text-green-600 font-medium">Yes</span> : <span className="text-[var(--muted-foreground)]">No</span>}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[160px] truncate" title={app.experienceDetails || undefined}>{app.experienceDetails || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[100px] truncate" title={[app.occultKnowledge, app.occultOther].filter(Boolean).join(' / ') || undefined}>{app.occultKnowledge || app.occultOther || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] max-w-[180px] truncate" title={app.whyJoin || undefined}>{app.whyJoin || '—'}</td>
+                    <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-[var(--muted-foreground)]">
+            <HiDocumentText className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+            <p>No affiliate applications yet.</p>
+            <Link href={`${ROUTES.ADMIN}/affiliate-applications`}>
+              <Button variant="ghost" size="sm" className="mt-2">View applications</Button>
+            </Link>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

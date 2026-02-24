@@ -49,7 +49,6 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/gallery`, label: 'Gallery', icon: HiPhotograph },
       { href: `${ROUTES.ADMIN}/carousel`, label: 'Carousel', icon: HiPhotograph },
       { href: `${ROUTES.ADMIN}/events`, label: 'Events', icon: HiCalendar },
-      { href: `${ROUTES.ADMIN}/event-registrations`, label: 'Event Registrations', icon: HiUserGroup },
       { href: `${ROUTES.ADMIN}/event-bookings`, label: 'Event Bookings', icon: HiUserGroup },
       { href: `${ROUTES.ADMIN}/popups`, label: 'Popups', icon: HiPhotograph },
       { href: `${ROUTES.ADMIN}/faqs`, label: 'FAQs', icon: HiQuestionMarkCircle },
@@ -89,7 +88,6 @@ const adminMenuCategories: MenuCategory[] = [
     label: 'Analytics & Tools',
     icon: HiChartBar,
     items: [
-      { href: `${ROUTES.ADMIN}/affiliates`, label: 'Affiliates', icon: HiChartBar },
       { href: `${ROUTES.ADMIN}/affiliate-applications`, label: 'Affiliate Applications', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/referrals`, label: 'Referrals', icon: HiShare },
       { href: `${ROUTES.ADMIN}/student-success`, label: 'Student Success', icon: HiStar },
