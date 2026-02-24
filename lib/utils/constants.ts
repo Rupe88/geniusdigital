@@ -190,6 +190,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/events/${id}`,
     ADMIN_REGISTRATIONS: '/events/admin/registrations',
   },
+  UPCOMING_EVENT_BOOKINGS: '/upcoming-event-bookings',
   // FAQs
   FAQS: {
     LIST: '/faqs',

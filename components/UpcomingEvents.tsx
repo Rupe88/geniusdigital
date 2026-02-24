@@ -2,12 +2,13 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { HiChevronLeft, HiChevronRight, HiX } from 'react-icons/hi';
-import { getUpcomingEvents, registerForEvent } from '@/lib/api/events';
+import { getUpcomingEvents } from '@/lib/api/events';
 import type { Event } from '@/lib/api/events';
 import { getUpcomingEventCourses } from '@/lib/api/courses';
 import type { Course } from '@/lib/types/course';
-import { CourseCard } from '@/components/CourseCard';
-import { formatPrice } from '@/lib/utils/helpers';
+import { submitUpcomingEventBooking } from '@/lib/api/upcomingEventBookings';
+import { getStorageImageSrc } from '@/lib/utils/storage';
+import { getApiBaseUrl } from '@/lib/api/axios';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop&q=80';
@@ -38,8 +39,15 @@ export const UpcomingEvents: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [bookingEvent, setBookingEvent] = useState<Event | null>(null);
-  const [bookingForm, setBookingForm] = useState({ name: '', email: '', phone: '', eventId: '', referralSource: '', message: '' });
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    selectedEventOrCourse: '', // "event:id" or "course:id"
+    referralSource: '',
+    message: '',
+  });
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
   useEffect(() => {
@@ -117,30 +125,34 @@ export const UpcomingEvents: React.FC = () => {
     }
   };
 
-  const openBookingPopup = (e: React.MouseEvent, event: Event) => {
+  const openBookingPopup = (e: React.MouseEvent, item: { type: 'event'; id: string } | { type: 'course'; id: string }) => {
     e.preventDefault();
     e.stopPropagation();
-    setBookingEvent(event);
-    setBookingForm({
+    const value = item.type === 'event' ? `event:${item.id}` : `course:${item.id}`;
+    setPopupOpen(true);
+    setBookingForm((f) => ({
+      ...f,
       name: '',
       email: '',
       phone: '',
-      eventId: event.id,
+      selectedEventOrCourse: value,
       referralSource: '',
       message: '',
-    });
+    }));
   };
 
   const closeBookingPopup = () => {
-    setBookingEvent(null);
+    setPopupOpen(false);
     setBookingSubmitting(false);
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bookingEvent) return;
-    const { name, email, phone, eventId, referralSource, message } = bookingForm;
-    const eventIdToRegister = eventId || bookingEvent.id;
+    const { name, email, phone, selectedEventOrCourse, referralSource, message } = bookingForm;
+    if (!selectedEventOrCourse) {
+      showError('Please select an event or course');
+      return;
+    }
     if (!name?.trim()) {
       showError('Please enter your name');
       return;
@@ -158,19 +170,22 @@ export const UpcomingEvents: React.FC = () => {
       showError('Please enter a valid email address');
       return;
     }
+    const [type, id] = selectedEventOrCourse.split(':');
+    const payload = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      referralSource: referralSource?.trim() || undefined,
+      message: message?.trim() || undefined,
+      ...(type === 'event' ? { eventId: id } : { courseId: id }),
+    };
     setBookingSubmitting(true);
     try {
-      await registerForEvent(eventIdToRegister, {
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        referralSource: referralSource?.trim() || undefined,
-        message: message?.trim() || undefined,
-      });
-      showSuccess('Successfully registered! We will contact you soon.');
+      await submitUpcomingEventBooking(payload);
+      showSuccess('Booking submitted! We will contact you soon.');
       closeBookingPopup();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      showError(err instanceof Error ? err.message : 'Booking failed. Please try again.');
     } finally {
       setBookingSubmitting(false);
     }
@@ -275,7 +290,7 @@ export const UpcomingEvents: React.FC = () => {
                 <div className="px-5 pb-4 pt-0">
                   <button
                     type="button"
-                    onClick={(e) => openBookingPopup(e, event)}
+                    onClick={(e) => openBookingPopup(e, { type: 'event', id: event.id })}
                     className="w-full py-2.5 px-4 rounded-none text-sm font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-colors cursor-pointer"
                   >
                     Book Now
@@ -284,16 +299,48 @@ export const UpcomingEvents: React.FC = () => {
               </div>
             ))}
             {!loading && !error && upcomingCourses.map((course) => (
-              <div key={`course-${course.id}`} className="flex-shrink-0 w-[400px]">
-                <CourseCard
-                  id={course.id}
-                  title={course.title}
-                  thumbnail={course.thumbnail}
-                  price={course.isFree ? 'Free' : formatPrice(course.price)}
-                  oldPrice={course.originalPrice ? formatPrice(course.originalPrice) : undefined}
-                  slug={course.slug}
-                  className="w-full"
-                />
+              <div
+                key={`course-${course.id}`}
+                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] overflow-hidden rounded-lg flex flex-col cursor-default"
+              >
+                <div className="flex-1 min-h-0">
+                  <div className="relative w-full h-52 p-2">
+                    {course.thumbnail ? (
+                      <img
+                        src={getStorageImageSrc(course.thumbnail, getApiBaseUrl()) || course.thumbnail}
+                        alt={course.title}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
+                        <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                          {course.title.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-5 pt-0 pb-2">
+                    {course.startDate && (
+                      <div className="mb-1">
+                        <span className="inline-block pl-0 pr-3 py-0 rounded-none bg-white text-xs font-medium text-gray-700">
+                          {formatEventDate(course.startDate)}
+                        </span>
+                      </div>
+                    )}
+                    <h3 className="text-base md:text-lg font-lg tracking-wide text-gray-900 mb-1 line-clamp-2">
+                      {course.title}
+                    </h3>
+                  </div>
+                </div>
+                <div className="px-5 pb-4 pt-0">
+                  <button
+                    type="button"
+                    onClick={(e) => openBookingPopup(e, { type: 'course', id: course.id })}
+                    className="w-full py-2.5 px-4 rounded-none text-sm font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] transition-colors cursor-pointer"
+                  >
+                    Book Now
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -301,7 +348,7 @@ export const UpcomingEvents: React.FC = () => {
       </div>
 
       {/* Book Now popup form */}
-      {bookingEvent && (
+      {popupOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60"
           aria-modal="true"
@@ -313,7 +360,7 @@ export const UpcomingEvents: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-semibold">Fill the Form For More Update</h3>
+              <h3 className="text-lg font-semibold">Book Your Seat</h3>
               <button
                 type="button"
                 onClick={closeBookingPopup}
@@ -326,42 +373,51 @@ export const UpcomingEvents: React.FC = () => {
             <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
               <input
                 type="text"
-                placeholder="Enter your name"
+                placeholder="Name"
                 value={bookingForm.name}
                 onChange={(e) => setBookingForm((f) => ({ ...f, name: e.target.value }))}
                 className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
                 required
               />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={bookingForm.email}
-                  onChange={(e) => setBookingForm((f) => ({ ...f, email: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
-                  required
-                />
-                <input
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={bookingForm.phone}
-                  onChange={(e) => setBookingForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+              <input
+                type="email"
+                placeholder="Email"
+                value={bookingForm.email}
+                onChange={(e) => setBookingForm((f) => ({ ...f, email: e.target.value }))}
+                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                value={bookingForm.phone}
+                onChange={(e) => setBookingForm((f) => ({ ...f, phone: e.target.value }))}
+                className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                required
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Select event</label>
                 <select
-                  value={bookingForm.eventId}
-                  onChange={(e) => setBookingForm((f) => ({ ...f, eventId: e.target.value }))}
+                  value={bookingForm.selectedEventOrCourse}
+                  onChange={(e) => setBookingForm((f) => ({ ...f, selectedEventOrCourse: e.target.value }))}
                   className="w-full px-4 py-2.5 rounded border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  required
                 >
+                  <option value="">Select an event or course...</option>
                   {events.map((ev) => (
-                    <option key={ev.id} value={ev.id}>
-                      {ev.title.length > 35 ? ev.title.slice(0, 35) + '…' : ev.title}
+                    <option key={`event-${ev.id}`} value={`event:${ev.id}`}>
+                      Event: {ev.title.length > 40 ? ev.title.slice(0, 40) + '…' : ev.title}
+                    </option>
+                  ))}
+                  {upcomingCourses.map((c) => (
+                    <option key={`course-${c.id}`} value={`course:${c.id}`}>
+                      Course: {c.title.length > 40 ? c.title.slice(0, 40) + '…' : c.title}
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">How did you find us?</label>
                 <select
                   value={bookingForm.referralSource}
                   onChange={(e) => setBookingForm((f) => ({ ...f, referralSource: e.target.value }))}
@@ -373,7 +429,7 @@ export const UpcomingEvents: React.FC = () => {
                 </select>
               </div>
               <textarea
-                placeholder="Enter your message"
+                placeholder="Message"
                 value={bookingForm.message}
                 onChange={(e) => setBookingForm((f) => ({ ...f, message: e.target.value }))}
                 rows={3}
@@ -384,7 +440,7 @@ export const UpcomingEvents: React.FC = () => {
                 disabled={bookingSubmitting}
                 className="w-full py-3 px-4 rounded-none font-semibold text-white bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-60 transition-colors"
               >
-                {bookingSubmitting ? 'Submitting...' : 'Book Your Seat Now'}
+                {bookingSubmitting ? 'Submitting...' : 'Book your seat'}
               </button>
             </form>
           </div>
