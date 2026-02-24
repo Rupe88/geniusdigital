@@ -105,18 +105,26 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const MAX_PROMO_VIDEOS = 5;
-  // For promo videos we now use file uploads only.
-  // Start with empty slots; existing promo videos stay on the backend
-  // unless the admin uploads new files to replace them.
-  const initialPromoSlots = (): Array<{ url: string; file: File | null }> =>
-    Array.from({ length: MAX_PROMO_VIDEOS }, () => ({ url: '', file: null }));
+  // Promo videos use file uploads only, but we still show any existing
+  // promo video URLs from the course so admins know something is already saved.
+  const initialPromoSlots = (): Array<{ url: string; file: File | null }> => {
+    const urls = course?.promoVideos?.length
+      ? [...course.promoVideos]
+      : course?.videoUrl
+        ? [course.videoUrl]
+        : [];
+    const slots = urls
+      .slice(0, MAX_PROMO_VIDEOS)
+      .map((url) => ({ url: url || '', file: null as File | null }));
+    while (slots.length < MAX_PROMO_VIDEOS) slots.push({ url: '', file: null });
+    return slots;
+  };
   const [promoSlots, setPromoSlots] = useState<Array<{ url: string; file: File | null }>>(initialPromoSlots);
 
   useEffect(() => {
-    // When course changes, reset promo slots to empty; existing promos
-    // are preserved by backend until new files are uploaded.
+    // When course changes, refresh display of existing promo video URLs.
     setPromoSlots(initialPromoSlots());
-  }, [course?.id]);
+  }, [course?.id, course?.promoVideos?.length, course?.videoUrl]);
 
   // Curriculum state
   const [curriculumChapters, setCurriculumChapters] = useState<any[]>([]);

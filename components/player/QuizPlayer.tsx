@@ -51,6 +51,15 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
         }
     };
 
+    const handleTextAnswerChange = (value: string) => {
+        if (result || !currentQuestion) return;
+        const questionId = currentQuestion.id!;
+        setSelectedAnswers({
+            ...selectedAnswers,
+            [questionId]: value,
+        });
+    };
+
     const handleNext = () => {
         if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -135,8 +144,17 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                     <div className="space-y-6">
                         {questions.map((q, idx) => {
                             const res = result.results.find(r => r.questionId === q.id);
+                            const options = Array.isArray(q.options) ? q.options : [];
+                            const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(
+                                q.questionType || 'single_choice'
+                            );
                             return (
-                                <div key={q.id} className={`p-6 rounded-none border ${res?.isCorrect ? 'border-green-100 bg-green-50/30' : 'border-red-100 bg-red-50/30'}`}>
+                                <div
+                                    key={q.id}
+                                    className={`p-6 rounded-none border ${
+                                        res?.isCorrect ? 'border-green-100 bg-green-50/30' : 'border-red-100 bg-red-50/30'
+                                    }`}
+                                >
                                     <div className="flex items-start gap-4">
                                         <span className="flex-shrink-0 w-8 h-8 rounded-none bg-white font-black text-gray-400 flex items-center justify-center border border-gray-100">
                                             {idx + 1}
@@ -144,9 +162,10 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                         <div className="flex-1 space-y-4">
                                             <p className="font-bold text-gray-900 text-lg leading-tight">{q.question}</p>
 
-                                            {/* Show options with right/wrong decorations */}
-                                            <div className="grid grid-cols-1 gap-2">
-                                                {(Array.isArray(q.options) ? q.options : []).map((option: string, oIdx: number) => {
+                                            {/* Show options with right/wrong decorations for objective questions */}
+                                            {isObjective && options.length > 0 && (
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {options.map((option: string, oIdx: number) => {
                                                     const isUserAnswer = Array.isArray(res?.userAnswer)
                                                         ? (res?.userAnswer as string[]).includes(option)
                                                         : res?.userAnswer === option;
@@ -169,14 +188,40 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                                         icon = <HiXCircle className="w-5 h-5 text-red-600" />;
                                                     }
 
-                                                    return (
-                                                        <div key={oIdx} className={`flex items-center justify-between p-3 rounded-none border-2 ${borderColor} ${bgColor} transition-all`}>
-                                                            <span className="text-sm font-bold text-gray-700">{option}</span>
-                                                            {icon}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                                        return (
+                                                            <div
+                                                                key={oIdx}
+                                                                className={`flex items-center justify-between p-3 rounded-none border-2 ${borderColor} ${bgColor} transition-all`}
+                                                            >
+                                                                <span className="text-sm font-bold text-gray-700">{option}</span>
+                                                                {icon}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* For subjective questions (short_answer, open_ended, matching) show text answers */}
+                                            {!isObjective && (
+                                                <div className="mt-3 space-y-1 text-sm">
+                                                    <p className="font-semibold text-gray-800">
+                                                        Your answer:{' '}
+                                                        <span className="font-normal text-gray-700">
+                                                            {typeof res?.userAnswer === 'string' && res.userAnswer.trim()
+                                                                ? res.userAnswer
+                                                                : '—'}
+                                                        </span>
+                                                    </p>
+                                                    {typeof res?.correctAnswer === 'string' && res.correctAnswer.trim() && (
+                                                        <p className="font-semibold text-gray-800">
+                                                            Expected / model answer:{' '}
+                                                            <span className="font-normal text-gray-700">
+                                                                {res.correctAnswer}
+                                                            </span>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
 
                                             {q.description && (
                                                 <div className="mt-4 p-4 rounded-none bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100 flex gap-3">
@@ -232,31 +277,66 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                        {(Array.isArray(currentQuestion.options) ? currentQuestion.options : []).map((option: string, index: number) => {
+                        {(() => {
                             const questionId = currentQuestion.id!;
-                            const isSelected = currentQuestion.questionType === 'multiple_choice'
-                                ? ((selectedAnswers[questionId] as string[]) || []).includes(option)
-                                : selectedAnswers[questionId] === option;
+                            const questionType = currentQuestion.questionType || 'single_choice';
+                            const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(questionType);
+                            const options = Array.isArray(currentQuestion.options) ? currentQuestion.options : [];
+
+                            if (isObjective && options.length > 0) {
+                                return options.map((option: string, index: number) => {
+                                    const isSelected =
+                                        questionType === 'multiple_choice'
+                                            ? ((selectedAnswers[questionId] as string[]) || []).includes(option)
+                                            : selectedAnswers[questionId] === option;
+
+                                    return (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleSelectAnswer(option)}
+                                            className={`flex items-center gap-4 p-5 rounded-none border-4 text-left transition-all ${
+                                                isSelected
+                                                    ? 'border-[var(--primary-700)] bg-blue-50/50 shadow-inner'
+                                                    : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
+                                            }`}
+                                        >
+                                            <div
+                                                className={`flex-shrink-0 w-8 h-8 rounded-none flex items-center justify-center font-black ${
+                                                    isSelected
+                                                        ? 'bg-[var(--primary-700)] text-white'
+                                                        : 'bg-white text-gray-400 border border-gray-200'
+                                                }`}
+                                            >
+                                                {String.fromCharCode(65 + index)}
+                                            </div>
+                                            <span
+                                                className={`text-lg font-bold flex-1 ${
+                                                    isSelected ? 'text-[var(--primary-700)]' : 'text-gray-700'
+                                                }`}
+                                            >
+                                                {option}
+                                            </span>
+                                        </button>
+                                    );
+                                });
+                            }
+
+                            // Subjective question types: show text input/textarea
+                            const currentValue = (selectedAnswers[questionId] as string) || '';
+                            const placeholder =
+                                questionType === 'short_answer'
+                                    ? 'Type your short answer here...'
+                                    : 'Write your answer here...';
 
                             return (
-                                <button
-                                    key={index}
-                                    onClick={() => handleSelectAnswer(option)}
-                                    className={`flex items-center gap-4 p-5 rounded-none border-4 text-left transition-all ${isSelected
-                                            ? 'border-[var(--primary-700)] bg-blue-50/50 shadow-inner'
-                                            : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
-                                        }`}
-                                >
-                                    <div className={`flex-shrink-0 w-8 h-8 rounded-none flex items-center justify-center font-black ${isSelected ? 'bg-[var(--primary-700)] text-white' : 'bg-white text-gray-400 border border-gray-200'
-                                        }`}>
-                                        {String.fromCharCode(65 + index)}
-                                    </div>
-                                    <span className={`text-lg font-bold flex-1 ${isSelected ? 'text-[var(--primary-700)]' : 'text-gray-700'}`}>
-                                        {option}
-                                    </span>
-                                </button>
+                                <textarea
+                                    value={currentValue}
+                                    onChange={(e) => handleTextAnswerChange(e.target.value)}
+                                    placeholder={placeholder}
+                                    className="w-full min-h-[120px] px-4 py-3 border-2 border-gray-200 rounded-none bg-white text-gray-800 focus:outline-none focus:border-[var(--primary-700)]"
+                                />
                             );
-                        })}
+                        })()}
                     </div>
                 </div>
 

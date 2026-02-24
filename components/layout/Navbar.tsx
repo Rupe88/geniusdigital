@@ -85,7 +85,11 @@ export const Navbar: React.FC = () => {
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
     { label: 'Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
-    { label: isAuthenticated ? 'Account' : 'Login', href: isAuthenticated ? ROUTES.DASHBOARD : ROUTES.LOGIN, icon: HiUser },
+    {
+      label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',
+      href: isAuthenticated ? (user?.role === 'ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD) : ROUTES.LOGIN,
+      icon: HiUser,
+    },
   ];
 
   return (
@@ -196,28 +200,14 @@ export const Navbar: React.FC = () => {
 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-none shadow-lg py-1 z-50 border border-gray-200">
-                    <Link
-                      href={ROUTES.DASHBOARD}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <HiCog className="inline mr-2" />
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/dashboard/referrals"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      💰 My Referrals
-                    </Link>
-                    {user?.role === 'ADMIN' && (
+                    {user?.role === 'ADMIN' ? (
                       <>
                         <Link
                           href={ROUTES.ADMIN}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
+                          <HiCog className="inline mr-2" />
                           Admin Panel
                         </Link>
                         <Link
@@ -226,6 +216,24 @@ export const Navbar: React.FC = () => {
                           onClick={() => setIsUserMenuOpen(false)}
                         >
                           📊 Referral Admin
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href={ROUTES.DASHBOARD}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <HiCog className="inline mr-2" />
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/dashboard/referrals"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          💰 My Referrals
                         </Link>
                       </>
                     )}
