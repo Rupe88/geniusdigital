@@ -76,7 +76,7 @@ export default function HomePage() {
     const fetchPopular = async () => {
       setPopularCoursesLoading(true);
       try {
-        const data = await courseApi.getPopularCourses();
+        const data = await courseApi.getFeaturedCourses();
         if (!cancelled && Array.isArray(data)) setPopularCoursesList(data);
         else if (!cancelled) setPopularCoursesList([]);
       } catch (e) {
@@ -501,7 +501,7 @@ export default function HomePage() {
               )}
               {!popularCoursesLoading && popularCourses.length === 0 && (
                 <div className="w-full py-12 text-center text-gray-600">
-                  <p>No popular courses at the moment. Set course status to Popular in admin to show them here.</p>
+                  <p>No popular courses at the moment. Mark courses as popular (tick) in admin to show them here.</p>
                 </div>
               )}
               {!popularCoursesLoading &&

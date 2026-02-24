@@ -54,7 +54,7 @@ const courseSchema = z.object({
   skills: z.array(z.string()).optional(),
 
   // Step 3
-  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED', 'ONGOING', 'UPCOMING_EVENTS', 'POPULAR']).optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED', 'ONGOING', 'UPCOMING_EVENTS']).optional(),
   featured: z.boolean().optional(),
   isOngoing: z.boolean().optional(),
   startDate: z.string().optional(),
@@ -1004,7 +1004,6 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                   { value: 'ONGOING', label: 'Ongoing' },
                   { value: 'ARCHIVED', label: 'Archived' },
                   { value: 'UPCOMING_EVENTS', label: 'Upcoming Events' },
-                  { value: 'POPULAR', label: 'Popular' },
                 ]}
               />
 
