@@ -17,6 +17,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     const [secureVideoSrc, setSecureVideoSrc] = useState<string | null>(null);
     const [secureVideoError, setSecureVideoError] = useState<string | null>(null);
     const [retryCount, setRetryCount] = useState(0);
+    const [autoRetryUsed, setAutoRetryUsed] = useState(false);
     const fetchedForLessonId = useRef<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -30,6 +31,11 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
         }
         setRetryCount((c) => c + 1);
     };
+
+    // Reset auto-retry flag when lesson changes
+    useEffect(() => {
+        setAutoRetryUsed(false);
+    }, [lesson.id]);
 
     useEffect(() => {
         console.log('[LessonPlayer] useEffect triggered', {
@@ -265,9 +271,10 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                         });
 
                                         // If this is a secure stream URL, first try to refresh the
-                                        // signed link once before showing the permanent error UI.
-                                        if (isSecureStreamPath(lesson.videoUrl) && !secureVideoError) {
-                                            console.log('[Video] onError - secure stream path detected, retrying with fresh token');
+                                        // signed link ONCE before showing the permanent error UI.
+                                        if (isSecureStreamPath(lesson.videoUrl) && !autoRetryUsed) {
+                                            console.log('[Video] onError - secure stream path detected, auto-retrying with fresh token');
+                                            setAutoRetryUsed(true);
                                             retryVideo();
                                             return;
                                         }
