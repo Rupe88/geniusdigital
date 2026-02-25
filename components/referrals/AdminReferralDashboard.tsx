@@ -261,7 +261,7 @@ export const AdminReferralDashboard: React.FC = () => {
                       Total Commission
                     </dt>
                     <dd className="text-2xl font-bold text-gray-900">
-                      NPR {analytics.totalCommission?.toFixed(0) || '0'}
+                      {`NPR ${Number(analytics.totalCommission || 0).toFixed(0)}`}
                     </dd>
                   </dl>
                 </div>

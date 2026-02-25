@@ -80,9 +80,11 @@ export default function VastuProductPage() {
   });
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    // Display price in Nepalese Rupees without the $ symbol
+    return new Intl.NumberFormat('en-NP', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NPR',
+      maximumFractionDigits: 0,
     }).format(price);
   };
 
@@ -196,10 +198,10 @@ export default function VastuProductPage() {
               className="py-3"
               options={[
                 { value: 'all', label: 'All Prices' },
-                { value: 'under-50', label: 'Under $50' },
-                { value: '50-100', label: '$50 - $100' },
-                { value: '100-200', label: '$100 - $200' },
-                { value: 'over-200', label: 'Over $200' },
+                { value: 'under-50', label: 'Under NPR 5,000' },
+                { value: '50-100', label: 'NPR 5,000 - 10,000' },
+                { value: '100-200', label: 'NPR 10,000 - 20,000' },
+                { value: 'over-200', label: 'Over NPR 20,000' },
               ]}
             />
           </div>
@@ -218,9 +220,12 @@ export default function VastuProductPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="group overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <Card
+                key={product.id}
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
                 {/* Product Image */}
-                <div className="relative h-64 bg-gray-100">
+                <div className="relative h-60 bg-gray-100">
                   {product.images && product.images.length > 0 ? (
                     <Image
                       src={product.images[0]}
@@ -250,44 +255,44 @@ export default function VastuProductPage() {
                 </div>
 
                 {/* Product Info */}
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                <div className="flex flex-1 flex-col p-5">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1.5 line-clamp-2">
                     {product.name}
                   </h3>
 
                   {product.vastuPurpose && (
-                    <p className="text-sm text-red-600 font-medium mb-2">
+                    <p className="text-xs sm:text-sm text-red-600 font-semibold mb-1.5 uppercase tracking-wide">
                       {product.vastuPurpose}
                     </p>
                   )}
 
                   {product.material && (
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2">
                       Material: {product.material}
                     </p>
                   )}
 
                   {product.shortDescription && (
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-4 line-clamp-2">
                       {product.shortDescription}
                     </p>
                   )}
 
                   {/* Price */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-gray-900">
+                  <div className="mt-auto flex items-center justify-between mb-4">
+                    <div className="flex items-baseline space-x-2">
+                      <span className="text-xl sm:text-2xl font-bold text-gray-900">
                         {formatPrice(product.price)}
                       </span>
                       {product.originalPrice && product.originalPrice > product.price && (
-                        <span className="text-lg text-gray-500 line-through">
+                        <span className="text-xs sm:text-sm text-gray-500 line-through">
                           {formatPrice(product.originalPrice)}
                         </span>
                       )}
                     </div>
 
                     {/* Stock Status */}
-                    <span className={`text-sm font-medium ${
+                    <span className={`text-xs sm:text-sm font-medium ${
                       product.stockQuantity > 0
                         ? 'text-green-600'
                         : 'text-red-600'
@@ -297,14 +302,15 @@ export default function VastuProductPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex space-x-2">
+                  <div className="mt-1 flex space-x-2">
                     <Link href={`/vastu-product/${product.slug}`} className="flex-1">
-                      <Button variant="outline" className="w-full flex items-center justify-center">
+                      <Button variant="outline" size="sm" className="w-full flex items-center justify-center">
                         <HiEye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
                     </Link>
                     <Button
+                      size="sm"
                       className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center"
                       disabled={product.stockQuantity <= 0}
                     >
