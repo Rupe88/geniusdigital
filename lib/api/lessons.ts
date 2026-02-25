@@ -81,7 +81,6 @@ export const createLesson = async (data: CreateLessonData): Promise<Lesson> => {
     if (data.description) formData.append('description', data.description);
     if (data.content) formData.append('content', data.content);
     if (data.videoUrl) formData.append('videoUrl', data.videoUrl);
-    if (data.videoDuration) formData.append('videoDuration', data.videoDuration.toString());
     if (data.attachmentUrl) formData.append('attachmentUrl', data.attachmentUrl);
     if (data.lessonType) formData.append('lessonType', data.lessonType);
     if (data.order !== undefined) formData.append('order', data.order.toString());
@@ -144,7 +143,6 @@ export const updateLesson = async (id: string, data: Partial<CreateLessonData>):
     if (data.description !== undefined) formData.append('description', data.description);
     if (data.content !== undefined) formData.append('content', data.content);
     if (data.videoUrl !== undefined) formData.append('videoUrl', data.videoUrl);
-    if (data.videoDuration !== undefined) formData.append('videoDuration', data.videoDuration.toString());
     if (data.attachmentUrl !== undefined) formData.append('attachmentUrl', data.attachmentUrl);
     if (data.lessonType) formData.append('lessonType', data.lessonType);
     if (data.order !== undefined) formData.append('order', data.order.toString());

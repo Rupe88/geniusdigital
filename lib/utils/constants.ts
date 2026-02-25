@@ -76,6 +76,15 @@ export const API_ENDPOINTS = {
     HISTORY: '/payments', // GET list (backend uses GET /)
     BY_ID: (id: string) => `/payments/${id}`,
   },
+  // Installments (EMI-style)
+  INSTALLMENTS: {
+    PLAN_BY_COURSE: (courseId: string) => `/installments/plan/course/${courseId}`,
+    START: '/installments/start',
+    MY_LIST: '/installments/me',
+    ADMIN_PLAN: (courseId: string) => `/installments/admin/plan/course/${courseId}`,
+    ADMIN_UPSERT_PLAN: (courseId: string) => `/installments/admin/plan/course/${courseId}`,
+    ADMIN_DELETE_PLAN: (courseId: string) => `/installments/admin/plan/course/${courseId}`,
+  },
   // Payment Analytics
   PAYMENT_ANALYTICS: {
     ANALYTICS: '/payment-analytics',

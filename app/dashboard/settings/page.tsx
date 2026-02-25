@@ -13,9 +13,9 @@ import { HiKey, HiUser, HiCreditCard } from 'react-icons/hi';
 const PAYMENT_METHODS = [
   { value: '', label: 'Not set' },
   { value: 'ESEWA', label: 'eSewa' },
-  { value: 'MOBILE_BANKING', label: 'Mobile Banking' },
-  { value: 'VISA_CARD', label: 'Visa Card' },
-  { value: 'MASTERCARD', label: 'Mastercard' },
+  { value: 'MOBILE_BANKING', label: 'Mobile Banking (Coming soon)' },
+  { value: 'VISA_CARD', label: 'Visa Card (Coming soon)' },
+  { value: 'MASTERCARD', label: 'Mastercard (Coming soon)' },
 ] as const;
 
 type ProfileFormData = {
@@ -96,6 +96,14 @@ export default function SettingsPage() {
 
   const onPaymentPreferenceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
+
+    // Only eSewa is currently supported for user payments
+    if (value && value !== 'ESEWA') {
+      showError('This payment method is coming soon. Please use eSewa for now.');
+      setPaymentMethod('ESEWA');
+      return;
+    }
+
     setPaymentMethod(value);
     if (!value) return;
     setSavingPayment(true);

@@ -75,7 +75,6 @@ interface LessonFormData {
   content: string;
   lessonType: 'VIDEO' | 'TEXT' | 'PDF' | 'QUIZ' | 'ASSIGNMENT';
   videoUrl: string;
-  videoDuration: number;
   isPreview: boolean;
   isLocked: boolean;
   videoFile: File | null;
@@ -116,7 +115,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
     content: '',
     lessonType: 'VIDEO',
     videoUrl: '',
-    videoDuration: 0,
     isPreview: false,
     isLocked: false,
     videoFile: null,
@@ -274,7 +272,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       content: '',
       lessonType: 'VIDEO',
       videoUrl: '',
-      videoDuration: 0,
       isPreview: false,
       isLocked: false,
       videoFile: null,
@@ -333,7 +330,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       content: lesson.content || '',
       lessonType: lesson.lessonType as 'VIDEO' | 'TEXT' | 'PDF' | 'QUIZ' | 'ASSIGNMENT',
       videoUrl: lesson.videoUrl || '',
-      videoDuration: lesson.videoDuration || 0,
       isPreview: lesson.isPreview || false,
       isLocked: lesson.isLocked || false,
       videoFile: null,
@@ -363,7 +359,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           content: lessonForm.content.trim() || undefined,
           lessonType: lessonForm.lessonType,
           videoUrl: lessonForm.videoUrl || undefined,
-          videoDuration: lessonForm.videoDuration || undefined,
           isPreview: lessonForm.isPreview,
           isLocked: lessonForm.isLocked,
           videoFile: lessonForm.videoFile || undefined,
@@ -393,7 +388,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           content: lessonForm.content.trim() || '',
           lessonType: lessonForm.lessonType,
           videoUrl: lessonForm.videoUrl || undefined,
-          videoDuration: lessonForm.videoDuration || undefined,
           isPreview: lessonForm.isPreview,
           isLocked: lessonForm.isLocked,
           quiz: lessonForm.lessonType === 'QUIZ' ? lessonForm.quizData : undefined,
@@ -884,14 +878,6 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                   />
                 </div>
               </div>
-
-              <Input
-                label="Video Duration (seconds)"
-                type="number"
-                value={lessonForm.videoDuration || ''}
-                onChange={(e) => setLessonForm(prev => ({ ...prev, videoDuration: parseInt(e.target.value) || 0 }))}
-                placeholder="0"
-              />
             </>
           )}
 

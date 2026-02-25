@@ -27,6 +27,8 @@ export const createPayment = async (data: {
   referralClickId?: string;
   successUrl?: string;
   failureUrl?: string;
+  /** When paying a single installment (EMI) */
+  installmentId?: string;
 }): Promise<InitiatePaymentResponse> => {
   try {
     const response = await apiClient.post<ApiResponse<InitiatePaymentResponse>>(API_ENDPOINTS.PAYMENTS.CREATE, data);

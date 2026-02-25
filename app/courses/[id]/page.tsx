@@ -12,6 +12,7 @@ import * as courseApi from '@/lib/api/courses';
 import * as lessonApi from '@/lib/api/lessons';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import * as paymentApi from '@/lib/api/payments';
+import * as installmentApi from '@/lib/api/installments';
 import * as chapterApi from '@/lib/api/chapters';
 import { validateCoupon } from '@/lib/api/coupon';
 import { reviewsApi } from '@/lib/api/reviews';
@@ -73,6 +74,8 @@ export default function CourseDetailPage({
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountAmount: number; finalAmount: number } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [applyingPromo, setApplyingPromo] = useState(false);
+  type PayMode = 'full' | 'installment';
+  const [payMode, setPayMode] = useState<PayMode>('full');
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,22 +340,30 @@ export default function CourseDetailPage({
         return;
       }
 
-      // Paid courses: Skip enrollment API, go directly to payment
-      // Enrollment will be created automatically after payment verification
-      // Paid course – initiate eSewa payment
+      // Paid courses: full or installment
       if (priceNum <= 0 || !Number.isFinite(priceNum)) {
         showError('Invalid course price. Please contact support.');
         return;
       }
 
+      let amount = appliedPromo ? appliedPromo.finalAmount : priceNum;
+      let installmentId: string | undefined;
+
+      if (payMode === 'installment' && course.installmentPlan?.isActive) {
+        const result = await installmentApi.startInstallmentEnrollment(course.id);
+        amount = result.firstAmount;
+        installmentId = result.firstInstallmentId;
+      }
+
       const paymentResponse = await paymentApi.createPayment({
         courseId: course.id,
-        amount: priceNum,
+        amount,
         paymentMethod: 'ESEWA',
         couponCode: appliedPromo?.code || undefined,
         referralClickId: referralClickId || undefined,
         successUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/success`,
         failureUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/failure`,
+        installmentId,
       });
 
       if (paymentResponse?.paymentDetails?.paymentUrl) {
@@ -936,6 +947,39 @@ export default function CourseDetailPage({
                   </div>
                 )}
 
+                {/* Pay mode: full vs installment (when plan available and price high enough) */}
+                {!course.isFree && course.price != null && course.installmentPlan?.isActive && (
+                  (course.installmentPlan.minAmountForPlan == null || Number(course.price) >= Number(course.installmentPlan.minAmountForPlan)) && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700">Payment option</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPayMode('full')}
+                          className={`flex-1 py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                            payMode === 'full'
+                              ? 'border-[var(--primary-700)] bg-[var(--primary-50)] text-[var(--primary-700)]'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          Pay full · Rs. {(appliedPromo ? appliedPromo.finalAmount : Number(course.price)).toLocaleString()}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPayMode('installment')}
+                          className={`flex-1 py-2.5 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                            payMode === 'installment'
+                              ? 'border-[var(--primary-700)] bg-[var(--primary-50)] text-[var(--primary-700)]'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          {course.installmentPlan.numberOfInstallments} × Rs. {Math.ceil(Number(course.price) / course.installmentPlan.numberOfInstallments).toLocaleString()}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                )}
+
                 {/* Main Actions */}
                 <div className="space-y-3">
                   <Button
@@ -945,7 +989,13 @@ export default function CourseDetailPage({
                     onClick={handleEnroll}
                     isLoading={enrolling}
                   >
-                    {course.isEnrolled ? 'Continue Learning' : course.isFree ? 'Enroll for Free' : 'Enroll Now'}
+                    {course.isEnrolled
+                      ? 'Continue Learning'
+                      : course.isFree
+                        ? 'Enroll for Free'
+                        : payMode === 'installment' && course.installmentPlan?.isActive
+                          ? `Pay first installment · Rs. ${Math.ceil(Number(course.price) / (course.installmentPlan?.numberOfInstallments || 1)).toLocaleString()}`
+                          : 'Enroll Now'}
                   </Button>
 
                   <ShareButton

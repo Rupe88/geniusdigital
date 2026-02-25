@@ -112,6 +112,15 @@ export interface Course {
     progress: number;
     completedAt?: string;
   };
+  /** EMI-style installment plan (admin-configured) */
+  installmentPlan?: {
+    id: string;
+    courseId: string;
+    numberOfInstallments: number;
+    intervalMonths: number;
+    minAmountForPlan: number | null;
+    isActive: boolean;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

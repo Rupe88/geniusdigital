@@ -81,7 +81,6 @@ export default function CreateCoursePage() {
                   content: lesson.content || undefined,
                   lessonType: lesson.lessonType || 'VIDEO',
                   videoUrl: lesson.videoUrl || undefined,
-                  videoDuration: lesson.videoDuration || undefined,
                   isPreview: lesson.isPreview || false,
                   isLocked: lesson.isLocked || false,
                   order: lesson.order,

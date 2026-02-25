@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/context/AuthContext';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import { getPaymentHistory } from '@/lib/api/payments';
+import { getMyInstallments } from '@/lib/api/installments';
 import { getReferralStats } from '@/lib/api/referrals';
 import type { Enrollment } from '@/lib/types/course';
 import type { Payment } from '@/lib/types/payment';
@@ -22,6 +23,7 @@ import {
   HiChartBar,
   HiChevronRight,
   HiRefresh,
+  HiCalendar,
 } from 'react-icons/hi';
 
 const DASHBOARD_SECTIONS = [
@@ -54,6 +56,13 @@ const DASHBOARD_SECTIONS = [
     color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
   },
   {
+    href: `${ROUTES.DASHBOARD}/installments`,
+    label: 'Installments',
+    description: 'View and pay course installments (EMI)',
+    icon: HiCalendar,
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  },
+  {
     href: `${ROUTES.DASHBOARD}/settings`,
     label: 'Settings',
     description: 'Profile and account preferences',
@@ -84,6 +93,7 @@ export default function DashboardPage() {
   });
   const [recentEnrollments, setRecentEnrollments] = useState<Enrollment[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
+  const [upcomingInstallments, setUpcomingInstallments] = useState<import('@/lib/api/installments').MyInstallmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -91,9 +101,10 @@ export default function DashboardPage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [enrollmentsRes, paymentsRes, referralRes] = await Promise.allSettled([
+      const [enrollmentsRes, paymentsRes, installmentsRes, referralRes] = await Promise.allSettled([
         enrollmentApi.getUserEnrollments(),
         getPaymentHistory({ page: 1, limit: 5 }),
+        getMyInstallments().then((list) => list.filter((i) => i.status === 'PENDING' || i.status === 'OVERDUE')),
         getReferralStats(),
       ]);
 
@@ -106,6 +117,9 @@ export default function DashboardPage() {
       const payments = paymentsRes.status === 'fulfilled' ? paymentsRes.value?.data ?? [] : [];
       const paymentTotal = paymentsRes.status === 'fulfilled' ? paymentsRes.value?.pagination?.total ?? payments.length : 0;
       setRecentPayments(payments.slice(0, 3));
+
+      const installments = installmentsRes.status === 'fulfilled' ? installmentsRes.value ?? [] : [];
+      setUpcomingInstallments(installments.slice(0, 5));
 
       const referral = referralRes.status === 'fulfilled' ? referralRes.value : null;
 
@@ -324,6 +338,48 @@ export default function DashboardPage() {
           )}
           <Link href={`${ROUTES.DASHBOARD}/payments`} className="inline-block mt-4 text-sm font-medium text-[var(--primary-700)] hover:underline">
             View all payments →
+          </Link>
+        </Card>
+
+        <Card padding="lg">
+          <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Upcoming installments</h2>
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center justify-between gap-3 p-2 rounded-lg">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 bg-[var(--muted)] rounded animate-pulse" />
+                    <div className="h-2 w-1/3 bg-[var(--muted)] rounded animate-pulse" />
+                  </div>
+                  <div className="h-8 w-20 bg-[var(--muted)] rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : upcomingInstallments.length === 0 ? (
+            <p className="text-[var(--muted-foreground)] text-sm">No upcoming installments.</p>
+          ) : (
+            <ul className="space-y-3">
+              {upcomingInstallments.map((i) => (
+                <li key={i.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-[var(--muted)]/50 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-[var(--foreground)] truncate">{i.course?.title ?? 'Course'}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Installment {i.installmentNumber} · Due {formatDate(i.dueDate)}
+                      {i.status === 'OVERDUE' && <span className="text-amber-600 ml-1">(Overdue)</span>}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-medium text-[var(--foreground)]">{formatCurrency(i.amount)}</span>
+                    <Link href={`${ROUTES.DASHBOARD}/installments`}>
+                      <Button variant="primary" size="sm">Pay now</Button>
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link href={`${ROUTES.DASHBOARD}/installments`} className="inline-block mt-4 text-sm font-medium text-[var(--primary-700)] hover:underline">
+            View all installments →
           </Link>
         </Card>
       </section>

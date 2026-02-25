@@ -180,26 +180,13 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
 
         {lessonType === 'VIDEO' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <Input
-                  label="Video URL *"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  helperText="YouTube, Vimeo, or direct video URL"
-                />
-              </div>
+            <div>
               <Input
-                label="Duration (seconds)"
-                type="number"
-                min="0"
-                value={lesson?.videoDuration?.toString() || ''}
-                onChange={(e) => {
-                  // Duration will be passed in save
-                }}
-                placeholder="e.g., 600 for 10 min"
-                helperText="Auto-detected if YouTube/Vimeo"
+                label="Video URL *"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                helperText="YouTube, Vimeo, or direct video URL"
               />
             </div>
 
