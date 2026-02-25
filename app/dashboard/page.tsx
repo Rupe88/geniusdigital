@@ -14,60 +14,38 @@ import { getReferralStats } from '@/lib/api/referrals';
 import type { Enrollment } from '@/lib/types/course';
 import type { Payment } from '@/lib/types/payment';
 import { ROUTES } from '@/lib/utils/constants';
-import {
-  HiBookOpen,
-  HiCheckCircle,
-  HiCreditCard,
-  HiShare,
-  HiCog,
-  HiChartBar,
-  HiChevronRight,
-  HiRefresh,
-  HiCalendar,
-} from 'react-icons/hi';
+import { HiChevronRight, HiRefresh } from 'react-icons/hi';
 
 const DASHBOARD_SECTIONS = [
   {
     href: `${ROUTES.DASHBOARD}/my-courses`,
     label: 'My Courses',
     description: 'View and continue your enrolled courses',
-    icon: HiBookOpen,
-    color: 'bg-[var(--primary-100)] text-[var(--primary-700)] dark:bg-[var(--primary-900)]/40 dark:text-[var(--primary-300)]',
   },
   {
     href: `${ROUTES.DASHBOARD}/progress`,
     label: 'Progress',
     description: 'Track your learning progress by course',
-    icon: HiChartBar,
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   },
   {
     href: `${ROUTES.DASHBOARD}/referrals`,
     label: 'Referrals',
     description: 'Share courses and earn rewards',
-    icon: HiShare,
-    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
   },
   {
     href: `${ROUTES.DASHBOARD}/payments`,
     label: 'Payments',
     description: 'View payment and transaction history',
-    icon: HiCreditCard,
-    color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
   },
   {
     href: `${ROUTES.DASHBOARD}/installments`,
     label: 'Installments',
     description: 'View and pay course installments (EMI)',
-    icon: HiCalendar,
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   },
   {
     href: `${ROUTES.DASHBOARD}/settings`,
     label: 'Settings',
     description: 'Profile and account preferences',
-    icon: HiCog,
-    color: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
   },
 ];
 
@@ -172,45 +150,41 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Stats */}
+      {/* Overview stats (without large icons, clean numeric summary) */}
       <section aria-label="Overview statistics">
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Overview</h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
-            <div className="p-2.5 rounded-lg bg-[var(--primary-100)] dark:bg-[var(--primary-900)]/40">
-              <HiBookOpen className="h-5 w-5 text-[var(--primary-700)] dark:text-[var(--primary-300)]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-2xl font-bold text-[var(--foreground)]">{loading ? '—' : stats.enrolledCourses}</p>
-              <p className="text-xs text-[var(--muted-foreground)] truncate">Enrolled</p>
-            </div>
+          <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+              Enrolled courses
+            </p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">
+              {loading ? '—' : stats.enrolledCourses}
+            </p>
           </Card>
-          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
-            <div className="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-              <HiCheckCircle className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-2xl font-bold text-[var(--foreground)]">{loading ? '—' : stats.completedCourses}</p>
-              <p className="text-xs text-[var(--muted-foreground)] truncate">Completed</p>
-            </div>
+          <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+              Completed courses
+            </p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">
+              {loading ? '—' : stats.completedCourses}
+            </p>
           </Card>
-          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
-            <div className="p-2.5 rounded-lg bg-violet-100 dark:bg-violet-900/40">
-              <HiCreditCard className="h-5 w-5 text-violet-700 dark:text-violet-300" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-2xl font-bold text-[var(--foreground)]">{loading ? '—' : stats.paymentCount}</p>
-              <p className="text-xs text-[var(--muted-foreground)] truncate">Payments</p>
-            </div>
+          <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+              Total payments
+            </p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">
+              {loading ? '—' : stats.paymentCount}
+            </p>
           </Card>
-          <Card padding="md" className="flex flex-row items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
-            <div className="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-              <HiShare className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-2xl font-bold text-[var(--foreground)]">{loading ? '—' : stats.referralConversions}</p>
-              <p className="text-xs text-[var(--muted-foreground)] truncate">Referrals</p>
-            </div>
+          <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+              Referral conversions
+            </p>
+            <p className="text-2xl font-bold text-[var(--foreground)]">
+              {loading ? '—' : stats.referralConversions}
+            </p>
           </Card>
         </div>
       </section>
@@ -220,14 +194,10 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">All sections</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {DASHBOARD_SECTIONS.map((section) => {
-            const Icon = section.icon;
             return (
               <Link key={section.href} href={section.href}>
                 <Card padding="md" className="h-full border border-[var(--border)] hover:border-[var(--primary-300)] hover:shadow-md transition-all group">
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg ${section.color}`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--primary-700)] transition-colors">
                         {section.label}
