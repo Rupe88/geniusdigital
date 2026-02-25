@@ -421,7 +421,7 @@ export const AdminReferralDashboard: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      NPR {conversion.commissionAmount?.toFixed(2)}
+                      {`NPR ${Number(conversion.commissionAmount || 0).toFixed(2)}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(conversion.status)}
