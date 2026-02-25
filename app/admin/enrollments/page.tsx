@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,9 +12,10 @@ import * as adminApi from '@/lib/api/admin';
 import * as coursesApi from '@/lib/api/courses';
 import { Enrollment } from '@/lib/types/course';
 import type { Course } from '@/lib/types/course';
+import type { User } from '@/lib/types/auth';
 import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiDownload, HiFilter, HiTrash } from 'react-icons/hi';
+import { HiDownload, HiFilter, HiTrash, HiSearch } from 'react-icons/hi';
 
 type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
@@ -26,25 +27,75 @@ export default function AdminEnrollmentsPage() {
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [grantEmail, setGrantEmail] = useState('');
+  const [grantUserId, setGrantUserId] = useState<string | null>(null);
   const [grantCourseId, setGrantCourseId] = useState('');
   const [grantLoading, setGrantLoading] = useState(false);
+  const [studentResults, setStudentResults] = useState<User[]>([]);
+  const [studentSearchLoading, setStudentSearchLoading] = useState(false);
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const studentSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchEnrollments();
   }, [pagination.page, status]);
 
   useEffect(() => {
-    // Preload a reasonable list of courses for the grant form
     const loadCourses = async () => {
       try {
         const res = await coursesApi.getAllCourses({ page: 1, limit: 100, status: 'PUBLISHED' });
         setAvailableCourses(res.data || []);
       } catch (error) {
-        // Non-blocking error
         console.error('Failed to load courses for grant access form:', error);
       }
     };
     loadCourses();
+  }, []);
+
+  // Debounced search for students by email/name
+  useEffect(() => {
+    const q = grantEmail.trim();
+    if (!q) {
+      setStudentResults([]);
+      setShowStudentDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setStudentSearchLoading(true);
+      try {
+        const res = await adminApi.getAllUsers({ search: q, page: 1, limit: 10 });
+        setStudentResults(res.data || []);
+        setShowStudentDropdown((res.data?.length ?? 0) > 0);
+      } catch {
+        setStudentResults([]);
+        setShowStudentDropdown(false);
+      } finally {
+        setStudentSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [grantEmail]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (studentSearchRef.current && !studentSearchRef.current.contains(e.target as Node)) {
+        setShowStudentDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleSelectStudent = useCallback((user: User) => {
+    setGrantEmail(user.email);
+    setGrantUserId(user.id);
+    setShowStudentDropdown(false);
+    setStudentResults([]);
+  }, []);
+
+  const handleGrantInputChange = useCallback((value: string) => {
+    setGrantEmail(value);
+    setGrantUserId(null);
   }, []);
 
   const fetchEnrollments = async () => {
@@ -68,7 +119,7 @@ export default function AdminEnrollmentsPage() {
 
   const handleGrantAccess = async () => {
     if (!grantEmail.trim()) {
-      showError('Please enter the student email to grant access');
+      showError('Please search and select a student to grant access');
       return;
     }
     if (!grantCourseId) {
@@ -76,27 +127,36 @@ export default function AdminEnrollmentsPage() {
       return;
     }
 
-    try {
-      setGrantLoading(true);
-
-      // Find user by email (admin search)
-      const usersResult = await adminApi.getAllUsers({
-        page: 1,
-        limit: 1,
-        search: grantEmail.trim(),
-      });
-
-      const user = usersResult.data[0];
-      if (!user) {
-        showError('No student found with that email');
+    let userId = grantUserId;
+    if (!userId) {
+      // Fallback: search by email
+      try {
+        const usersResult = await adminApi.getAllUsers({
+          page: 1,
+          limit: 1,
+          search: grantEmail.trim(),
+        });
+        userId = usersResult.data[0]?.id;
+      } catch {
+        showError('Failed to find student');
         return;
       }
+    }
+    if (!userId) {
+      showError('No student found. Search by email or name and select from the list.');
+      return;
+    }
 
-      await enrollmentApi.grantCourseAccess(user.id, grantCourseId);
-      showSuccess(`Access granted to ${user.fullName || user.email}`);
+    try {
+      setGrantLoading(true);
+      await enrollmentApi.grantCourseAccess(userId, grantCourseId);
+      showSuccess('Course access granted successfully');
 
       setGrantEmail('');
+      setGrantUserId(null);
       setGrantCourseId('');
+      setStudentResults([]);
+      setShowStudentDropdown(false);
       fetchEnrollments();
     } catch (error) {
       showError(Object(error).message || 'Failed to grant course access');
@@ -136,15 +196,49 @@ export default function AdminEnrollmentsPage() {
       <Card padding="md" className="space-y-4">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Grant Course Access Manually</h2>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Enter the student&apos;s email and select a course to give them access without payment.
+          Search by student email or name, select from the list, then choose a course.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <Input
-            label="Student Email"
-            placeholder="student@example.com"
-            value={grantEmail}
-            onChange={(e) => setGrantEmail(e.target.value)}
-          />
+          <div ref={studentSearchRef} className="relative">
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+              Student
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by email or name..."
+                value={grantEmail}
+                onChange={(e) => handleGrantInputChange(e.target.value)}
+                onFocus={() => studentResults.length > 0 && setShowStudentDropdown(true)}
+                className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]">
+                {studentSearchLoading ? (
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <HiSearch className="h-4 w-4" />
+                )}
+              </span>
+            </div>
+            {showStudentDropdown && studentResults.length > 0 && (
+              <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded border border-[var(--border)] bg-[var(--background)] shadow-lg">
+                {studentResults.map((user) => (
+                  <li key={user.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStudent(user)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--muted)] transition-colors flex flex-col"
+                    >
+                      <span className="font-medium text-[var(--foreground)]">
+                        {user.fullName || 'No name'}
+                      </span>
+                      <span className="text-xs text-[var(--muted-foreground)]">{user.email}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Course</label>
             <select
