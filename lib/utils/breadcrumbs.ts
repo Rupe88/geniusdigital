@@ -19,6 +19,8 @@ const routeLabels: Record<string, string> = {
   [ROUTES.CONTACT]: 'Contact',
   [ROUTES.LIVE_CLASSES]: 'Live Classes',
   [ROUTES.AFFILIATE]: 'Become A Affiliate',
+  '/privacy': 'Privacy Statement',
+  '/terms': 'Terms & Conditions',
 };
 
 /**

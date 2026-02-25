@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { generateSharingLinks, SocialSharing, SharingLinks } from '@/lib/api/referrals';
 import { FaShare, FaFacebook, FaLinkedin, FaTwitter, FaWhatsapp, FaCopy, FaCheck } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -33,20 +34,42 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [sharingData, setSharingData] = useState<SharingLinks | null>(null);
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock background scroll when modal is open so UI feels like a true dialog
+  useEffect(() => {
+    if (showModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [showModal]);
 
   const handleShare = async () => {
     if (!isAuthenticated) {
       toast.error('Please login to share and earn');
-      router.push(`${ROUTES.LOGIN}?redirect=/courses/${courseId}`);
+      const redirectPath =
+        typeof window !== 'undefined'
+          ? `${window.location.pathname}${window.location.search}`
+          : `/courses/${courseId}`;
+      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectPath)}`);
       return;
     }
+
+    // Always open the modal immediately so the user sees instant feedback
+    setShowModal(true);
 
     if (!sharingData) {
       setLoading(true);
       try {
         const result = await generateSharingLinks(courseId);
         setSharingData(result);
-        setShowModal(true);
       } catch (error) {
         toast.error('Failed to generate sharing links');
         console.error('Share error:', error);
@@ -117,22 +140,26 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         )}
       </button>
 
-      {/* Share Modal - z-[100] so it appears above navbar (z-50) and bottom nav */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto" aria-modal="true" role="dialog">
+      {/* Share Modal - rendered via Portal into document.body so it is always on top of course content (Play Preview, tabs, etc.) */}
+      {mounted && showModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] overflow-y-auto" aria-modal="true" role="dialog">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500/75 transition-opacity z-[100]" aria-hidden="true" onClick={() => setShowModal(false)} />
+            <div
+              className="fixed inset-0 bg-gray-500/75 transition-opacity"
+              aria-hidden="true"
+              onClick={() => setShowModal(false)}
+            />
             <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
-            <div className="relative z-[101] inline-block align-bottom bg-white rounded-none text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div className="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
                     <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                      Share "{course.title}"
+                      Share &quot;{course.title}&quot;
                     </h3>
 
                     {/* Referral Stats */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-none p-4 mb-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                       <div className="text-sm text-blue-800">
                         <p className="font-medium">Earn 10% commission when friends enroll!</p>
                         <p className="text-xs mt-1">
@@ -142,7 +169,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                     </div>
 
                     {/* Share URL */}
-                    {sharingData?.shareUrl && (
+                    {sharingData?.shareUrl ? (
                       <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Share this link:
@@ -152,15 +179,20 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                             type="text"
                             value={sharingData.shareUrl}
                             readOnly
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-none bg-gray-50 text-sm"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
                           />
                           <button
                             onClick={handleCopyLink}
-                            className="px-4 py-2 border border-l-0 border-gray-300 bg-gray-50 hover:bg-gray-100 rounded-none text-sm font-medium"
+                            className="px-4 py-2 border border-l-0 border-gray-300 bg-gray-50 hover:bg-gray-100 rounded-r-lg text-sm font-medium"
                           >
                             {copied ? <FaCheck className="w-4 h-4 text-green-600" /> : <FaCopy className="w-4 h-4" />}
                           </button>
                         </div>
+                      </div>
+                    ) : (
+                      <div className="mb-4 flex items-center gap-2 text-gray-500">
+                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                        <span className="text-sm">Generating link…</span>
                       </div>
                     )}
 
@@ -172,7 +204,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => handleSocialShare('facebook')}
-                          className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-none hover:bg-blue-700 text-sm font-medium"
+                          className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
                         >
                           <FaFacebook className="w-4 h-4 mr-2" />
                           Facebook
@@ -180,7 +212,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 
                         <button
                           onClick={() => handleSocialShare('linkedin')}
-                          className="flex items-center justify-center px-4 py-2 bg-blue-700 text-white rounded-none hover:bg-blue-800 text-sm font-medium"
+                          className="flex items-center justify-center px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 text-sm font-medium"
                         >
                           <FaLinkedin className="w-4 h-4 mr-2" />
                           LinkedIn
@@ -188,7 +220,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 
                         <button
                           onClick={() => handleSocialShare('twitter')}
-                          className="flex items-center justify-center px-4 py-2 bg-blue-400 text-white rounded-none hover:bg-blue-500 text-sm font-medium"
+                          className="flex items-center justify-center px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500 text-sm font-medium"
                         >
                           <FaTwitter className="w-4 h-4 mr-2" />
                           Twitter
@@ -196,7 +228,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 
                         <button
                           onClick={() => handleSocialShare('whatsapp')}
-                          className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-none hover:bg-green-700 text-sm font-medium"
+                          className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
                         >
                           <FaWhatsapp className="w-4 h-4 mr-2" />
                           WhatsApp
@@ -210,7 +242,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <button
                   type="button"
-                  className="w-full inline-flex justify-center rounded-none border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
                   onClick={() => setShowModal(false)}
                 >
                   Done
@@ -218,7 +250,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
