@@ -14,7 +14,7 @@ import { getReferralStats } from '@/lib/api/referrals';
 import type { Enrollment } from '@/lib/types/course';
 import type { Payment } from '@/lib/types/payment';
 import { ROUTES } from '@/lib/utils/constants';
-import { HiChevronRight, HiRefresh } from 'react-icons/hi';
+import { HiBookOpen, HiChevronRight, HiRefresh } from 'react-icons/hi';
 
 const DASHBOARD_SECTIONS = [
   {
