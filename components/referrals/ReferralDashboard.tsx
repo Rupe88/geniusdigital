@@ -198,7 +198,7 @@ export const ReferralDashboard: React.FC = () => {
                       Total Earnings
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      NPR {stats.totalEarnings?.toFixed(2) || '0.00'}
+                      {`NPR ${Number(stats.totalEarnings || 0).toFixed(2)}`}
                     </dd>
                   </dl>
                 </div>
@@ -218,13 +218,13 @@ export const ReferralDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  NPR {stats.paidEarnings?.toFixed(2) || '0.00'}
+                  {`NPR ${Number(stats.paidEarnings || 0).toFixed(2)}`}
                 </div>
                 <div className="text-sm text-gray-500">Paid</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">
-                  NPR {stats.pendingEarnings?.toFixed(2) || '0.00'}
+                  {`NPR ${Number(stats.pendingEarnings || 0).toFixed(2)}`}
                 </div>
                 <div className="text-sm text-gray-500">Pending</div>
               </div>
@@ -308,7 +308,7 @@ export const ReferralDashboard: React.FC = () => {
                         {link.totalConversions}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        NPR {link.totalEarnings?.toFixed(2) || '0.00'}
+                        {`NPR ${Number(link.totalEarnings || 0).toFixed(2)}`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-none ${link.isActive
