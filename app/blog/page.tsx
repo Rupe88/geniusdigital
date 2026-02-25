@@ -30,9 +30,13 @@ export default function BlogListingPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">Our Latest Insights</h1>
-          <p className="mt-4 text-xl text-gray-500">Discover articles on Vastu, Numerology, and personal growth.</p>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-3xl">
+            Our Latest Insights
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Discover articles on Vastu, Numerology, and personal growth.
+          </p>
         </div>
 
         {loading ? (

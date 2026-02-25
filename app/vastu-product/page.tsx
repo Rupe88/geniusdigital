@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { productsApi, Product } from '@/lib/api/products';
+import { useCart } from '@/lib/context/CartContext';
 import { ROUTES } from '@/lib/utils/constants';
 
 interface VastuProduct extends Product {
@@ -25,6 +26,7 @@ export default function VastuProductPage() {
   const [energyTypeFilter, setEnergyTypeFilter] = useState<string>('all');
   const [materialFilter, setMaterialFilter] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<string>('all');
+  const { addToCart } = useCart();
 
   useEffect(() => {
     fetchVastuProducts();
@@ -121,10 +123,46 @@ export default function VastuProductPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea]">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-none h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading Vastu products...</p>
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-8">
+          {/* Header skeleton (matches final layout) */}
+          <div className="mb-8 text-center">
+            <div className="mx-auto h-8 w-48 bg-gray-200 rounded-md animate-pulse" />
+            <div className="mt-3 mx-auto h-4 w-80 bg-gray-200 rounded-md animate-pulse" />
+          </div>
+
+          {/* Filters skeleton */}
+          <Card className="p-6 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="h-11 bg-gray-200 rounded-md animate-pulse md:col-span-2" />
+              <div className="h-11 bg-gray-200 rounded-md animate-pulse" />
+              <div className="h-11 bg-gray-200 rounded-md animate-pulse" />
+              <div className="h-11 bg-gray-200 rounded-md animate-pulse" />
+            </div>
+          </Card>
+
+          {/* Product cards skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <Card
+                key={i}
+                className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white"
+              >
+                <div className="h-60 bg-gray-200 animate-pulse" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 w-3/4 bg-gray-200 rounded-md animate-pulse" />
+                  <div className="h-3 w-1/2 bg-gray-200 rounded-md animate-pulse" />
+                  <div className="h-3 w-full bg-gray-200 rounded-md animate-pulse" />
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="h-5 w-24 bg-gray-200 rounded-md animate-pulse" />
+                    <div className="h-3 w-16 bg-gray-200 rounded-md animate-pulse" />
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <div className="h-9 flex-1 bg-gray-200 rounded-md animate-pulse" />
+                    <div className="h-9 flex-1 bg-gray-200 rounded-md animate-pulse" />
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
@@ -134,12 +172,12 @@ export default function VastuProductPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea]">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+        {/* Header (match Consultation page typography) */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-3xl">
             Vastu Products
           </h1>
-          <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="mt-2 text-gray-600 max-w-3xl mx-auto">
             Discover our collection of authentic Vastu products designed to bring positive energy,
             harmony, and prosperity to your space. Each item is carefully selected and energized
             according to ancient Vastu principles.
@@ -313,6 +351,7 @@ export default function VastuProductPage() {
                       size="sm"
                       className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center"
                       disabled={product.stockQuantity <= 0}
+                      onClick={() => addToCart('', product.id)}
                     >
                       <HiShoppingCart className="h-4 w-4 mr-2" />
                       {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}

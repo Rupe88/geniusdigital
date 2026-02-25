@@ -419,13 +419,13 @@ export default function NewProductPage() {
             </div>
           </Card>
 
-          {/* Pricing */}
+          {/* Pricing (NPR) */}
           <Card className="p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Pricing</h3>
 
             <div className="space-y-4">
               <Input
-                label="Price (USD) *"
+                label="Price (NPR) *"
                 type="number"
                 step="0.01"
                 required
@@ -435,7 +435,7 @@ export default function NewProductPage() {
               />
 
               <Input
-                label="Original Price (Optional)"
+                label="Original Price (Optional, NPR)"
                 type="number"
                 step="0.01"
                 {...register('originalPrice')}

@@ -149,13 +149,33 @@ const createFormData = (data: any): FormData => {
  * Products API
  */
 export const productsApi = {
-  // ... (getters omitted for brevity, assuming they are unchanged unless I replace whole object)
   /**
    * Get all products
    */
   getAll: async (): Promise<ApiResponse<Product[]>> => {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.LIST);
-    return response.data;
+    const payload = response.data as ApiResponse<any[]>;
+    const normalized: ApiResponse<Product[]> = {
+      ...payload,
+      data: (payload.data || []).map((p: any) => ({
+        ...p,
+        // Backend sends price as string, stock as "stock"
+        price: typeof p.price === 'string' ? Number(p.price) : p.price,
+        originalPrice:
+          p.originalPrice != null
+            ? Number(p.originalPrice)
+            : p.comparePrice != null
+              ? Number(p.comparePrice)
+              : undefined,
+        stockQuantity:
+          p.stockQuantity != null
+            ? Number(p.stockQuantity)
+            : p.stock != null
+              ? Number(p.stock)
+              : 0,
+      })),
+    };
+    return normalized;
   },
 
   /**
@@ -179,7 +199,29 @@ export const productsApi = {
    */
   getById: async (id: string): Promise<ApiResponse<Product>> => {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BY_ID(id));
-    return response.data;
+    const payload = response.data as ApiResponse<any>;
+    if (!payload.data) return payload as ApiResponse<Product>;
+    const p = payload.data;
+    const normalized: ApiResponse<Product> = {
+      ...payload,
+      data: {
+        ...p,
+        price: typeof p.price === 'string' ? Number(p.price) : p.price,
+        originalPrice:
+          p.originalPrice != null
+            ? Number(p.originalPrice)
+            : p.comparePrice != null
+              ? Number(p.comparePrice)
+              : undefined,
+        stockQuantity:
+          p.stockQuantity != null
+            ? Number(p.stockQuantity)
+            : p.stock != null
+              ? Number(p.stock)
+              : 0,
+      },
+    };
+    return normalized;
   },
 
   /**
