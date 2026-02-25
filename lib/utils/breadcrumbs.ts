@@ -50,6 +50,11 @@ export function shouldShowBreadcrumbs(pathname: string | null): boolean {
     return false;
   }
 
+  // Don't show on course detail page (course page has its own breadcrumb with course title)
+  if (pathname.match(/^\/courses\/[^/]+$/)) {
+    return false;
+  }
+
   // Don't show on affiliate application page
   if (pathname === ROUTES.AFFILIATE) {
     return false;
