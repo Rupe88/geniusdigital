@@ -131,7 +131,10 @@ export const getReferralLinks = async (
 export const deactivateReferralLink = async (linkId: string): Promise<void> => {
   try {
     const response = await apiClient.patch<ApiResponse<void>>(`/referrals/links/${linkId}/deactivate`);
-    handleApiResponse<void>(response);
+    const payload = response.data;
+    if (!payload?.success) {
+      throw new Error(payload?.message || 'Failed to deactivate referral link');
+    }
   } catch (error) {
     throw new Error(handleApiError(error));
   }
@@ -143,7 +146,10 @@ export const deactivateReferralLink = async (linkId: string): Promise<void> => {
 export const reactivateReferralLink = async (linkId: string): Promise<void> => {
   try {
     const response = await apiClient.patch<ApiResponse<void>>(`/referrals/links/${linkId}/reactivate`);
-    handleApiResponse<void>(response);
+    const payload = response.data;
+    if (!payload?.success) {
+      throw new Error(payload?.message || 'Failed to reactivate referral link');
+    }
   } catch (error) {
     throw new Error(handleApiError(error));
   }
