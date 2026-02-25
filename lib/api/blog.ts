@@ -43,27 +43,27 @@ export interface BlogListResponse {
 
 export const blogsApi = {
   getAll: async (params?: any) => {
-    const response = await apiClient.get<BlogListResponse>('/blogs', { params });
+    const response = await apiClient.get<BlogListResponse>('/blog', { params });
     return response.data;
   },
 
   getById: async (id: string) => {
-    const response = await apiClient.get<{ success: boolean; data: Blog }>(`/blogs/${id}`);
+    const response = await apiClient.get<{ success: boolean; data: Blog }>(`/blog/${id}`);
     return response.data;
   },
 
   create: async (data: FormData) => {
-    const response = await apiClient.post<{ success: boolean; data: Blog }>('/blogs', data);
+    const response = await apiClient.post<{ success: boolean; data: Blog }>('/blog', data);
     return response.data;
   },
 
   update: async (id: string, data: FormData) => {
-    const response = await apiClient.put<{ success: boolean; data: Blog }>(`/blogs/${id}`, data);
+    const response = await apiClient.put<{ success: boolean; data: Blog }>(`/blog/${id}`, data);
     return response.data;
   },
 
   delete: async (id: string) => {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(`/blogs/${id}`);
+    const response = await apiClient.delete<{ success: boolean; message: string }>(`/blog/${id}`);
     return response.data;
   },
 };
