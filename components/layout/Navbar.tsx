@@ -361,7 +361,7 @@ export const Navbar: React.FC = () => {
                   NPR {total.toFixed(0)}
                 </span>
               </div>
-              <Link href={ROUTES.ORDERS ?? '/dashboard/payments'} className="block">
+              <Link href="/dashboard/payments" className="block">
                 <button
                   type="button"
                   className="w-full inline-flex items-center justify-center rounded-md bg-[var(--primary-700)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--primary-800)] transition-colors"
