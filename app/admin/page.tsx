@@ -27,7 +27,8 @@ import {
   HiCheckCircle,
   HiCalendar,
   HiChatBubbleLeftRight,
-  HiEllipsisVertical
+  HiEllipsisVertical,
+  HiCreditCard
 } from 'react-icons/hi2';
 import { ROUTES } from '@/lib/utils/constants';
 import { getApiBaseUrl } from '@/lib/api/axios';
@@ -226,6 +227,13 @@ export default function AdminDashboardPage() {
       icon: HiChartBar,
       href: `${ROUTES.ADMIN}/finance`,
       color: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+    },
+    {
+      title: 'Installments (EMI)',
+      description: 'Configure pay-in-installments per course (Course → Edit)',
+      icon: HiCreditCard,
+      href: `${ROUTES.ADMIN}/courses`,
+      color: 'bg-gradient-to-r from-emerald-500 to-teal-600',
     },
   ];
 
