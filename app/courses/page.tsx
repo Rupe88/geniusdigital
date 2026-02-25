@@ -170,7 +170,38 @@ export default function CoursesPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">Loading courses...</div>
+          <div className="space-y-6">
+            {/* Category pills skeleton */}
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-9 w-20 rounded-full bg-[var(--muted)]/80 animate-pulse"
+                />
+              ))}
+            </div>
+
+            {/* Course cards skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-full rounded-xl bg-white border border-[var(--border)] shadow-sm overflow-hidden animate-pulse"
+                >
+                  <div className="h-40 bg-[var(--muted)]" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 w-3/4 bg-[var(--muted)] rounded-md" />
+                    <div className="h-3 w-1/2 bg-[var(--muted)] rounded-md" />
+                    <div className="h-3 w-full bg-[var(--muted)] rounded-md" />
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="h-4 w-16 bg-[var(--muted)] rounded-md" />
+                      <div className="h-8 w-20 bg-[var(--muted)] rounded-md" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : courses.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

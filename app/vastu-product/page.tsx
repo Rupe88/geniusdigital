@@ -4,12 +4,15 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { HiSearch, HiFilter, HiShoppingCart, HiStar, HiEye } from 'react-icons/hi';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { productsApi, Product } from '@/lib/api/products';
 import { useCart } from '@/lib/context/CartContext';
+import { useAuth } from '@/lib/context/AuthContext';
 import { ROUTES } from '@/lib/utils/constants';
 
 interface VastuProduct extends Product {
@@ -27,6 +30,8 @@ export default function VastuProductPage() {
   const [materialFilter, setMaterialFilter] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<string>('all');
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     fetchVastuProducts();
@@ -88,6 +93,25 @@ export default function VastuProductPage() {
       currency: 'NPR',
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleAddToCart = async (productId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to add products to cart');
+      const redirectUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.pathname}${window.location.search}`
+          : ROUTES.VASTU_PRODUCT;
+      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectUrl)}`);
+      return;
+    }
+    try {
+      await addToCart('', productId);
+      toast.success('Product added to cart');
+    } catch (error) {
+      const message = Object(error).message || 'Failed to add product to cart';
+      toast.error(message);
+    }
   };
 
   const getEnergyTypeColor = (energyType?: string) => {
@@ -256,68 +280,57 @@ export default function VastuProductPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <Card
                 key={product.id}
-                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className="group flex h-full flex-col overflow-hidden rounded-lg bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] hover:-translate-y-1 transition-all duration-200"
               >
                 {/* Product Image */}
-                <div className="relative h-60 bg-gray-100">
+                <div className="relative w-full h-52 p-2">
                   {product.images && product.images.length > 0 ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-gray-400 text-sm">No Image Available</span>
+                    <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
+                      <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                        {product.name.charAt(0)}
+                      </span>
                     </div>
                   )}
 
-                  {/* Featured Badge */}
-                  {product.featured && (
-                    <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-none text-xs font-medium">
-                      Featured
-                    </div>
-                  )}
-
-                  {/* Energy Type Badge */}
-                  {product.energyType && (
-                    <div className={`absolute top-4 right-4 px-3 py-1 rounded-none text-xs font-medium ${getEnergyTypeColor(product.energyType)}`}>
-                      {getEnergyTypeLabel(product.energyType)}
-                    </div>
-                  )}
                 </div>
 
                 {/* Product Info */}
-                <div className="flex flex-1 flex-col p-5">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1.5 line-clamp-2">
+                <div className="flex flex-1 flex-col px-5 pt-0 pb-4 space-y-1">
+                  <h3 className="text-base md:text-lg font-[550] leading-6 tracking-[0.03em] text-gray-900 mb-1 line-clamp-2">
                     {product.name}
                   </h3>
 
                   {product.vastuPurpose && (
-                    <p className="text-xs sm:text-sm text-red-600 font-semibold mb-1.5 uppercase tracking-wide">
+                    <p className="text-[11px] uppercase tracking-wide text-red-600 font-semibold">
                       {product.vastuPurpose}
                     </p>
                   )}
 
                   {product.material && (
-                    <p className="text-xs sm:text-sm text-gray-600 mb-2">
+                    <p className="text-xs text-gray-600">
                       Material: {product.material}
                     </p>
                   )}
 
                   {product.shortDescription && (
-                    <p className="text-xs sm:text-sm text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">
                       {product.shortDescription}
                     </p>
                   )}
 
                   {/* Price */}
-                  <div className="mt-auto flex items-center justify-between mb-4">
+                  <div className="mt-auto flex items-center justify-between mb-3">
                     <div className="flex items-baseline space-x-2">
                       <span className="text-xl sm:text-2xl font-bold text-gray-900">
                         {formatPrice(product.price)}
@@ -351,7 +364,7 @@ export default function VastuProductPage() {
                       size="sm"
                       className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center"
                       disabled={product.stockQuantity <= 0}
-                      onClick={() => addToCart('', product.id)}
+                      onClick={() => handleAddToCart(product.id)}
                     >
                       <HiShoppingCart className="h-4 w-4 mr-2" />
                       {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}

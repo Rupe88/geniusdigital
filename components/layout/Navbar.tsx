@@ -5,16 +5,19 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useCart } from '@/lib/context/CartContext';
 import { ROUTES } from '@/lib/utils/constants';
 import { generateBreadcrumbs, shouldShowBreadcrumbs } from '@/lib/utils/breadcrumbs';
-import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash, HiDotsHorizontal } from 'react-icons/hi';
+import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash, HiDotsHorizontal, HiShoppingCart } from 'react-icons/hi';
 
 export const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
+  const { items: cartItems, itemCount, total } = useCart();
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
   const handleLogout = async () => {
@@ -182,6 +185,19 @@ export const Navbar: React.FC = () => {
             >
               Become A Affiliate
             </Link>
+            {/* Cart icon */}
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="relative inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-3 py-2 text-gray-700 hover:text-[var(--primary-700)] hover:border-[var(--primary-300)] transition-colors"
+            >
+              <HiShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-semibold h-4 min-w-[1rem] px-1">
+                  {itemCount > 9 ? '9+' : itemCount}
+                </span>
+              )}
+            </button>
             {/* Auth / user menu */}
             {isAuthenticated ? (
               <div className="relative">
@@ -291,6 +307,73 @@ export const Navbar: React.FC = () => {
         </div>
       )}
     </nav>
+
+    {/* Cart slide-over */}
+    <div
+      className={`fixed inset-0 z-50 transition-opacity ${isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+    >
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={() => setIsCartOpen(false)}
+      />
+      <div
+        className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform ${
+          isCartOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Cart</h2>
+          <button
+            type="button"
+            className="text-gray-500 hover:text-gray-800"
+            onClick={() => setIsCartOpen(false)}
+          >
+            ✕
+          </button>
+        </div>
+        <div className="flex flex-col h-[calc(100%-56px)]">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            {cartItems.length === 0 ? (
+              <p className="text-sm text-gray-500 mt-4">Your cart is empty.</p>
+            ) : (
+              cartItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 border-b border-gray-100 pb-3">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                      {item.product?.name || item.course?.title || 'Item'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Qty: {item.quantity}
+                    </p>
+                  </div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    NPR {(item.price * item.quantity).toFixed(0)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          {cartItems.length > 0 && (
+            <div className="border-t border-gray-200 px-4 py-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Total</span>
+                <span className="font-semibold text-gray-900">
+                  NPR {total.toFixed(0)}
+                </span>
+              </div>
+              <Link href={ROUTES.ORDERS ?? '/dashboard/payments'} className="block">
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center rounded-md bg-[var(--primary-700)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--primary-800)] transition-colors"
+                >
+                  Proceed to Checkout
+                </button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
 
       {/* Mobile: Fixed bottom navigation */}
       <nav

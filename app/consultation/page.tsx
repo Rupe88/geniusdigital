@@ -88,9 +88,22 @@ export default function ConsultationPage() {
                   <p className="text-sm text-gray-500 mt-1">Select a category to open the booking form.</p>
                 </div>
                 {categoriesLoading ? (
-                  <div className="p-12 text-center">
-                    <div className="w-10 h-10 border-4 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-gray-500 mt-4">Loading categories...</p>
+                  <div className="p-6 sm:p-8 space-y-4">
+                    <div className="h-5 w-48 bg-gray-200 rounded-md animate-pulse" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      {Array.from({ length: 4 }).map((_, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 bg-white animate-pulse"
+                        >
+                          <div className="w-16 h-16 rounded-lg bg-gray-200" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 w-32 bg-gray-200 rounded-md" />
+                            <div className="h-3 w-24 bg-gray-200 rounded-md" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : categories.length === 0 ? (
                   <div className="p-12 text-center">

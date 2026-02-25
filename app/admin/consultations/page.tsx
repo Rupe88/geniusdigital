@@ -47,7 +47,26 @@ export default function AdminConsultationsPage() {
     };
 
     if (loading) {
-        return <div className="p-8 text-center text-gray-500">Loading consultations...</div>;
+        return (
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <div className="h-7 w-40 bg-gray-200 rounded-md animate-pulse" />
+                    <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse" />
+                </div>
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+                    <div className="divide-y divide-gray-200">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                            <div key={idx} className="px-6 py-4 grid grid-cols-4 gap-4 animate-pulse">
+                                <div className="h-4 bg-gray-200 rounded-md" />
+                                <div className="h-4 bg-gray-200 rounded-md" />
+                                <div className="h-4 bg-gray-200 rounded-md" />
+                                <div className="h-4 bg-gray-200 rounded-md" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
