@@ -204,7 +204,10 @@ export const updateEvent = async (id: string, data: UpdateEventRequest): Promise
 export const deleteEvent = async (id: string): Promise<void> => {
   try {
     const response = await apiClient.delete<ApiResponse<void>>(API_ENDPOINTS.EVENTS.BY_ID(id));
-    handleApiResponse<void>(response);
+    const payload = response.data;
+    if (!payload?.success) {
+      throw new Error(payload?.message || 'Failed to delete event');
+    }
   } catch (error) {
     throw new Error(handleApiError(error));
   }
