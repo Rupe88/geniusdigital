@@ -347,9 +347,39 @@ export default function LearnLayout({
 
   if (authLoading || loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-[var(--background)]">
-        <div className="w-12 h-12 border-4 border-[var(--primary-600)] border-t-transparent rounded-full animate-spin" />
-        <p className="mt-4 text-[var(--foreground)] font-medium">Loading course...</p>
+      <div className="h-screen flex flex-col bg-[var(--background)]">
+        {/* Header skeleton */}
+        <div className="h-14 flex-shrink-0 border-b border-[var(--border)] flex items-center gap-3 px-4 lg:px-6">
+          <div className="h-9 w-9 rounded-md bg-[var(--muted)] animate-pulse" />
+          <div className="h-6 w-px bg-[var(--border)] hidden sm:block" />
+          <div className="h-5 w-48 bg-[var(--muted)] rounded animate-pulse" />
+          <div className="flex-1" />
+          <div className="h-8 w-24 bg-[var(--muted)] rounded animate-pulse hidden sm:block" />
+        </div>
+        <div className="flex-1 flex min-h-0">
+          {/* Sidebar skeleton */}
+          <aside className="hidden lg:flex w-72 flex-shrink-0 border-r border-[var(--border)] bg-[var(--card)] p-4 flex-col gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-3/4 bg-[var(--muted)] rounded animate-pulse" />
+                <div className="space-y-1 pl-2">
+                  {[1, 2, 3].map((j) => (
+                    <div key={j} className="h-3 w-full bg-[var(--muted)] rounded animate-pulse" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </aside>
+          {/* Main content skeleton */}
+          <main className="flex-1 min-w-0 p-4 lg:p-6">
+            <div className="max-w-4xl mx-auto space-y-4">
+              <div className="aspect-video w-full max-w-3xl mx-auto bg-[var(--muted)] rounded-lg animate-pulse" />
+              <div className="h-6 w-2/3 bg-[var(--muted)] rounded animate-pulse" />
+              <div className="h-4 w-full bg-[var(--muted)] rounded animate-pulse" />
+              <div className="h-4 w-5/6 bg-[var(--muted)] rounded animate-pulse" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

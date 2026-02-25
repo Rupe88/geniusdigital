@@ -322,7 +322,7 @@ export default function CourseDetailPage({
     if (!course) return;
 
     if (course.isEnrolled) {
-      router.push(`/courses/${course.id}/learn`);
+      router.push(`/dashboard/courses/${course.id}/learn`);
       return;
     }
 
@@ -336,7 +336,7 @@ export default function CourseDetailPage({
         // Free courses: Enroll directly with ACTIVE status
         await enrollmentApi.enrollInCourse(course.id);
         showSuccess('Successfully enrolled in course!');
-        router.push(`/courses/${course.id}/learn`);
+        router.push(`/dashboard/courses/${course.id}/learn`);
         return;
       }
 
@@ -379,7 +379,7 @@ export default function CourseDetailPage({
       if (typeof msg === 'string' && msg.toLowerCase().includes('already enrolled')) {
         await fetchCourse(course.id);
         showSuccess('You are already enrolled. Taking you to the course.');
-        router.push(`/courses/${course.id}/learn`);
+        router.push(`/dashboard/courses/${course.id}/learn`);
       } else {
         showError(msg);
       }
@@ -988,14 +988,17 @@ export default function CourseDetailPage({
                     className="w-full h-12 text-base font-semibold rounded-lg"
                     onClick={handleEnroll}
                     isLoading={enrolling}
+                    disabled={enrolling}
                   >
-                    {course.isEnrolled
-                      ? 'Continue Learning'
-                      : course.isFree
-                        ? 'Enroll for Free'
-                        : payMode === 'installment' && course.installmentPlan?.isActive
-                          ? `Pay first installment · Rs. ${Math.ceil(Number(course.price) / (course.installmentPlan?.numberOfInstallments || 1)).toLocaleString()}`
-                          : 'Enroll Now'}
+                    {enrolling && !course.isFree
+                      ? 'Redirecting to eSewa...'
+                      : course.isEnrolled
+                        ? 'Continue Learning'
+                        : course.isFree
+                          ? 'Enroll for Free'
+                          : payMode === 'installment' && course.installmentPlan?.isActive
+                            ? `Pay first installment · Rs. ${Math.ceil(Number(course.price) / (course.installmentPlan?.numberOfInstallments || 1)).toLocaleString()}`
+                            : 'Enroll Now'}
                   </Button>
 
                   <ShareButton

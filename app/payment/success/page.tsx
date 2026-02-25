@@ -23,10 +23,15 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
     const [message, setMessage] = useState('Verifying your payment...');
     const [paymentData, setPaymentData] = useState<any>(null);
 
+    const isInstallment = getParam(searchParams, 'type') === 'installment';
+    const courseId = paymentData?.courseId ?? paymentData?.course?.id;
+    const courseTitle = paymentData?.course?.title;
+
     useEffect(() => {
         const data = getParam(searchParams, 'data');
+        const installment = getParam(searchParams, 'type') === 'installment';
         if (data) {
-            verifyPayment(data);
+            verifyPayment(data, installment);
         } else {
             setVerifying(false);
             setStatus('error');
@@ -34,7 +39,7 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
         }
     }, [searchParams]);
 
-    const verifyPayment = async (encodedData: string) => {
+    const verifyPayment = async (encodedData: string, isInstallmentPayment: boolean) => {
         try {
             setVerifying(true);
             const decodedData = JSON.parse(atob(encodedData));
@@ -49,7 +54,11 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
             const result = await paymentApi.verifyPaymentCallback(transactionId, 'ESEWA', decodedData);
             setPaymentData(result);
             setStatus('success');
-            setMessage('Your payment has been successfully verified! You are now enrolled.');
+            setMessage(
+                isInstallmentPayment
+                    ? 'Your installment has been paid successfully.'
+                    : 'Your payment has been successfully verified! You are now enrolled.'
+            );
         } catch (error) {
             console.error('Verification error:', error);
             setStatus('failed');
@@ -73,11 +82,19 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
                         <div className="bg-green-50 w-24 h-24 rounded-none flex items-center justify-center mx-auto">
                             <HiCheckCircle className="w-16 h-16 text-green-500" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900">Payment Successful!</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">
+                            {isInstallment ? 'Installment Paid!' : 'Payment Successful!'}
+                        </h1>
                         <p className="text-gray-600 leading-relaxed">{message}</p>
 
                         {paymentData && (
                             <div className="bg-gray-50 rounded-none p-4 text-left space-y-2 mb-6 border border-gray-200">
+                                {courseTitle && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Course:</span>
+                                        <span className="font-semibold text-gray-900 truncate max-w-[200px]" title={courseTitle}>{courseTitle}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Transaction ID:</span>
                                     <span className="font-semibold text-gray-900">{(paymentData as any).transactionId ?? (paymentData as any).esewaRefId ?? '—'}</span>
@@ -90,10 +107,30 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
                         )}
 
                         <div className="flex flex-col gap-3">
+                            {courseId && !isInstallment && (
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    className="w-full h-12 text-lg shadow-lg shadow-primary-500/20"
+                                    onClick={() => router.push(`/dashboard/courses/${courseId}/learn`)}
+                                >
+                                    Continue to course
+                                </Button>
+                            )}
+                            {isInstallment && (
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    className="w-full h-12 text-lg shadow-lg shadow-primary-500/20"
+                                    onClick={() => router.push(`${ROUTES.DASHBOARD}/installments`)}
+                                >
+                                    Back to Installments
+                                </Button>
+                            )}
                             <Button
-                                variant="primary"
+                                variant={courseId && !isInstallment ? 'outline' : 'primary'}
                                 size="lg"
-                                className="w-full h-12 text-lg shadow-lg shadow-primary-500/20"
+                                className="w-full h-12 text-lg"
                                 onClick={() => router.push(ROUTES.DASHBOARD)}
                             >
                                 Go to My Courses

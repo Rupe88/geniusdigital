@@ -100,6 +100,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
   const [editingChapter, setEditingChapter] = useState<Chapter | LocalChapter | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | LocalLesson | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string>('');
+  const [scrollToLessonId, setScrollToLessonId] = useState<string | null>(null);
 
   // Form states
   const [chapterForm, setChapterForm] = useState<ChapterFormData>({
@@ -131,6 +132,23 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       loadChapters();
     }
   }, [courseId]);
+
+  // Scroll to lesson after save (e.g. new or updated lesson)
+  useEffect(() => {
+    if (!scrollToLessonId || chapters.length === 0) return;
+    const chapterWithLesson = (chapters as (Chapter | LocalChapter)[]).find(
+      (ch) => (ch.lessons || []).some((l) => l.id === scrollToLessonId)
+    );
+    if (chapterWithLesson) {
+      setExpandedChapters((prev) => new Set(prev).add(chapterWithLesson.id));
+    }
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-lesson-id="${scrollToLessonId}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setScrollToLessonId(null);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [scrollToLessonId, chapters]);
 
   const loadChapters = async () => {
     if (!courseId) return;
@@ -369,16 +387,20 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           },
         };
 
+        let savedId: string;
         if (editingLesson) {
-          await lessonApi.updateLesson(editingLesson.id, lessonData);
+          const updated = await lessonApi.updateLesson(editingLesson.id, lessonData);
+          savedId = updated.id;
           showSuccess('Lesson updated successfully');
         } else {
-          await lessonApi.createLesson(lessonData);
+          const created = await lessonApi.createLesson(lessonData);
+          savedId = created.id;
           showSuccess('Lesson created successfully');
         }
 
         setShowLessonModal(false);
-        loadChapters();
+        await loadChapters();
+        setScrollToLessonId(savedId);
       } else {
         // Work with local state if no courseId
         const newLesson: LocalLesson = {
@@ -567,8 +589,32 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center bg-[var(--muted)]/30 p-4 rounded-lg animate-pulse">
+          <div className="h-6 w-48 bg-[var(--muted)] rounded" />
+          <div className="h-10 w-32 bg-[var(--muted)] rounded" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border border-[var(--border)] rounded-lg overflow-hidden">
+              <div className="flex items-center gap-4 p-4">
+                <div className="h-8 w-8 rounded bg-[var(--muted)] animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-64 bg-[var(--muted)] rounded animate-pulse" />
+                  <div className="h-4 w-48 bg-[var(--muted)] rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="bg-[var(--muted)]/20 p-4 border-t border-[var(--border)] space-y-2">
+                {[1, 2].map((j) => (
+                  <div key={j} className="flex items-center gap-3 p-3">
+                    <div className="h-5 w-5 rounded bg-[var(--muted)] animate-pulse" />
+                    <div className="h-4 flex-1 max-w-xs bg-[var(--muted)] rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -673,7 +719,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                     <div className="space-y-3">
                       {chapter.lessons && chapter.lessons.length > 0 ? (
                         (chapter.lessons as (Lesson | LocalLesson)[]).map((lesson, lessonIndex) => (
-                          <div key={lesson.id} className="flex items-center gap-4 p-4 rounded-none bg-white border border shadow-sm hover:border-blue-200 transition-all group">
+                          <div key={lesson.id} data-lesson-id={lesson.id} className="flex items-center gap-4 p-4 rounded-none bg-white border border shadow-sm hover:border-blue-200 transition-all group">
                             <div className="flex items-center justify-center w-6 h-6 rounded-none bg-blue-50 text-blue-600 font-bold text-[10px]">
                               {lessonIndex + 1}
                             </div>

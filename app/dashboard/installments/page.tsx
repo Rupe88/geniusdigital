@@ -73,7 +73,7 @@ export default function InstallmentsPage() {
         amount: item.amount,
         paymentMethod: 'ESEWA',
         installmentId: item.id,
-        successUrl: `${origin}/payment/success`,
+        successUrl: `${origin}/payment/success?type=installment`,
         failureUrl: `${origin}/payment/failure`,
       });
       if (res?.paymentDetails?.paymentUrl) {
