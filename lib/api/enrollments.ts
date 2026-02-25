@@ -127,3 +127,18 @@ export const deleteEnrollment = async (id: string): Promise<void> => {
   }
 };
 
+export const grantCourseAccess = async (userId: string, courseId: string): Promise<void> => {
+  try {
+    const response = await apiClient.post<ApiResponse<Enrollment>>(API_ENDPOINTS.ENROLLMENTS.ADMIN_GRANT, {
+      userId,
+      courseId,
+    });
+    const payload = response.data;
+    if (!payload.success) {
+      throw new Error(payload.message || 'Failed to grant course access');
+    }
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+

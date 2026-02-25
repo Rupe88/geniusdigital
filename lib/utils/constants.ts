@@ -67,6 +67,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/enrollments/${id}`, // Get enrollment by ID
     PROGRESS: (id: string) => `/enrollments/${id}/progress`, // Get progress for enrollment
     UNENROLL: (courseId: string) => `/enrollments/course/${courseId}`, // User: unenroll from course
+    ADMIN_GRANT: '/enrollments/admin/grant', // Admin: manually grant course access
   },
   // Payments
   PAYMENTS: {

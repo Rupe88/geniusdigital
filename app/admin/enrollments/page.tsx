@@ -8,10 +8,13 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import * as enrollmentApi from '@/lib/api/enrollments';
+import * as adminApi from '@/lib/api/admin';
+import * as coursesApi from '@/lib/api/courses';
 import { Enrollment } from '@/lib/types/course';
+import type { Course } from '@/lib/types/course';
 import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiDownload, HiSearch, HiFilter, HiTrash } from 'react-icons/hi';
+import { HiDownload, HiFilter, HiTrash } from 'react-icons/hi';
 
 type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
@@ -21,10 +24,28 @@ export default function AdminEnrollmentsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
+  const [grantEmail, setGrantEmail] = useState('');
+  const [grantCourseId, setGrantCourseId] = useState('');
+  const [grantLoading, setGrantLoading] = useState(false);
 
   useEffect(() => {
     fetchEnrollments();
   }, [pagination.page, status]);
+
+  useEffect(() => {
+    // Preload a reasonable list of courses for the grant form
+    const loadCourses = async () => {
+      try {
+        const res = await coursesApi.getAllCourses({ page: 1, limit: 100, status: 'PUBLISHED' });
+        setAvailableCourses(res.data || []);
+      } catch (error) {
+        // Non-blocking error
+        console.error('Failed to load courses for grant access form:', error);
+      }
+    };
+    loadCourses();
+  }, []);
 
   const fetchEnrollments = async () => {
     try {
@@ -42,6 +63,45 @@ export default function AdminEnrollmentsPage() {
       showError(Object(error).message || 'An error occurred' || 'Failed to fetch enrollments');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGrantAccess = async () => {
+    if (!grantEmail.trim()) {
+      showError('Please enter the student email to grant access');
+      return;
+    }
+    if (!grantCourseId) {
+      showError('Please select a course to grant access');
+      return;
+    }
+
+    try {
+      setGrantLoading(true);
+
+      // Find user by email (admin search)
+      const usersResult = await adminApi.getAllUsers({
+        page: 1,
+        limit: 1,
+        search: grantEmail.trim(),
+      });
+
+      const user = usersResult.data[0];
+      if (!user) {
+        showError('No student found with that email');
+        return;
+      }
+
+      await enrollmentApi.grantCourseAccess(user.id, grantCourseId);
+      showSuccess(`Access granted to ${user.fullName || user.email}`);
+
+      setGrantEmail('');
+      setGrantCourseId('');
+      fetchEnrollments();
+    } catch (error) {
+      showError(Object(error).message || 'Failed to grant course access');
+    } finally {
+      setGrantLoading(false);
     }
   };
 
@@ -72,6 +132,44 @@ export default function AdminEnrollmentsPage() {
         <h1 className="text-3xl font-bold text-[var(--foreground)]">Enrollment Management</h1>
         <p className="text-[var(--muted-foreground)] mt-2">View and manage student course enrollments</p>
       </div>
+
+      <Card padding="md" className="space-y-4">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Grant Course Access Manually</h2>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Enter the student&apos;s email and select a course to give them access without payment.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <Input
+            label="Student Email"
+            placeholder="student@example.com"
+            value={grantEmail}
+            onChange={(e) => setGrantEmail(e.target.value)}
+          />
+          <div>
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Course</label>
+            <select
+              className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+              value={grantCourseId}
+              onChange={(e) => setGrantCourseId(e.target.value)}
+            >
+              <option value="">Select course</option>
+              {availableCourses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button
+            variant="primary"
+            onClick={handleGrantAccess}
+            disabled={grantLoading}
+            className="w-full md:w-auto"
+          >
+            {grantLoading ? 'Granting access...' : 'Grant Access'}
+          </Button>
+        </div>
+      </Card>
 
       <div className="flex flex-col md:flex-row gap-4 items-end">
         <div className="flex-1 max-w-sm">
