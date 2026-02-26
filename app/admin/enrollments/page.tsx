@@ -24,6 +24,7 @@ export default function AdminEnrollmentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('');
+  const [courseId, setCourseId] = useState<string>('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [grantEmail, setGrantEmail] = useState('');
@@ -37,15 +38,16 @@ export default function AdminEnrollmentsPage() {
 
   useEffect(() => {
     fetchEnrollments();
-  }, [pagination.page, status]);
+  }, [pagination.page, status, courseId]);
 
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const res = await coursesApi.getAllCourses({ page: 1, limit: 100, status: 'PUBLISHED' });
+        // All courses for dropdowns (no status filter = all statuses)
+        const res = await coursesApi.getAllCourses({ page: 1, limit: 500 });
         setAvailableCourses(res.data || []);
       } catch (error) {
-        console.error('Failed to load courses for grant access form:', error);
+        console.error('Failed to load courses:', error);
       }
     };
     loadCourses();
@@ -98,15 +100,16 @@ export default function AdminEnrollmentsPage() {
     setGrantUserId(null);
   }, []);
 
-  const fetchEnrollments = async () => {
+  const fetchEnrollments = async (opts?: { page?: number }) => {
     try {
       setLoading(true);
-      // Safely cast the status string to EnrollmentStatus or undefined
+      const page = opts?.page ?? pagination.page;
       const data = await enrollmentApi.getAllEnrollments({
-        page: pagination.page,
+        page,
         limit: pagination.limit,
         status: (status === '' ? undefined : status) as EnrollmentStatus | undefined,
-        // search is handled by a separate button or debounced
+        courseId: courseId || undefined,
+        search: search.trim() || undefined,
       });
       setEnrollments(data.data);
       setPagination(data.pagination);
@@ -115,6 +118,11 @@ export default function AdminEnrollmentsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApplyFilters = () => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchEnrollments({ page: 1 });
   };
 
   const handleGrantAccess = async () => {
@@ -265,20 +273,42 @@ export default function AdminEnrollmentsPage() {
         </div>
       </Card>
 
-      <div className="flex flex-col md:flex-row gap-4 items-end">
-        <div className="flex-1 max-w-sm">
+      <div className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+        <div className="flex-1 min-w-[200px]">
           <Input
-            label="Search Students or Courses"
+            label="Search by student name, email or course"
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
           />
         </div>
-        <div className="w-full md:w-48">
+        <div className="w-full md:w-56">
+          <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Filter by Course</label>
+          <select
+            className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+            value={courseId}
+            onChange={(e) => {
+              setCourseId(e.target.value);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+          >
+            <option value="">All Courses</option>
+            {availableCourses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="w-full md:w-40">
           <Select
             label="Filter Status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
             options={[
               { value: '', label: 'All Status' },
               { value: 'ACTIVE', label: 'Active' },
@@ -288,7 +318,7 @@ export default function AdminEnrollmentsPage() {
             ]}
           />
         </div>
-        <Button variant="outline" onClick={fetchEnrollments} className="h-[42px]">
+        <Button variant="outline" onClick={handleApplyFilters} className="h-[42px]">
           <HiFilter className="w-4 h-4 mr-2" />
           Apply Filters
         </Button>
@@ -338,7 +368,9 @@ export default function AdminEnrollmentsPage() {
                       <div className="text-xs text-[var(--muted-foreground)]">ID: #{enrollment.id.slice(0, 8)}</div>
                     </td>
                     <td className="px-6 py-4 text-[var(--muted-foreground)]">
-                      {enrollment.enrolledAt ? formatDate(enrollment.enrolledAt) : 'N/A'}
+                      {(enrollment.enrolledAt || enrollment.createdAt)
+                      ? formatDate((enrollment.enrolledAt || enrollment.createdAt) as string)
+                      : 'N/A'}
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={getStatusColor(enrollment.status)}>

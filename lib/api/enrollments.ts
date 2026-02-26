@@ -35,6 +35,7 @@ export const getAllEnrollments = async (params?: {
   status?: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   courseId?: string;
   userId?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }): Promise<PaginatedResponse<Enrollment>> => {
