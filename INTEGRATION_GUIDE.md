@@ -219,7 +219,7 @@ import { ShareButton } from '@/components/referrals/ShareButton';
 ### **Backend Deployment:**
 ```bash
 # Your backend is already deployed at:
-# https://goldfish-app-d9t4j.ondigitalocean.app
+# https://stingray-app-2-iy8as.ondigitalocean.app
 
 # If you need to redeploy:
 git add .
@@ -237,7 +237,7 @@ npm run start
 ### **Environment Variables:**
 ```env
 # Backend API URL
-NEXT_PUBLIC_API_URL=https://goldfish-app-d9t4j.ondigitalocean.app/api
+NEXT_PUBLIC_API_URL=https://stingray-app-2-iy8as.ondigitalocean.app/api
 
 # Frontend URL
 NEXT_PUBLIC_FRONTEND_URL=https://your-frontend-domain.com
@@ -247,7 +247,7 @@ NEXT_PUBLIC_FRONTEND_URL=https://your-frontend-domain.com
 
 ## ✅ **Verification Checklist**
 
-- [ ] **Backend Running**: `https://goldfish-app-d9t4j.ondigitalocean.app/health`
+- [ ] **Backend Running**: `https://stingray-app-2-iy8as.ondigitalocean.app/health`
 - [ ] **Frontend Running**: `http://localhost:3000`
 - [ ] **User Registration**: Create account successfully
 - [ ] **User Login**: Login works without buffering

@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       // Backend image proxy (course thumbnails from S3 in production)
       {
         protocol: 'https',
-        hostname: 'goldfish-app-d9t4j.ondigitalocean.app',
+        hostname: 'stingray-app-2-iy8as.ondigitalocean.app',
         pathname: '/api/media/image',
       },
       // S3 storage (Kailesh Cloud / DataHub) – course thumbnails, events, gallery, etc.
