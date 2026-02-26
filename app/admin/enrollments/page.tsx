@@ -34,6 +34,7 @@ export default function AdminEnrollmentsPage() {
   const [studentResults, setStudentResults] = useState<User[]>([]);
   const [studentSearchLoading, setStudentSearchLoading] = useState(false);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const studentSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -194,6 +195,51 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      const allEnrollments: Enrollment[] = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const data = await enrollmentApi.getAllEnrollments({
+          page,
+          limit: 500,
+          status: (status === '' ? undefined : status) as EnrollmentStatus | undefined,
+          courseId: courseId || undefined,
+          search: search.trim() || undefined,
+        });
+        allEnrollments.push(...data.data);
+        hasMore = page < (data.pagination?.pages ?? 1);
+        page += 1;
+      }
+
+      const headers = ['Student Name', 'Student Email', 'Course', 'Enrolled Date', 'Status', 'Price Paid'];
+      const rows = allEnrollments.map((e) => [
+        e.user?.fullName ?? 'Unknown',
+        e.user?.email ?? '',
+        e.course?.title ?? 'Unknown',
+        (e.enrolledAt || e.createdAt) ? formatDate((e.enrolledAt || e.createdAt) as string) : 'N/A',
+        e.status,
+        (e.pricePaid ?? 0).toString(),
+      ]);
+      const csvContent = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `enrollments-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showSuccess('Enrollments exported successfully');
+    } catch (error) {
+      showError(Object(error).message || 'Failed to export enrollments');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -249,18 +295,23 @@ export default function AdminEnrollmentsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Course</label>
-            <select
-              className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
-              value={grantCourseId}
-              onChange={(e) => setGrantCourseId(e.target.value)}
-            >
-              <option value="">Select course</option>
-              {availableCourses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] appearance-none"
+                value={grantCourseId}
+                onChange={(e) => setGrantCourseId(e.target.value)}
+              >
+                <option value="">Select course</option>
+                {availableCourses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] pointer-events-none">
+                <HiSearch className="h-4 w-4" />
+              </span>
+            </div>
           </div>
           <Button
             variant="primary"
@@ -322,9 +373,14 @@ export default function AdminEnrollmentsPage() {
           <HiFilter className="w-4 h-4 mr-2" />
           Apply Filters
         </Button>
-        <Button variant="secondary" className="h-[42px]">
+        <Button
+          variant="secondary"
+          className="h-[42px]"
+          onClick={handleExport}
+          disabled={exportLoading}
+        >
           <HiDownload className="w-4 h-4 mr-2" />
-          Export
+          {exportLoading ? 'Exporting…' : 'Export'}
         </Button>
       </div>
 
