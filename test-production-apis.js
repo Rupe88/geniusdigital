@@ -5,7 +5,7 @@
  * Tests all frontend API integrations with production backend
  */
 
-const API_BASE_URL = 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+const API_BASE_URL = 'https://goldfish-app-d9t4j.ondigitalocean.app/api';
 
 /**
  * Test Utilities

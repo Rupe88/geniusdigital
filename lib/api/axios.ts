@@ -4,7 +4,7 @@ import { ApiError, ApiResponse } from '@/lib/types/api';
 import { shouldRefreshToken, isTokenExpired } from '@/lib/utils/tokenUtils';
 
 // Production backend URL (DigitalOcean) – used when frontend runs in production (non-localhost)
-const PRODUCTION_API_URL = 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+const PRODUCTION_API_URL = 'https://goldfish-app-d9t4j.ondigitalocean.app/api';
 const DEFAULT_DEV_API = 'http://localhost:4000/api';
 
 // Use env first; then in browser any non-localhost = production backend so data shows correctly.
