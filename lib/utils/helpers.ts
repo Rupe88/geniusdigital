@@ -125,6 +125,26 @@ export const getYouTubeEmbedUrl = (url: string): string | null => {
  * Get embed URL for carousel (YouTube or Vimeo). Accepts watch, youtu.be, or embed URLs.
  * @param options.autoplay - If true, appends autoplay (and mute for YouTube) query params.
  */
+/**
+ * Get Google Drive embeddable preview URL from view link.
+ * e.g. https://drive.google.com/file/d/FILE_ID/view -> https://drive.google.com/file/d/FILE_ID/preview
+ */
+export const getGoogleDriveEmbedUrl = (url: string): string | null => {
+  if (!url || !url.trim()) return null;
+  const match = url.trim().match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (match) {
+    return `https://drive.google.com/file/d/${match[1]}/preview`;
+  }
+  return null;
+};
+
+/**
+ * Check if URL is a Google Drive file link
+ */
+export const isGoogleDriveUrl = (url: string): boolean => {
+  return /drive\.google\.com\/file\/d\//.test(url || '');
+};
+
 export const getVideoEmbedUrl = (
   url: string | null | undefined,
   options?: { autoplay?: boolean }
@@ -139,6 +159,8 @@ export const getVideoEmbedUrl = (
     embed = yt;
     isYoutube = true;
   } else {
+    const gd = getGoogleDriveEmbedUrl(u);
+    if (gd) return gd;
     const vimeoMatch = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if (vimeoMatch) {
       embed = `https://player.vimeo.com/video/${vimeoMatch[1]}`;

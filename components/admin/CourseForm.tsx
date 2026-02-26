@@ -363,19 +363,20 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         submitData.thumbnail = course.thumbnail;
       }
 
-      const builtSlots = promoSlots
-        .slice(0, MAX_PROMO_VIDEOS)
-        .map((s) => (s.file ? ({ type: 'file' } as const) : null))
-        .filter((x): x is { type: 'file' } => x != null);
+      const builtSlots: Array<{ type: 'url'; url: string } | { type: 'file' }> = [];
+      promoSlots.slice(0, MAX_PROMO_VIDEOS).forEach((s) => {
+        if (s.file) {
+          builtSlots.push({ type: 'file' });
+        } else if (s.url?.trim()) {
+          builtSlots.push({ type: 'url', url: s.url.trim() });
+        }
+      });
       const builtFiles = promoSlots.filter((s) => s.file).map((s) => s.file!);
 
-      // Only send promo video payload when user has selected new files.
-      // Existing promo videos (stored as URLs on the course) are kept as-is by the backend.
       if (builtSlots.length > 0) {
         submitData.promoVideoSlots = builtSlots;
         submitData.videoFiles = builtFiles;
       } else if (data.videoUrl?.trim()) {
-        // Paste video URL (YouTube, Vimeo, etc.) - no file upload needed
         submitData.videoUrl = data.videoUrl.trim();
       }
 
@@ -632,14 +633,8 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
               <p className="text-sm font-medium text-[var(--foreground)]">
                 Promo / preview video (optional)
               </p>
-              <Input
-                label="Paste video URL (easiest – no upload)"
-                {...register('videoUrl')}
-                placeholder="https://youtube.com/watch?v=... or https://vimeo.com/... or Google Drive link"
-                helperText="YouTube, Vimeo, Google Drive, or direct video link. Students will see this on the course page."
-              />
-              <p className="text-xs text-[var(--muted-foreground)] border-t border-[var(--border)] pt-3 mt-2">
-                Or upload video files below (up to 5). URL and upload are alternatives.
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Paste video URLs (YouTube, Vimeo, Google Drive e.g. https://drive.google.com/file/d/.../view) or upload files below.
               </p>
               {promoSlots.map((slot, index) => (
                 <div
@@ -650,23 +645,31 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                     Video {index + 1}
                   </label>
 
-                  {slot.url && !slot.file && (
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      Existing promo video is already saved for this slot. Upload a new file below only
-                      if you want to replace it.
-                    </p>
-                  )}
+                  <Input
+                    placeholder="https://drive.google.com/file/d/.../view or YouTube/Vimeo link"
+                    value={slot.url}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setPromoSlots((prev) => {
+                        const next = [...prev];
+                        next[index] = { url: v, file: slot.file };
+                        return next;
+                      });
+                    }}
+                    helperText={slot.url ? 'URL saved. Upload a file below to replace.' : undefined}
+                  />
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-[var(--muted-foreground)]">Or upload file:</span>
                     <input
                       type="file"
                       accept="video/mp4,video/webm,video/ogg,video/quicktime"
-                      className="block w-full max-w-xs text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-[var(--primary-600)] file:text-white file:font-medium hover:file:bg-[var(--primary-700)]"
+                      className="block max-w-xs text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-[var(--primary-600)] file:text-white file:font-medium hover:file:bg-[var(--primary-700)]"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
                         setPromoSlots((prev) => {
                           const next = [...prev];
-                          next[index] = { url: slot.url, file: f || null };
+                          next[index] = { url: f ? '' : slot.url, file: f || null };
                           return next;
                         });
                         e.target.value = '';

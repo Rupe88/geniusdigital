@@ -17,7 +17,7 @@ import * as chapterApi from '@/lib/api/chapters';
 import { validateCoupon } from '@/lib/api/coupon';
 import { reviewsApi } from '@/lib/api/reviews';
 import { Course, Lesson, Review, Chapter } from '@/lib/types/course';
-import { formatPrice, formatCurrency, getYouTubeEmbedUrl } from '@/lib/utils/helpers';
+import { formatPrice, formatCurrency, getYouTubeEmbedUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 import { useAuth } from '@/lib/context/AuthContext';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { ROUTES } from '@/lib/utils/constants';
@@ -121,15 +121,16 @@ export default function CourseDetailPage({
   }, [course?.id]);
 
   // Use promo URL from course when API already returns signed URL (faster); otherwise fetch from video-token
+  const effectiveVideoUrl = course?.videoUrl || course?.promoVideos?.[0];
   useEffect(() => {
-    if (!course?.id || !course?.videoUrl) return;
+    if (!course?.id || !effectiveVideoUrl) return;
 
-    const isS3 = isOurS3Url(course.videoUrl);
-    const isStream = isSecureStreamPath(course.videoUrl);
+    const isS3 = isOurS3Url(effectiveVideoUrl);
+    const isStream = isSecureStreamPath(effectiveVideoUrl);
 
     // If it's a generic public URL (not S3, not stream), use it directly
-    if (course.videoUrl.startsWith('http') && !isS3 && !isStream) {
-      setPromoStreamUrl(course.videoUrl);
+    if (effectiveVideoUrl.startsWith('http') && !isS3 && !isStream) {
+      setPromoStreamUrl(effectiveVideoUrl);
       setPromoStreamError(null);
       promoFetchedForCourseId.current = course.id;
       return;
@@ -137,6 +138,8 @@ export default function CourseDetailPage({
 
     // If it's an S3 URL or a stream path, we NEED a tokenized stream URL
     if (!isS3 && !isStream) return;
+    // Skip fetch for Google Drive / YouTube - they use direct embed
+    if (getGoogleDriveEmbedUrl(effectiveVideoUrl) || getYouTubeEmbedUrl(effectiveVideoUrl)) return;
     if (promoFetchedForCourseId.current === course.id) return;
 
     promoFetchedForCourseId.current = course.id;
@@ -153,7 +156,7 @@ export default function CourseDetailPage({
         }
       });
     return () => { cancelled = true; };
-  }, [course?.id, course?.videoUrl]);
+  }, [course?.id, effectiveVideoUrl]);
 
   useEffect(() => {
     if (demoVideoPlaying && promoVideoRef.current) {
@@ -518,21 +521,29 @@ export default function CourseDetailPage({
             {/* Main Course Media */}
             <div className={`relative aspect-video rounded-lg overflow-hidden bg-black ${!demoVideoPlaying ? 'cursor-pointer' : ''}`}
               onClick={() => !demoVideoPlaying && setDemoVideoPlaying(true)}>
-              {course.videoUrl && getYouTubeEmbedUrl(course.videoUrl) && demoVideoPlaying ? (
+              {effectiveVideoUrl && getYouTubeEmbedUrl(effectiveVideoUrl) && demoVideoPlaying ? (
                 <iframe
-                  src={`${getYouTubeEmbedUrl(course.videoUrl)}?autoplay=1`}
+                  src={`${getYouTubeEmbedUrl(effectiveVideoUrl)}?autoplay=1`}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               ) : null}
-              {course.videoUrl && !getYouTubeEmbedUrl(course.videoUrl) && promoStreamError ? (
+              {effectiveVideoUrl && getGoogleDriveEmbedUrl(effectiveVideoUrl) && demoVideoPlaying ? (
+                <iframe
+                  src={getGoogleDriveEmbedUrl(effectiveVideoUrl)!}
+                  className="w-full h-full"
+                  allow="autoplay"
+                  allowFullScreen
+                />
+              ) : null}
+              {effectiveVideoUrl && !getYouTubeEmbedUrl(effectiveVideoUrl) && !getGoogleDriveEmbedUrl(effectiveVideoUrl) && promoStreamError ? (
                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                   <HiVideoCamera className="w-16 h-16 opacity-20" />
                   <p className="font-medium">{promoStreamError}</p>
                 </div>
               ) : null}
-              {course.videoUrl && !getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && (isSecureStreamPath(course.videoUrl) || course.videoUrl.startsWith('http')) ? (
+              {effectiveVideoUrl && !getYouTubeEmbedUrl(effectiveVideoUrl) && !getGoogleDriveEmbedUrl(effectiveVideoUrl) && !promoStreamError && (isSecureStreamPath(effectiveVideoUrl) || effectiveVideoUrl.startsWith('http')) ? (
                 promoStreamUrl ? (
                   <video
                     ref={promoVideoRef}
@@ -558,16 +569,16 @@ export default function CourseDetailPage({
                   </div>
                 )
               ) : null}
-              {demoVideoPlaying && course.videoUrl && !getYouTubeEmbedUrl(course.videoUrl) && !promoStreamError && !isSecureStreamPath(course.videoUrl) && (
+              {demoVideoPlaying && effectiveVideoUrl && !getYouTubeEmbedUrl(effectiveVideoUrl) && !getGoogleDriveEmbedUrl(effectiveVideoUrl) && !promoStreamError && !isSecureStreamPath(effectiveVideoUrl) && (
                 <video
-                  src={course.videoUrl}
+                  src={effectiveVideoUrl}
                   controls
                   autoPlay
                   className="w-full h-full"
                   playsInline
                 />
               )}
-              {!course.videoUrl && !promoStreamUrl && !promoStreamError ? (
+              {!effectiveVideoUrl && !promoStreamUrl && !promoStreamError ? (
                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                   <HiVideoCamera className="w-16 h-16 opacity-20" />
                   <p className="font-medium">Preview video not available</p>
