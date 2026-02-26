@@ -14,6 +14,8 @@ export default function AccountManagementPage() {
     page: 1,
     limit: 50,
   });
+
+  // account page 
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
