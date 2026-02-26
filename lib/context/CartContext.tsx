@@ -1,19 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Course } from '@/lib/types/course';
-import { Product } from '@/lib/api/products';
 import * as cartApi from '@/lib/api/cart';
-
-interface CartItem {
-  id: string;
-  courseId?: string;
-  productId?: string;
-  course?: Course;
-  product?: Product;
-  quantity: number;
-  price: number;
-}
+import type { CartItem } from '@/lib/api/cart';
 
 interface CartContextType {
   items: CartItem[];

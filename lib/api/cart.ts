@@ -7,6 +7,7 @@ export interface CartItem {
   productId?: string;
   quantity: number;
   price: number;
+  product?: { name?: string };
 }
 
 export interface Cart {
@@ -26,12 +27,13 @@ export const getCart = async (): Promise<Cart> => {
     }
     const data = (payload as { data: Record<string, unknown> }).data;
     if (!data) return { items: [], total: 0, subtotal: 0, discount: 0 };
-    const rawItems = (data.items as Array<{ id: string; productId: string; quantity: number; product?: { price?: string | number } }>) || [];
+    const rawItems = (data.items as Array<{ id: string; productId: string; quantity: number; product?: { price?: string | number; name?: string } }>) || [];
     const items: CartItem[] = rawItems.map((item) => ({
       id: item.id,
       productId: item.productId,
       quantity: item.quantity,
       price: Number(item.product?.price ?? 0),
+      product: item.product?.name ? { name: item.product.name } : undefined,
     }));
     const subtotal = Number(data.subtotal ?? 0);
     return {
