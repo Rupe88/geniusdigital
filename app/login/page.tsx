@@ -76,7 +76,7 @@ function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
         .getMe()
         .then((user) => {
           if (user?.role === 'ADMIN') window.location.href = ROUTES.ADMIN;
-          else window.location.href = ROUTES.DASHBOARD;
+          else window.location.href = ROUTES.HOME;
         })
         .catch(() => {
           localStorage.removeItem('accessToken');
@@ -109,11 +109,11 @@ function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
         if (user?.role === 'ADMIN') {
           window.location.href = ROUTES.ADMIN;
         } else {
-          window.location.href = ROUTES.DASHBOARD;
+          window.location.href = ROUTES.HOME;
         }
       } else {
         if (user?.role === 'ADMIN') router.push(ROUTES.ADMIN);
-        else router.push(ROUTES.DASHBOARD);
+        else router.push(ROUTES.HOME);
       }
     } catch (err: any) {
       console.error('Login failed:', err);

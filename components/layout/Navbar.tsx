@@ -206,7 +206,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-700 hover:text-[var(--primary-700)] transition-colors"
                 >
                   <HiUser className="h-5 w-5" />
-                  <span className="hidden xl:inline">{user?.fullName || 'User'}</span>
+                  <span className="hidden md:inline">{user?.fullName || user?.email?.split('@')[0] || 'User'}</span>
                 </button>
 
                 {isUserMenuOpen && (
