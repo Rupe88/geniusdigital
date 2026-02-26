@@ -53,7 +53,7 @@ export default function PromotionalPopup() {
             aria-label="Close popup"
         >
             <div
-                className="relative w-full max-w-lg bg-white rounded-lg shadow-2xl animate-in fade-in zoom-in duration-300 cursor-pointer overflow-hidden"
+                className="relative w-full max-w-lg bg-white rounded-lg shadow-2xl animate-in fade-in duration-300 cursor-pointer overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
                 role="presentation"
             >
@@ -76,7 +76,7 @@ export default function PromotionalPopup() {
                                 src={popup.imageUrl}
                                 alt={popup.title}
                                 fill
-                                className="object-cover hover:scale-105 transition-transform duration-500"
+                                className="object-cover"
                                 sizes="(max-width: 768px) 100vw, 500px"
                                 priority
                             />
@@ -91,7 +91,7 @@ export default function PromotionalPopup() {
                                 src={popup.imageUrl}
                                 alt={popup.title}
                                 fill
-                                className="object-cover hover:scale-105 transition-transform duration-500"
+                                className="object-cover"
                                 sizes="(max-width: 768px) 100vw, 500px"
                                 priority
                             />
