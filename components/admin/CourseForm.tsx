@@ -374,6 +374,9 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
       if (builtSlots.length > 0) {
         submitData.promoVideoSlots = builtSlots;
         submitData.videoFiles = builtFiles;
+      } else if (data.videoUrl?.trim()) {
+        // Paste video URL (YouTube, Vimeo, etc.) - no file upload needed
+        submitData.videoUrl = data.videoUrl.trim();
       }
 
       // Add curriculum data if it exists
@@ -627,7 +630,16 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           <div className="space-y-6">
             <div className="space-y-4">
               <p className="text-sm font-medium text-[var(--foreground)]">
-                Promo videos (optional, up to 5) – upload video files for course preview
+                Promo / preview video (optional)
+              </p>
+              <Input
+                label="Paste video URL (easiest – no upload)"
+                {...register('videoUrl')}
+                placeholder="https://youtube.com/watch?v=... or https://vimeo.com/... or Google Drive link"
+                helperText="YouTube, Vimeo, Google Drive, or direct video link. Students will see this on the course page."
+              />
+              <p className="text-xs text-[var(--muted-foreground)] border-t border-[var(--border)] pt-3 mt-2">
+                Or upload video files below (up to 5). URL and upload are alternatives.
               </p>
               {promoSlots.map((slot, index) => (
                 <div

@@ -905,11 +905,11 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
               <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4">
                 <p className="text-sm font-medium text-[var(--foreground)]">Video source (use one)</p>
                 <Input
-                  label="Video URL (optional)"
+                  label="Paste video link (easiest – no upload)"
                   value={lessonForm.videoUrl}
                   onChange={(e) => setLessonForm(prev => ({ ...prev, videoUrl: e.target.value, videoFile: e.target.value ? null : prev.videoFile }))}
-                  placeholder="YouTube link or https://example.com/video.mp4"
-                  helperText="Paste a YouTube or direct video URL"
+                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/... or classroom link"
+                  helperText="Copy & paste YouTube, Vimeo, Google Drive, or any video URL. Users will watch it embedded."
                 />
                 <div>
                   <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Or upload a video file</label>
