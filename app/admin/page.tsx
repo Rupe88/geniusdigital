@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
           totalUsers: dashboardStats.users?.total || 0,
           totalCourses: dashboardStats.courses?.total || 0,
           totalEnrollments: dashboardStats.enrollments?.total || 0,
-          totalRevenue: dashboardStats.revenue?.today || 0,
+          totalRevenue: dashboardStats.revenue?.total ?? dashboardStats.revenue?.today ?? 0,
           referralClicks: referralStats?.totalClicks || 0,
           referralConversions: referralStats?.totalConversions || 0,
           publishedCourses: publishedData.pagination?.total || 0,
