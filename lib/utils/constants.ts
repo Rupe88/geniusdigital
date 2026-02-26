@@ -95,8 +95,8 @@ export const API_ENDPOINTS = {
   // Cart
   CART: {
     GET: '/cart',
-    ADD: '/cart',
-    REMOVE: (id: string) => `/cart/${id}`,
+    ADD: '/cart/items',
+    REMOVE: (id: string) => `/cart/items/${id}`,
     CLEAR: '/cart',
     APPLY_COUPON: '/cart/apply-coupon',
   },
