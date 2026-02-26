@@ -1,6 +1,6 @@
 {
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://goldfish-app-d9t4j.ondigitalocean.app/api"
+    "NEXT_PUBLIC_API_URL": "https://stingray-app-2-iy8as.ondigitalocean.app/api"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
