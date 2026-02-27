@@ -145,6 +145,30 @@ export const isGoogleDriveUrl = (url: string): boolean => {
   return /drive\.google\.com\/file\/d\//.test(url || '');
 };
 
+/**
+ * Get Google Drive direct download URL from view link.
+ * Use for PDFs/documents - more reliable than /view when file is shared "Anyone with the link".
+ * e.g. https://drive.google.com/file/d/FILE_ID/view -> https://drive.google.com/uc?export=download&id=FILE_ID
+ */
+export const getGoogleDriveDownloadUrl = (url: string): string | null => {
+  if (!url || !url.trim()) return null;
+  const match = url.trim().match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (match) {
+    return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+  }
+  return null;
+};
+
+/**
+ * Get the best URL for opening a Google Drive document (PDF, etc.) from a view link.
+ * Returns direct download URL for Drive links, otherwise the original URL.
+ */
+export const getDocumentOpenUrl = (url: string): string => {
+  if (!url || !url.trim()) return url;
+  const downloadUrl = getGoogleDriveDownloadUrl(url);
+  return downloadUrl ?? url;
+};
+
 export const getVideoEmbedUrl = (
   url: string | null | undefined,
   options?: { autoplay?: boolean }

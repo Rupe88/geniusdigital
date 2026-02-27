@@ -5,7 +5,7 @@ import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload, HiRefresh } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
-import { getVideoEmbedUrl } from '@/lib/utils/helpers';
+import { getVideoEmbedUrl, getDocumentOpenUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 
 interface LessonPlayerProps {
@@ -171,33 +171,52 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                     </div>
                 );
 
-            case 'PDF':
+            case 'PDF': {
+                const pdfUrl = lesson.attachmentUrl ?? '';
+                const docDownloadUrl = pdfUrl ? getDocumentOpenUrl(pdfUrl) : '';
+                const isDrive = pdfUrl && /drive\.google\.com\/file\/d\//.test(pdfUrl);
+
                 return (
                     <div className="space-y-6">
-                        <div className="bg-white p-12 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-6">
-                            <div className="w-24 h-24 bg-red-50 text-red-500 flex items-center justify-center">
-                                <HiDocumentText className="w-12 h-12" />
+                        <div className="bg-white p-8 md:p-12 shadow-sm border border-gray-100">
+                            <div className="flex flex-col items-center text-center gap-4 mb-6">
+                                <div className="w-16 h-16 bg-red-50 text-red-500 flex items-center justify-center rounded-xl">
+                                    <HiDocumentText className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-gray-900 mb-1">PDF Document</h3>
+                                    <p className="text-gray-500 font-medium text-sm">Download or open the course materials below</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-2xl font-black text-gray-900 mb-2">PDF Document</h3>
-                                <p className="text-gray-500 font-medium">Download or view the course materials below</p>
-                            </div>
-                            {lesson.attachmentUrl && (
-                                <a
-                                    href={lesson.attachmentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black shadow-lg transition-all"
-                                >
-                                    <HiDownload className="w-5 h-5" />
-                                    Download PDF
-                                </a>
+                            {docDownloadUrl && (
+                                <div className="flex flex-wrap justify-center gap-3">
+                                    <a
+                                        href={docDownloadUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors"
+                                    >
+                                        <HiDownload className="w-5 h-5" />
+                                        Download PDF
+                                    </a>
+                                    {isDrive && (
+                                        <a
+                                            href={pdfUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors"
+                                        >
+                                            Open in Google Drive
+                                        </a>
+                                    )}
+                                </div>
                             )}
                         </div>
                         <div className="prose max-w-none text-gray-700 ql-editor px-0"
                             dangerouslySetInnerHTML={{ __html: lesson.content || lesson.description || '' }} />
                     </div>
                 );
+            }
 
             case 'QUIZ':
                 return lesson.quiz ? (
@@ -225,13 +244,13 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                         {lesson.attachmentUrl && (
                             <div className="pt-6 border-t border-gray-50">
                                 <a
-                                    href={lesson.attachmentUrl}
+                                    href={getDocumentOpenUrl(lesson.attachmentUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-2 text-[var(--primary-700)] font-black hover:underline"
                                 >
                                     <HiDownload className="w-5 h-5" />
-                                    Attachment.zip
+                                    Download attachment
                                 </a>
                             </div>
                         )}
