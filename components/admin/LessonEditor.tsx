@@ -267,7 +267,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
               value={attachmentUrl}
               onChange={(e) => setAttachmentUrl(e.target.value)}
               placeholder="https://example.com/document.pdf"
-              helperText="Direct link to PDF or downloadable document. For Google Drive: ensure file is shared as 'Anyone with the link can view'."
+              helperText="Direct link to PDF or document. Supports: Google Drive (shared 'Anyone with the link'), Google Classroom, or any public URL."
             />
 
             <div className="bg-[var(--muted)]/30 p-4 rounded-none border border-[var(--border)] border-dashed">

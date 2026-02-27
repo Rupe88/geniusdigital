@@ -146,6 +146,13 @@ export const isGoogleDriveUrl = (url: string): boolean => {
 };
 
 /**
+ * Check if URL is a Google Classroom link
+ */
+export const isGoogleClassroomUrl = (url: string): boolean => {
+  return /classroom\.google\.com\//.test(url || '');
+};
+
+/**
  * Get Google Drive direct download URL from view link.
  * Use for PDFs/documents - more reliable than /view when file is shared "Anyone with the link".
  * e.g. https://drive.google.com/file/d/FILE_ID/view -> https://drive.google.com/uc?export=download&id=FILE_ID
@@ -162,6 +169,7 @@ export const getGoogleDriveDownloadUrl = (url: string): string | null => {
 /**
  * Get the best URL for opening a Google Drive document (PDF, etc.) from a view link.
  * Returns direct download URL for Drive links, otherwise the original URL.
+ * Note: Google Classroom URLs are returned as-is (no conversion).
  */
 export const getDocumentOpenUrl = (url: string): string => {
   if (!url || !url.trim()) return url;
