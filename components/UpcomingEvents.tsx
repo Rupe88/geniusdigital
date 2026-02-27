@@ -353,27 +353,27 @@ export const UpcomingEvents: React.FC = () => {
       {/* Book Now popup form */}
       {popupOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/60"
           aria-modal="true"
           role="dialog"
           onClick={closeBookingPopup}
         >
           <div
-            className="bg-white text-gray-900 rounded-lg shadow-xl w-full max-w-md border border-gray-200 overflow-hidden"
+            className="bg-white text-gray-900 rounded-t-xl sm:rounded-lg shadow-xl w-full max-w-[min(calc(100vw-1rem),448px)] sm:max-w-md border border-gray-200 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Book Your Seat</h3>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 shrink-0">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Book Your Seat</h3>
               <button
                 type="button"
                 onClick={closeBookingPopup}
-                className="p-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
+                className="p-1.5 sm:p-1 rounded hover:bg-gray-100 text-gray-600 transition-colors"
                 aria-label="Close"
               >
-                <HiX className="w-6 h-6" />
+                <HiX className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
-            <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleBookingSubmit} className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto flex-1 min-h-0">
               <input
                 type="text"
                 placeholder="Name"

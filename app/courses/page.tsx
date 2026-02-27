@@ -108,28 +108,26 @@ export default function CoursesPage() {
     <div className="min-h-screen bg-[var(--muted)] py-6 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 space-y-4">
-          {/* <h1 className="text-4xl font-bold text-[var(--foreground)]">All Courses</h1> */}
-
-          {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="w-full max-w-lg">
-            <div className="flex p-1 h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
-              <div className="flex items-center px-2 text-[#ae8c94]">
-                <HiSearch className="h-6 w-6" />
+          {/* Search bar - wider on desktop for better proportions */}
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-lg md:max-w-xl lg:max-w-2xl">
+            <div className="flex p-1 h-[48px] md:h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
+              <div className="flex items-center pl-3 pr-2 text-[#ae8c94] shrink-0">
+                <HiSearch className="h-5 w-5 md:h-6 md:w-6" />
               </div>
-              <div className="w-full min-w-0 max-w-[320px]">
+              <div className="flex-1 min-w-0">
                 <input
                   type="text"
-                  placeholder="search your course...."
+                  placeholder="Search your course..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-full h-full px-4 py-2 bg-[var(--muted)] text-[var(--foreground)] border-none outline-none focus:outline-none focus:ring-0"
+                  className="w-full h-full px-3 md:px-4 py-2 bg-[var(--muted)] text-[var(--foreground)] text-sm md:text-base border-none outline-none focus:outline-none focus:ring-0 placeholder:text-gray-500"
                 />
               </div>
               <Button
                 type="submit"
                 variant="primary"
                 size="sm"
-                className="rounded-none px-5  focus:ring-0 outline-none focus:ring-offset-0"
+                className="rounded-none px-4 md:px-6 shrink-0 focus:ring-0 outline-none focus:ring-offset-0 h-full"
                 style={{ borderRadius: '8px' }}
               >
                 Search

@@ -375,62 +375,6 @@ export default function VastuProductPage() {
             ))}
           </div>
         )}
-
-        {/* Vastu Information Section */}
-        <div className="mt-16 bg-white rounded-none shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Understanding Vastu Products
-            </h2>
-            <p className="text-gray-600 max-w-3xl mx-auto">
-              Vastu Shastra is an ancient Indian science of architecture and design that promotes harmony
-              between living spaces and cosmic energies. Our Vastu products are carefully selected and
-              energized to help create positive energy flow in your environment.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="bg-red-100 rounded-none w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🕉️</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Energy Correction</h3>
-              <p className="text-sm text-gray-600">
-                Products designed to correct negative energy and promote positive vibrations.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-blue-100 rounded-none w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💎</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Natural Materials</h3>
-              <p className="text-sm text-gray-600">
-                Made from authentic crystals, metals, and natural stones with healing properties.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-green-100 rounded-none w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🏠</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Home Harmony</h3>
-              <p className="text-sm text-gray-600">
-                Specifically designed to create balance and harmony in living and working spaces.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-yellow-100 rounded-none w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">⭐</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Expert Guidance</h3>
-              <p className="text-sm text-gray-600">
-                Each product comes with usage instructions and Vastu placement guidance.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

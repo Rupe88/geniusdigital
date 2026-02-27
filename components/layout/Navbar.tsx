@@ -456,31 +456,32 @@ export const Navbar: React.FC = () => {
       </>
     )}
 
-    {/* Cart slide-over */}
+    {/* Cart slide-over - z-[60] to sit above bottom nav (z-50) on mobile */}
     <div
-      className={`fixed inset-0 z-50 transition-opacity ${isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      className={`fixed inset-0 z-[60] transition-opacity ${isCartOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
     >
       <div
         className="absolute inset-0 bg-black/40"
         onClick={() => setIsCartOpen(false)}
       />
       <div
-        className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform ${
+        className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform flex flex-col ${
           isCartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">Cart</h2>
           <button
             type="button"
-            className="text-gray-500 hover:text-gray-800"
+            className="p-1 -m-1 text-gray-500 hover:text-gray-800 text-xl leading-none"
             onClick={() => setIsCartOpen(false)}
+            aria-label="Close cart"
           >
             ✕
           </button>
         </div>
-        <div className="flex flex-col h-[calc(100%-56px)]">
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0">
             {cartItems.length === 0 ? (
               <p className="text-sm text-gray-500 mt-4">Your cart is empty.</p>
             ) : (
@@ -502,17 +503,19 @@ export const Navbar: React.FC = () => {
             )}
           </div>
           {cartItems.length > 0 && (
-            <div className="border-t border-gray-200 px-4 py-4 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Total</span>
-                <span className="font-semibold text-gray-900">
+            <div className="border-t border-gray-200 px-4 py-4 space-y-3 shrink-0 bg-white"
+              style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+            >
+              <div className="flex items-center justify-between text-base font-medium">
+                <span className="text-gray-700">Total</span>
+                <span className="font-semibold text-gray-900 text-lg">
                   NPR {total.toFixed(0)}
                 </span>
               </div>
-              <Link href="/dashboard/checkout" className="block">
+              <Link href="/dashboard/checkout" className="block" onClick={() => setIsCartOpen(false)}>
                 <button
                   type="button"
-                  className="w-full inline-flex items-center justify-center rounded-md bg-[var(--primary-700)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--primary-800)] transition-colors"
+                  className="w-full inline-flex items-center justify-center rounded-md bg-[var(--primary-700)] px-4 py-3 text-base font-medium text-white hover:bg-[var(--primary-800)] transition-colors"
                 >
                   Proceed to Checkout
                 </button>
