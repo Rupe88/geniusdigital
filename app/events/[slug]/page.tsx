@@ -238,7 +238,7 @@ export default function EventDetailPage({
     <div className="min-h-screen bg-[var(--muted)]">
       {/* Header Image */}
       {event.image && (
-        <div className="relative h-64 md:h-96 w-full">
+        <div className="relative h-48 sm:h-64 md:h-96 w-full">
           <StorageImage
             src={event.image}
             alt={event.title}
@@ -248,7 +248,7 @@ export default function EventDetailPage({
           />
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <div className="text-center text-white">
-              <h1 className="text-3xl md:text-5xl font-bold mb-2">{event.title}</h1>
+              <h1 className="text-xl sm:text-3xl md:text-5xl font-bold mb-2 px-2">{event.title}</h1>
               {event.featured && (
                 <span className="inline-block bg-yellow-500 text-white px-3 py-1 text-sm font-semibold rounded mt-2">
                   Featured Event
@@ -259,7 +259,7 @@ export default function EventDetailPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6">
           <Link href="/events">
             <Button variant="outline" size="sm">
@@ -269,7 +269,7 @@ export default function EventDetailPage({
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Event Info Card */}

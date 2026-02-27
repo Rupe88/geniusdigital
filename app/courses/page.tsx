@@ -105,18 +105,18 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--muted)] py-12">
+    <div className="min-h-screen bg-[var(--muted)] py-6 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 space-y-4">
           {/* <h1 className="text-4xl font-bold text-[var(--foreground)]">All Courses</h1> */}
 
           {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="max-w-lg">
-            <div className="inline-flex p-1 h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-lg">
+            <div className="flex p-1 h-[52px] items-stretch border border-[#ae8c94] rounded-[10px] bg-[var(--muted)] overflow-hidden">
               <div className="flex items-center px-2 text-[#ae8c94]">
                 <HiSearch className="h-6 w-6" />
               </div>
-              <div className="w-[320px]">
+              <div className="w-full min-w-0 max-w-[320px]">
                 <input
                   type="text"
                   placeholder="search your course...."

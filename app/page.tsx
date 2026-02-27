@@ -420,7 +420,7 @@ export default function HomePage() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="flex-shrink-0 w-[400px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                      className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] h-72 bg-gray-100 animate-pulse rounded-lg"
                     />
                   ))}
                 </>
@@ -440,7 +440,7 @@ export default function HomePage() {
                     price={course.price}
                     oldPrice={course.oldPrice}
                     slug={course.slug}
-                    className="flex-shrink-0 w-[400px]"
+                    className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] sm:w-[360px] lg:w-[400px]"
                   />
                 ))}
             </div>
@@ -494,7 +494,7 @@ export default function HomePage() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="flex-shrink-0 w-[400px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                      className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] h-72 bg-gray-100 animate-pulse rounded-lg"
                     />
                   ))}
                 </>
@@ -515,7 +515,7 @@ export default function HomePage() {
                     price={course.price}
                     oldPrice={course.oldPrice}
                     slug={course.slug}
-                    className="flex-shrink-0 w-[400px]"
+                    className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] sm:w-[360px] lg:w-[400px]"
                   />
                 ))}
             </div>
@@ -567,7 +567,7 @@ export default function HomePage() {
               {testimonialsToShow.map((testimonial: Testimonial) => (
                 <div
                   key={testimonial.id}
-                  className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
+                  className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[280px] sm:w-[360px] lg:w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
                 >
                   <div className="px-5 pt-3 pb-0">
                     <div>

@@ -494,23 +494,23 @@ export default function CourseDetailPage({
       {/* Top Header / Breadcrumbs */}
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex items-center text-sm font-medium">
-            <Link href="/" className="text-gray-500 hover:text-[var(--primary-700)] transition-colors">Home</Link>
-            <span className="mx-2 text-gray-400">/</span>
-            <Link href="/courses" className="text-gray-500 hover:text-[var(--primary-700)] transition-colors">Courses</Link>
-            <span className="mx-2 text-gray-400">/</span>
-            <span className="text-gray-900 truncate">{course.title}</span>
+          <nav className="flex items-center text-xs sm:text-sm font-medium gap-1 sm:gap-2 min-w-0">
+            <Link href="/" className="text-gray-500 hover:text-[var(--primary-700)] transition-colors shrink-0">Home</Link>
+            <span className="text-gray-400 shrink-0">/</span>
+            <Link href="/courses" className="text-gray-500 hover:text-[var(--primary-700)] transition-colors shrink-0">Courses</Link>
+            <span className="text-gray-400 shrink-0">/</span>
+            <span className="text-gray-900 truncate min-w-0">{course.title}</span>
           </nav>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Title and Description - Above both columns */}
-        <div className="space-y-3 mb-8">
-          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">
+        <div className="space-y-3 mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-900 leading-tight">
             {course.title}
           </h1>
-          <p className="text-lg text-gray-600 leading-relaxed max-w-3xl">
+          <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-3xl">
             {course.shortDescription}
           </p>
         </div>
@@ -618,7 +618,7 @@ export default function CourseDetailPage({
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as TabType)}
-                    className={`flex-1 min-w-[100px] py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                    className={`flex-1 min-w-[80px] sm:min-w-[100px] py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                       ? 'text-[var(--primary-700)] border-[var(--primary-700)]'
                       : 'text-gray-500 border-transparent hover:text-gray-700'
                       }`}
@@ -630,7 +630,7 @@ export default function CourseDetailPage({
             </div>
 
             {/* Tab Panels */}
-            <div className="bg-white rounded-lg p-6 md:p-8 min-h-[400px]">
+            <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 min-h-[400px]">
               {activeTab === 'overview' && (
                 <div className="space-y-8 animate-fadeIn">
                   {/* Learning Outcomes */}

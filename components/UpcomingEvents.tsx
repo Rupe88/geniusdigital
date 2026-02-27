@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { HiChevronLeft, HiChevronRight, HiX } from 'react-icons/hi';
 import { getUpcomingEvents } from '@/lib/api/events';
 import type { Event } from '@/lib/api/events';
@@ -239,11 +240,11 @@ export const UpcomingEvents: React.FC = () => {
             onMouseLeave={handleMouseLeave}
           >
             {loading && (
-              <div className="flex gap-6 w-full justify-start py-8">
+              <div className="flex gap-4 sm:gap-6 w-full justify-start py-8 overflow-x-auto hide-scrollbar">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="flex-shrink-0 w-[400px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                    className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] h-72 bg-gray-100 animate-pulse rounded-lg"
                   />
                 ))}
               </div>
@@ -261,11 +262,9 @@ export const UpcomingEvents: React.FC = () => {
             {!loading && !error && events.map((event) => (
               <div
                 key={event.id}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] overflow-hidden rounded-lg flex flex-col cursor-default"
+                className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] sm:w-[360px] lg:w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] overflow-hidden rounded-lg flex flex-col cursor-default"
               >
-                {/* Card content – not clickable */}
-                <div className="flex-1 min-h-0">
-                  {/* Thumbnail */}
+                <Link href={`/events/${event.slug || event.id}`} className="flex-1 min-h-0 block">
                   <div className="relative w-full h-52 p-2">
                     <img
                       src={event.image || PLACEHOLDER_IMAGE}
@@ -290,7 +289,7 @@ export const UpcomingEvents: React.FC = () => {
                       {event.title}
                     </h3>
                   </div>
-                </div>
+                </Link>
                 <div className="px-5 pb-4 pt-0">
                   <button
                     type="button"
@@ -305,9 +304,9 @@ export const UpcomingEvents: React.FC = () => {
             {!loading && !error && upcomingCourses.map((course) => (
               <div
                 key={`course-${course.id}`}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] overflow-hidden rounded-lg flex flex-col cursor-default"
+                className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] sm:w-[360px] lg:w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] overflow-hidden rounded-lg flex flex-col cursor-default"
               >
-                <div className="flex-1 min-h-0">
+                <Link href={`/courses/${course.id}`} className="flex-1 min-h-0 block">
                   <div className="relative w-full h-52 p-2">
                     {course.thumbnail ? (
                       <img
@@ -335,7 +334,7 @@ export const UpcomingEvents: React.FC = () => {
                       {course.title}
                     </h3>
                   </div>
-                </div>
+                </Link>
                 <div className="px-5 pb-4 pt-0">
                   <button
                     type="button"

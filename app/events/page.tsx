@@ -120,11 +120,11 @@ export default function EventsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--muted)] py-12">
+    <div className="min-h-screen bg-[var(--muted)] py-6 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[var(--foreground)] mb-4">Events</h1>
-          <p className="text-lg text-[var(--muted-foreground)] mb-6">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--foreground)] mb-3 sm:mb-4">Events</h1>
+          <p className="text-base sm:text-lg text-[var(--muted-foreground)] mb-4 sm:mb-6">
             Discover upcoming workshops, seminars, and special events
           </p>
           
@@ -174,7 +174,7 @@ export default function EventsPage() {
           <div className="text-center py-12">Loading events...</div>
         ) : filteredEvents.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {filteredEvents.map((event) => (
                 <Card key={event.id} hover className="overflow-hidden flex flex-col">
                   {event.image && (
