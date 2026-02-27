@@ -95,21 +95,29 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     const renderContent = () => {
         switch (lesson.lessonType) {
             case 'VIDEO': {
-                const embedUrl = lesson.videoUrl ? getVideoEmbedUrl(lesson.videoUrl) : null;
+                const embedUrl = lesson.videoUrl ? getVideoEmbedUrl(lesson.videoUrl, { hideToolbar: true }) : null;
                 const isSecureStream = isSecureStreamPath(lesson.videoUrl);
                 const videoSrc = isSecureStream ? secureVideoSrc : lesson.videoUrl;
 
                 return (
                     <div className="space-y-6">
-                        <div className="aspect-video bg-black shadow-2xl">
+                        <div className="aspect-video bg-black shadow-2xl relative overflow-hidden">
                             {embedUrl ? (
-                                <iframe
-                                    src={embedUrl}
-                                    className="w-full h-full"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    title="Video player"
-                                />
+                                <>
+                                    <iframe
+                                        src={embedUrl}
+                                        className="w-full h-full"
+                                        allow="accelerometer; autoplay; encrypted-media; gyroscope; fullscreen; picture-in-picture"
+                                        allowFullScreen
+                                        title="Video player"
+                                    />
+                                    {/* CSS overlay to block Pop-out button (top-right) */}
+                                    <div
+                                        className="absolute top-2 right-2 w-28 h-12 z-10 rounded-bl"
+                                        style={{ pointerEvents: 'auto', cursor: 'default' }}
+                                        aria-hidden
+                                    />
+                                </>
                             ) : secureVideoError ? (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4 p-6">
                                     <HiVideoCamera className="w-16 h-16 opacity-20" />
@@ -176,7 +184,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 const docDownloadUrl = pdfUrl ? getDocumentOpenUrl(pdfUrl) : '';
                 const isDrive = pdfUrl && /drive\.google\.com\/file\/d\//.test(pdfUrl);
                 const isClassroom = pdfUrl && isGoogleClassroomUrl(pdfUrl);
-                const embedPdfUrl = isDrive ? getGoogleDriveEmbedUrl(pdfUrl) : null;
+                const embedPdfUrl = isDrive ? getGoogleDriveEmbedUrl(pdfUrl, true) : null;
 
                 return (
                     <div className="space-y-6">
@@ -195,12 +203,18 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                 </div>
                             </div>
                             {embedPdfUrl && (
-                                <div className="w-full aspect-[4/3] min-h-[400px] max-h-[70vh] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-6">
+                                <div className="relative w-full aspect-[4/3] min-h-[400px] max-h-[70vh] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-6">
                                     <iframe
                                         src={embedPdfUrl}
                                         className="w-full h-full"
                                         title="PDF Document"
                                         sandbox="allow-scripts allow-same-origin allow-popups"
+                                    />
+                                    {/* Overlay to block Pop-out button */}
+                                    <div
+                                        className="absolute top-2 right-2 w-28 h-12 z-10 rounded-bl"
+                                        style={{ pointerEvents: 'auto', cursor: 'default' }}
+                                        aria-hidden
                                     />
                                 </div>
                             )}

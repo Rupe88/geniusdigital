@@ -128,12 +128,15 @@ export const getYouTubeEmbedUrl = (url: string): string | null => {
 /**
  * Get Google Drive embeddable preview URL from view link.
  * e.g. https://drive.google.com/file/d/FILE_ID/view -> https://drive.google.com/file/d/FILE_ID/preview
+ * @param hideToolbar - Append #toolbar=0 to minimize share/open controls (may reduce pop-out icon visibility)
  */
-export const getGoogleDriveEmbedUrl = (url: string): string | null => {
+export const getGoogleDriveEmbedUrl = (url: string, hideToolbar?: boolean): string | null => {
   if (!url || !url.trim()) return null;
   const match = url.trim().match(/drive\.google\.com\/file\/d\/([^/]+)/);
   if (match) {
-    return `https://drive.google.com/file/d/${match[1]}/preview`;
+    let embed = `https://drive.google.com/file/d/${match[1]}/preview`;
+    if (hideToolbar) embed += '#toolbar=0';
+    return embed;
   }
   return null;
 };
@@ -179,7 +182,7 @@ export const getDocumentOpenUrl = (url: string): string => {
 
 export const getVideoEmbedUrl = (
   url: string | null | undefined,
-  options?: { autoplay?: boolean }
+  options?: { autoplay?: boolean; hideToolbar?: boolean }
 ): string | null => {
   if (!url || !url.trim()) return null;
   const u = url.trim();
@@ -191,7 +194,7 @@ export const getVideoEmbedUrl = (
     embed = yt;
     isYoutube = true;
   } else {
-    const gd = getGoogleDriveEmbedUrl(u);
+    const gd = getGoogleDriveEmbedUrl(u, options?.hideToolbar);
     if (gd) return gd;
     const vimeoMatch = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if (vimeoMatch) {
