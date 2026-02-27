@@ -9,12 +9,14 @@ import * as adminApi from '@/lib/api/admin';
 import { User } from '@/lib/types/auth';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatDate } from '@/lib/utils/helpers';
+import { HiDownload } from 'react-icons/hi';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -54,23 +56,76 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleExportUsers = async () => {
+    try {
+      setExportLoading(true);
+      const allUsers: User[] = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const data = await adminApi.getAllUsers({
+          page,
+          limit: 500,
+          search: search || undefined,
+        });
+        allUsers.push(...(data?.data || []));
+        hasMore = page < (data?.pagination?.pages ?? 1);
+        page += 1;
+      }
+
+      const headers = ['Name', 'Email', 'Phone', 'Role', 'Status', 'Joined'];
+      const rows = allUsers.map((u) => [
+        u.fullName ?? '',
+        u.email ?? '',
+        u.phone ?? '',
+        u.role ?? '',
+        u.isActive ? 'Active' : 'Blocked',
+        u.createdAt ? formatDate(u.createdAt) : '',
+      ]);
+      const csvContent = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert(Object(error).message || 'Failed to export users');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div>
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--foreground)]">User Management</h1>
           <p className="text-[var(--muted-foreground)] mt-2">Manage all users</p>
         </div>
-        <Input
-          type="text"
-          placeholder="Search users..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPagination({ ...pagination, page: 1 });
-          }}
-          className="max-w-md"
-        />
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Input
+            type="text"
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPagination({ ...pagination, page: 1 });
+            }}
+            className="max-w-md"
+          />
+          <Button
+            variant="outline"
+            onClick={handleExportUsers}
+            disabled={exportLoading}
+            className="shrink-0"
+          >
+            <HiDownload className="w-4 h-4 mr-2" />
+            {exportLoading ? 'Exporting…' : 'Export Users'}
+          </Button>
+        </div>
       </div>
 
       <Card padding="none">

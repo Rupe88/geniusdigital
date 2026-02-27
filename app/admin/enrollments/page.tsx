@@ -15,7 +15,7 @@ import type { Course } from '@/lib/types/course';
 import type { User } from '@/lib/types/auth';
 import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiDownload, HiFilter, HiTrash, HiSearch } from 'react-icons/hi';
+import { HiDownload, HiFilter, HiTrash, HiSearch, HiUpload } from 'react-icons/hi';
 
 type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
@@ -35,6 +35,10 @@ export default function AdminEnrollmentsPage() {
   const [studentSearchLoading, setStudentSearchLoading] = useState(false);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importCourseId, setImportCourseId] = useState('');
+  const [importResult, setImportResult] = useState<{ granted: number; failed: string[]; skipped: string[] } | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
   const studentSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -240,6 +244,101 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
+  const parseCsvEmails = (text: string): string[] => {
+    const lines = text.trim().split(/\r?\n/).filter((line) => line.trim());
+    const emails: string[] = [];
+    const seen = new Set<string>();
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
+      const emailCol = cols.find((c) => c.toLowerCase().includes('@'));
+      const firstCell = (emailCol ?? cols[0] ?? '').trim();
+      if (firstCell.toLowerCase() === 'email') continue;
+      const email = firstCell.toLowerCase();
+      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !seen.has(email)) {
+        seen.add(email);
+        emails.push(email);
+      }
+    }
+    return emails;
+  };
+
+  const handleDownloadImportTemplate = () => {
+    const template = 'email\nuser1@example.com\nuser2@example.com';
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bulk-grant-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showSuccess('Template downloaded');
+  };
+
+  const handleImportAndGrant = async () => {
+    if (!importCourseId) {
+      showError('Please select a course to grant access');
+      return;
+    }
+    if (!importFile) {
+      showError('Please select a CSV file');
+      return;
+    }
+
+    setImportLoading(true);
+    setImportResult(null);
+
+    try {
+      const text = await importFile.text();
+      const emails = parseCsvEmails(text);
+      if (emails.length === 0) {
+        showError('No valid emails found in the file. Use format: email (one per row)');
+        return;
+      }
+
+      const granted: string[] = [];
+      const failed: string[] = [];
+      const skipped: string[] = [];
+
+      for (const email of emails) {
+        try {
+          const usersResult = await adminApi.getAllUsers({ search: email, page: 1, limit: 1 });
+          const user = usersResult.data?.find((u) => u.email?.toLowerCase() === email);
+          if (!user) {
+            failed.push(`${email} (user not found)`);
+            continue;
+          }
+          try {
+            await enrollmentApi.grantCourseAccess(user.id, importCourseId);
+            granted.push(email);
+          } catch (grantErr: unknown) {
+            const msg = Object(grantErr).message || '';
+            if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exist')) {
+              skipped.push(`${email} (already enrolled)`);
+            } else {
+              failed.push(`${email} (${msg})`);
+            }
+          }
+        } catch {
+          failed.push(`${email} (lookup failed)`);
+        }
+      }
+
+      setImportResult({ granted: granted.length, failed, skipped });
+      showSuccess(`${granted.length} user(s) granted access`);
+      setImportFile(null);
+      if ((document.getElementById('import-csv-input') as HTMLInputElement)) {
+        (document.getElementById('import-csv-input') as HTMLInputElement).value = '';
+      }
+      fetchEnrollments();
+    } catch (error) {
+      showError(Object(error).message || 'Import failed');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -322,6 +421,68 @@ export default function AdminEnrollmentsPage() {
             {grantLoading ? 'Granting access...' : 'Grant Access'}
           </Button>
         </div>
+      </Card>
+
+      <Card padding="md" className="space-y-4">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Import & Bulk Grant Access</h2>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Upload a CSV with user emails (one per row) to grant multiple users access to a course. Export users from User Management to get the list.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[200px]">
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Course</label>
+            <select
+              className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+              value={importCourseId}
+              onChange={(e) => setImportCourseId(e.target.value)}
+            >
+              <option value="">Select course</option>
+              {availableCourses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="min-w-[200px]">
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">CSV File</label>
+            <input
+              id="import-csv-input"
+              type="file"
+              accept=".csv"
+              className="block w-full text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-sm file:font-medium file:bg-[var(--primary-50)] file:text-[var(--primary-700)] hover:file:bg-[var(--primary-100)]"
+              onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+          <Button
+            variant="primary"
+            onClick={handleImportAndGrant}
+            disabled={importLoading || !importCourseId || !importFile}
+          >
+            <HiUpload className="w-4 h-4 mr-2" />
+            {importLoading ? 'Importing…' : 'Import & Grant'}
+          </Button>
+          <Button variant="outline" onClick={handleDownloadImportTemplate} type="button">
+            Download template
+          </Button>
+        </div>
+        {importResult && (
+          <div className="rounded border border-[var(--border)] bg-[var(--muted)]/30 p-4 text-sm space-y-2">
+            <p className="font-medium text-green-600">{importResult.granted} user(s) granted access</p>
+            {importResult.skipped.length > 0 && (
+              <p className="text-amber-600">
+                Skipped ({importResult.skipped.length}): {importResult.skipped.slice(0, 5).join(', ')}
+                {importResult.skipped.length > 5 ? ` +${importResult.skipped.length - 5} more` : ''}
+              </p>
+            )}
+            {importResult.failed.length > 0 && (
+              <p className="text-red-600">
+                Failed ({importResult.failed.length}): {importResult.failed.slice(0, 5).join(', ')}
+                {importResult.failed.length > 5 ? ` +${importResult.failed.length - 5} more` : ''}
+              </p>
+            )}
+          </div>
+        )}
       </Card>
 
       <div className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
