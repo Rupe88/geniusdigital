@@ -5,7 +5,7 @@ import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload, HiRefresh } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
-import { getYouTubeEmbedUrl } from '@/lib/utils/helpers';
+import { getVideoEmbedUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 
 interface LessonPlayerProps {
@@ -168,27 +168,20 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     const renderContent = () => {
         switch (lesson.lessonType) {
             case 'VIDEO': {
-                const youtubeUrl = lesson.videoUrl ? getYouTubeEmbedUrl(lesson.videoUrl) : null;
-                const videoSrc = isSecureStreamPath(lesson.videoUrl) ? secureVideoSrc : lesson.videoUrl;
-                
-                console.log('[LessonPlayer] Rendering video', {
-                    youtubeUrl,
-                    videoSrc,
-                    secureVideoSrc,
-                    secureVideoError,
-                    isSecureStream: isSecureStreamPath(lesson.videoUrl),
-                    originalVideoUrl: lesson.videoUrl,
-                });
-                
+                const embedUrl = lesson.videoUrl ? getVideoEmbedUrl(lesson.videoUrl) : null;
+                const isSecureStream = isSecureStreamPath(lesson.videoUrl);
+                const videoSrc = isSecureStream ? secureVideoSrc : lesson.videoUrl;
+
                 return (
                     <div className="space-y-6">
                         <div className="aspect-video bg-black shadow-2xl">
-                            {youtubeUrl ? (
+                            {embedUrl ? (
                                 <iframe
-                                    src={youtubeUrl}
+                                    src={embedUrl}
                                     className="w-full h-full"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen
+                                    title="Video player"
                                 />
                             ) : secureVideoError ? (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-4 p-6">

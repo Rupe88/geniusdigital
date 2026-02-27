@@ -169,6 +169,8 @@ export const getVideoEmbedUrl = (
       embed = u;
       isYoutube = u.includes('youtube.com');
       isVimeo = u.includes('vimeo.com');
+    } else if (/classroom\.google\.com\//.test(u)) {
+      return u;
     }
   }
   if (!embed) return null;
