@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useAuth } from '@/lib/context/AuthContext';
 
 export default function ContentProtection() {
+    const { user } = useAuth();
+
     useEffect(() => {
+        // Admins can inspect freely; apply protection only for non-admins
+        if (user?.role === 'ADMIN') {
+            return;
+        }
         // Disable right-click context menu
         const handleContextMenu = (e: MouseEvent) => {
             e.preventDefault();
@@ -54,50 +61,52 @@ export default function ContentProtection() {
             return false;
         };
 
-        // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U (view source)
+        // Disable F12, Ctrl/Cmd+Shift+I, Ctrl/Cmd+Shift+J, Ctrl/Cmd+U (view source)
         const handleKeyDown = (e: KeyboardEvent) => {
+            const mod = e.ctrlKey || e.metaKey; // Ctrl (Win/Linux) or Cmd (Mac)
+
             // Disable F12
             if (e.key === 'F12') {
                 e.preventDefault();
                 return false;
             }
 
-            // Disable Ctrl+Shift+I (DevTools)
-            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+            // Disable Ctrl/Cmd+Shift+I (DevTools)
+            if (mod && e.shiftKey && e.key === 'I') {
                 e.preventDefault();
                 return false;
             }
 
-            // Disable Ctrl+Shift+J (Console)
-            if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+            // Disable Ctrl/Cmd+Shift+J (Console)
+            if (mod && e.shiftKey && e.key === 'J') {
                 e.preventDefault();
                 return false;
             }
 
-            // Disable Ctrl+U (View Source)
-            if (e.ctrlKey && e.key === 'u') {
+            // Disable Ctrl/Cmd+U (View Source)
+            if (mod && e.key === 'u') {
                 e.preventDefault();
                 return false;
             }
 
-            // Disable Ctrl+S (Save Page)
-            if (e.ctrlKey && e.key === 's') {
+            // Disable Ctrl/Cmd+S (Save Page)
+            if (mod && e.key === 's') {
                 e.preventDefault();
                 return false;
             }
 
-            // Disable Ctrl+A (Select All) - but allow in input fields
-            if (e.ctrlKey && e.key === 'a') {
+            // Disable Ctrl/Cmd+A (Select All) - but allow in input fields
+            if (mod && e.key === 'a') {
                 const target = e.target as HTMLElement;
                 if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-                    return true; // Allow select all in input fields
+                    return; // Allow select all in input fields
                 }
                 e.preventDefault();
                 return false;
             }
 
-            // Disable Ctrl+P (Print)
-            if (e.ctrlKey && e.key === 'p') {
+            // Disable Ctrl/Cmd+P (Print)
+            if (mod && e.key === 'p') {
                 e.preventDefault();
                 return false;
             }
@@ -122,7 +131,7 @@ export default function ContentProtection() {
             document.removeEventListener('dragstart', handleDragStart);
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [user?.role]);
 
     return null;
 }
