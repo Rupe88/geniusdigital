@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import {
@@ -116,18 +117,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
-          <div className="flex items-center justify-between p-4 border-b border-[var(--border)] lg:p-6 flex-shrink-0">
-            <div>
-              <h2 className="text-xl font-bold text-[var(--foreground)]">Dashboard</h2>
-              <p className="text-sm text-[var(--muted-foreground)] mt-0.5 truncate">{user?.fullName}</p>
-            </div>
+          <div className="flex items-center justify-between gap-2 py-3 px-4 border-b border-[var(--border)] flex-shrink-0 min-h-[52px]">
+            <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 flex-1 min-w-0 justify-center lg:justify-start" aria-label="Dashboard">
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
+                <Image
+                  src="/sanskar-academy-logo.jpeg"
+                  alt="Sanskar Academy"
+                  fill
+                  className="object-contain"
+                  sizes="40px"
+                  priority
+                />
+              </div>
+              <span className="font-semibold text-[var(--foreground)] text-sm truncate">Dashboard</span>
+            </Link>
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--muted)] lg:hidden"
+              className="p-1.5 rounded-lg text-[var(--foreground)] hover:bg-[var(--muted)] lg:hidden flex-shrink-0"
               aria-label="Close menu"
             >
-              <HiX className="h-6 w-6" />
+              <HiX className="h-5 w-5" />
             </button>
           </div>
           {navContent}
@@ -146,17 +156,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Main content */}
         <main className={`flex-1 min-w-0 flex flex-col ${isLearnRoute ? 'h-screen overflow-hidden' : ''}`}>
-          {/* Mobile: menu button */}
-          <div className="sticky top-0 z-30 flex items-center gap-4 px-4 py-3 bg-[var(--background)] border-b border-[var(--border)] lg:hidden">
+          {/* Mobile: menu button + logo */}
+          <div className="sticky top-0 z-30 flex items-center gap-2 py-2.5 px-3 bg-[var(--background)] border-b border-[var(--border)] lg:hidden">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--muted)]"
+              className="p-1.5 rounded-lg text-[var(--foreground)] hover:bg-[var(--muted)] flex-shrink-0"
               aria-label="Open menu"
             >
-              <HiMenu className="h-6 w-6" />
+              <HiMenu className="h-5 w-5" />
             </button>
-            <span className="font-semibold text-[var(--foreground)]">Dashboard</span>
+            <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 flex-1 min-w-0 justify-center" aria-label="Dashboard">
+              <div className="relative w-9 h-9 flex-shrink-0">
+                <Image
+                  src="/sanskar-academy-logo.jpeg"
+                  alt="Sanskar Academy"
+                  fill
+                  className="object-contain rounded-none"
+                  sizes="36px"
+                />
+              </div>
+              <span className="font-semibold text-[var(--foreground)] text-sm truncate">Dashboard</span>
+            </Link>
           </div>
 
           {/* Top bar - desktop only, hidden on learn routes */}
