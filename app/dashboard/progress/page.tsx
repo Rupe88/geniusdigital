@@ -33,10 +33,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  COMPLETED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  ACTIVE: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  PENDING: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  CANCELLED: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  COMPLETED: 'bg-emerald-600 text-white border-0',
+  ACTIVE: 'bg-blue-600 text-white border-0',
+  PENDING: 'bg-amber-600 text-white border-0',
+  CANCELLED: 'bg-gray-500 text-white border-0',
 };
 
 function getLessonIcon(type: string) {
@@ -86,7 +86,7 @@ function CourseProgressCard({
   const learnHref = `/dashboard/courses/${enrollment.courseId}/learn`;
 
   return (
-    <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-200)] transition-colors">
+    <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-300)] hover:shadow-lg transition-all duration-200">
       <div className="flex flex-col sm:flex-row">
         {enrollment.course?.thumbnail && (
           <div className="relative w-full sm:w-40 h-40 sm:h-auto sm:min-h-[140px] flex-shrink-0">
@@ -127,14 +127,14 @@ function CourseProgressCard({
               />
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-auto">
+          <div className="flex flex-wrap items-center gap-3 mt-auto">
             <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${STATUS_STYLES[enrollment.status] ?? STATUS_STYLES.ACTIVE}`}
+              className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm ${STATUS_STYLES[enrollment.status] ?? STATUS_STYLES.ACTIVE}`}
             >
               {STATUS_LABELS[enrollment.status] ?? enrollment.status}
             </span>
             <Link href={learnHref} className="inline-flex">
-              <Button variant="primary" size="sm" className="gap-1.5">
+              <Button variant="primary" size="sm" className="gap-2 shadow-md">
                 {isCompleted ? (
                   <>
                     <HiBookOpen className="w-4 h-4" />
@@ -151,7 +151,7 @@ function CourseProgressCard({
             <button
               type="button"
               onClick={() => onToggleDetails(enrollment.courseId)}
-              className="inline-flex items-center gap-1 text-sm text-[var(--primary-700)] hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:ring-offset-2 rounded px-2 py-1"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary-600)] hover:text-[var(--primary-700)] hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:ring-offset-2 rounded px-2 py-1.5 transition-colors"
               aria-expanded={isExpanded}
               aria-controls={`progress-detail-${enrollment.courseId}`}
             >
@@ -277,30 +277,24 @@ export default function ProgressPage() {
     }
   }, [expandedId, detailCache]);
 
-  const stats = {
-    total: enrollments.length,
-    inProgress: enrollments.filter((e) => e.status === 'ACTIVE').length,
-    completed: enrollments.filter((e) => e.status === 'COMPLETED').length,
-  };
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)] tracking-tight">
           My Progress
         </h1>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--muted-foreground)]">Filter:</span>
-          <div className="flex rounded-lg border border-[var(--border)] p-0.5 bg-[var(--muted)]/30">
+          <span className="text-sm font-medium text-[var(--muted-foreground)]">Filter:</span>
+          <div className="flex rounded-lg border border-[var(--border)] p-1 bg-[var(--muted)]/20">
             {(['ALL', 'ACTIVE', 'COMPLETED'] as const).map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:ring-offset-2 ${
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] focus:ring-offset-2 ${
                   filter === f
-                    ? 'bg-[var(--background)] text-[var(--foreground)] shadow-sm'
-                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+                    ? 'bg-[var(--primary-600)] text-white shadow-md'
+                    : 'text-[var(--muted-foreground)] hover:bg-[var(--muted)]/50 hover:text-[var(--foreground)]'
                 }`}
                 aria-pressed={filter === f}
                 aria-label={`Filter by ${f === 'ALL' ? 'all courses' : f === 'ACTIVE' ? 'in progress' : 'completed'}`}
@@ -310,37 +304,6 @@ export default function ProgressPage() {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card padding="md" className="flex flex-row items-center gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--primary-100)] text-[var(--primary-700)]">
-            <HiChartBar className="w-6 h-6" aria-hidden />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</p>
-            <p className="text-sm text-[var(--muted-foreground)]">Enrolled courses</p>
-          </div>
-        </Card>
-        <Card padding="md" className="flex flex-row items-center gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-            <HiPlay className="w-6 h-6" aria-hidden />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[var(--foreground)]">{stats.inProgress}</p>
-            <p className="text-sm text-[var(--muted-foreground)]">In progress</p>
-          </div>
-        </Card>
-        <Card padding="md" className="flex flex-row items-center gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-            <HiCheckCircle className="w-6 h-6" aria-hidden />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[var(--foreground)]">{stats.completed}</p>
-            <p className="text-sm text-[var(--muted-foreground)]">Completed</p>
-          </div>
-        </Card>
       </div>
 
       {/* Content */}
@@ -381,7 +344,7 @@ export default function ProgressPage() {
           </Link>
         </Card>
       ) : (
-        <div className="space-y-4" role="list">
+        <div className="space-y-5" role="list">
           {filtered.map((enrollment) => (
             <CourseProgressCard
               key={enrollment.id}

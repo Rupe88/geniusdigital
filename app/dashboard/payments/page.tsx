@@ -48,18 +48,26 @@ function paymentMethodLabel(method: string): string {
   return labels[method] ?? method;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  COMPLETED: 'Completed',
+  PENDING: 'Pending',
+  FAILED: 'Failed',
+  REFUNDED: 'Refunded',
+};
+
 function statusStyles(status: Payment['status']): string {
+  const base = 'inline-block text-sm font-semibold px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap';
   switch (status) {
     case 'COMPLETED':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
+      return `${base} bg-emerald-600 text-white`;
     case 'PENDING':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+      return `${base} bg-amber-600 text-white`;
     case 'FAILED':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      return `${base} bg-red-600 text-white`;
     case 'REFUNDED':
-      return 'bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-300';
+      return `${base} bg-slate-600 text-white`;
     default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
+      return `${base} bg-gray-600 text-white`;
   }
 }
 
@@ -184,10 +192,8 @@ export default function PaymentsPage() {
                         {paymentMethodLabel(payment.paymentMethod)}
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-block text-xs font-medium px-2 py-1 rounded ${statusStyles(payment.status)}`}
-                        >
-                          {payment.status}
+                        <span className={statusStyles(payment.status)}>
+                          {STATUS_LABELS[payment.status] ?? payment.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-[var(--muted-foreground)] font-mono hidden sm:table-cell max-w-[120px] truncate" title={payment.transactionId ?? undefined}>
