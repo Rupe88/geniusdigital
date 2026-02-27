@@ -8,12 +8,13 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
 import { ROUTES } from '@/lib/utils/constants';
 import { generateBreadcrumbs, shouldShowBreadcrumbs } from '@/lib/utils/breadcrumbs';
-import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash, HiDotsHorizontal, HiShoppingCart } from 'react-icons/hi';
+import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash, HiDotsHorizontal, HiShoppingCart, HiMenu, HiX } from 'react-icons/hi';
 
 export const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
@@ -76,7 +77,18 @@ export const Navbar: React.FC = () => {
     setIsMoreMenuOpen(false);
     setIsUserMenuOpen(false);
     setIsMobileMoreOpen(false);
+    setIsMobileNavOpen(false);
   }, [pathname]);
+
+  // Prevent body scroll when mobile nav is open
+  useEffect(() => {
+    if (isMobileNavOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileNavOpen]);
 
   const bottomNavItems = [
     { label: 'Home', href: ROUTES.HOME, icon: HiHome },
@@ -177,7 +189,42 @@ export const Navbar: React.FC = () => {
 
           </div>
 
-          {/* Right Section - Become A Affiliate + Auth (aligned from right with consistent spacing) */}
+          {/* Mobile: Hamburger + Cart + Auth */}
+          <div className="flex lg:hidden items-center gap-2 ml-auto flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="relative inline-flex items-center justify-center rounded-lg p-2 text-gray-700 hover:bg-gray-100 transition-colors"
+              aria-label="Open cart"
+            >
+              <HiShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-semibold h-4 min-w-[1rem] px-1">
+                  {itemCount > 9 ? '9+' : itemCount}
+                </span>
+              )}
+            </button>
+            {isAuthenticated ? (
+              <Link href={user?.role === 'ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD} className="p-2 rounded-lg hover:bg-gray-100">
+                <HiUser className="h-5 w-5 text-gray-700" />
+              </Link>
+            ) : (
+              <Link href={ROUTES.LOGIN} className="px-3 py-1.5 text-sm font-medium text-[var(--primary-700)]" onClick={() => setIsMobileNavOpen(false)}>
+                Login
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen((o) => !o)}
+              className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors lg:hidden"
+              aria-label={isMobileNavOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMobileNavOpen}
+            >
+              {isMobileNavOpen ? <HiX className="h-6 w-6" /> : <HiMenu className="h-6 w-6" />}
+            </button>
+          </div>
+
+          {/* Desktop: Right Section - Become A Affiliate + Auth */}
           <div className="hidden lg:flex lg:items-center lg:gap-4 lg:ml-auto flex-shrink-0">
             <Link
               href={ROUTES.AFFILIATE}
@@ -274,7 +321,6 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile: no hamburger - navigation is in bottom bar */}
         </div>
       </div>
 
@@ -307,6 +353,108 @@ export const Navbar: React.FC = () => {
         </div>
       )}
     </nav>
+
+    {/* Mobile hamburger menu - slide-out panel */}
+    {isMobileNavOpen && (
+      <>
+        <div
+          className="fixed inset-0 bg-black/50 z-[55] lg:hidden"
+          aria-hidden
+          onClick={() => setIsMobileNavOpen(false)}
+        />
+        <div
+          className="fixed top-0 right-0 bottom-0 w-full max-w-xs bg-white shadow-2xl z-[56] lg:hidden flex flex-col overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <span className="font-semibold text-[var(--foreground)]">Menu</span>
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(false)}
+              className="p-2 rounded-lg hover:bg-gray-100"
+              aria-label="Close menu"
+            >
+              <HiX className="h-6 w-6" />
+            </button>
+          </div>
+          <nav className="flex-1 overflow-y-auto py-4">
+            <div className="px-4 space-y-1">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
+                      active ? 'text-[var(--primary-700)] bg-[var(--primary-50)]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+              {moreMenuItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
+                      active ? 'text-[var(--primary-700)] bg-[var(--primary-50)]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 px-4 space-y-1">
+              <Link
+                href={ROUTES.AFFILIATE}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
+                  isActive(ROUTES.AFFILIATE) ? 'text-[var(--primary-700)] bg-[var(--primary-50)]' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                onClick={() => setIsMobileNavOpen(false)}
+              >
+                <HiCash className="h-5 w-5" />
+                Become A Affiliate
+              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href={user?.role === 'ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
+                    <HiUser className="h-5 w-5" />
+                    {user?.role === 'ADMIN' ? 'Admin Panel' : 'Dashboard'}
+                  </Link>
+                  <button
+                    onClick={() => { handleLogout(); setIsMobileNavOpen(false); }}
+                    className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100"
+                  >
+                    <HiLogout className="h-5 w-5" />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href={ROUTES.REGISTER}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-[var(--primary-700)] bg-[var(--primary-50)]"
+                  onClick={() => setIsMobileNavOpen(false)}
+                >
+                  Register
+                </Link>
+              )}
+            </div>
+          </nav>
+        </div>
+      </>
+    )}
 
     {/* Cart slide-over */}
     <div
