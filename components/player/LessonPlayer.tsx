@@ -5,7 +5,7 @@ import { Lesson } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload, HiRefresh } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
-import { getVideoEmbedUrl, getDocumentOpenUrl, isGoogleClassroomUrl } from '@/lib/utils/helpers';
+import { getVideoEmbedUrl, getDocumentOpenUrl, isGoogleClassroomUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 
 interface LessonPlayerProps {
@@ -176,6 +176,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 const docDownloadUrl = pdfUrl ? getDocumentOpenUrl(pdfUrl) : '';
                 const isDrive = pdfUrl && /drive\.google\.com\/file\/d\//.test(pdfUrl);
                 const isClassroom = pdfUrl && isGoogleClassroomUrl(pdfUrl);
+                const embedPdfUrl = isDrive ? getGoogleDriveEmbedUrl(pdfUrl) : null;
 
                 return (
                     <div className="space-y-6">
@@ -189,10 +190,20 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     <p className="text-gray-500 font-medium text-sm">
                                         {isClassroom
                                             ? 'Open the document in Google Classroom to view or download'
-                                            : 'Download or open the course materials below'}
+                                            : 'View, download, or open the course materials below'}
                                     </p>
                                 </div>
                             </div>
+                            {embedPdfUrl && (
+                                <div className="w-full aspect-[4/3] min-h-[400px] max-h-[70vh] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-6">
+                                    <iframe
+                                        src={embedPdfUrl}
+                                        className="w-full h-full"
+                                        title="PDF Document"
+                                        sandbox="allow-scripts allow-same-origin allow-popups"
+                                    />
+                                </div>
+                            )}
                             {docDownloadUrl && (
                                 <div className="flex flex-wrap justify-center gap-3">
                                     {isClassroom ? (
