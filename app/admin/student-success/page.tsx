@@ -15,7 +15,9 @@ export default function AdminStudentSuccessPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
 
-    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateStudentSuccessRequest>();
+    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateStudentSuccessRequest>({
+        defaultValues: { studentName: '', courseId: '', achievement: '', title: '', story: '', videoUrl: '' },
+    });
 
     useEffect(() => {
         const loadCourses = async () => {
@@ -119,7 +121,15 @@ export default function AdminStudentSuccessPage() {
             {isEditing && (
                 <div className="bg-white p-6 rounded-lg shadow border border-gray-200 animate-fade-in">
                     <h2 className="text-lg font-semibold mb-4">{editId ? 'Edit Success Story' : 'Add New Success Story'}</h2>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={handleSubmit(
+                            onSubmit,
+                            (err) => {
+                                toast.error('Please fill all required fields (Student Name, Achievement, Title, Full Story)');
+                            }
+                        )}
+                        className="space-y-4"
+                    >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Student Name</label>
@@ -150,6 +160,7 @@ export default function AdminStudentSuccessPage() {
                                     placeholder="e.g. Landed a job at Google"
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                                 />
+                                {errors.achievement && <span className="text-red-500 text-xs">Required</span>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">YouTube Video URL (optional)</label>
@@ -165,19 +176,22 @@ export default function AdminStudentSuccessPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Job Title / Headline</label>
                             <input
-                                {...register('title')}
+                                {...register('title', { required: 'Required' })}
                                 placeholder="e.g. Senior Architect"
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                             />
+                            {errors.title && <span className="text-red-500 text-xs">Required</span>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Full Story</label>
                             <textarea
-                                {...register('story')}
+                                {...register('story', { required: 'Required' })}
                                 rows={4}
+                                placeholder="Enter the success story..."
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                             />
+                            {errors.story && <span className="text-red-500 text-xs">Required</span>}
                         </div>
 
                         <div className="flex space-x-4">
