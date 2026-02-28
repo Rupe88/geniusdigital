@@ -253,9 +253,9 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/notifications/${id}`,
     MARK_READ: (id: string) => `/notifications/${id}/read`,
   },
-  // Audit Logs
+  // Audit Logs (backend route is audit-log)
   AUDIT_LOGS: {
-    LIST: '/audit-logs',
+    LIST: '/audit-log',
   },
 };
 
