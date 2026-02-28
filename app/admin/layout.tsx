@@ -37,7 +37,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/categories`, label: 'Categories', icon: HiFolder },
       { href: `${ROUTES.ADMIN}/enrollments`, label: 'Enrollments', icon: HiBookOpen },
       { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
-
+      { href: `${ROUTES.ADMIN}/student-success`, label: 'Student Success', icon: HiStar },
     ],
   },
   {
@@ -90,7 +90,6 @@ const adminMenuCategories: MenuCategory[] = [
     items: [
       { href: `${ROUTES.ADMIN}/affiliate-applications`, label: 'Affiliate Applications', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/referrals`, label: 'Referrals', icon: HiShare },
-      { href: `${ROUTES.ADMIN}/student-success`, label: 'Student Success', icon: HiStar },
       { href: `${ROUTES.ADMIN}/audit-logs`, label: 'Audit Logs', icon: HiShieldCheck },
     ],
   },

@@ -4,17 +4,30 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { studentSuccessApi, StudentSuccess, CreateStudentSuccessRequest } from '@/lib/api/studentSuccess';
+import * as coursesApi from '@/lib/api/courses';
 import { Button } from '@/components/ui/Button';
-import { HiPlus, HiPencil, HiTrash, HiCheck, HiX } from 'react-icons/hi';
-import Image from 'next/image';
+import { HiPlus, HiPencil, HiTrash } from 'react-icons/hi';
 
 export default function AdminStudentSuccessPage() {
     const [stories, setStories] = useState<StudentSuccess[]>([]);
+    const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateStudentSuccessRequest>();
+
+    useEffect(() => {
+        const loadCourses = async () => {
+            try {
+                const res = await coursesApi.getAllCourses({ page: 1, limit: 500 });
+                setCourses(res.data || []);
+            } catch {
+                setCourses([]);
+            }
+        };
+        loadCourses();
+    }, []);
 
     const fetchStories = async () => {
         setLoading(true);
@@ -35,11 +48,15 @@ export default function AdminStudentSuccessPage() {
 
     const onSubmit = async (data: CreateStudentSuccessRequest) => {
         try {
+            const payload = {
+                ...data,
+                courseId: data.courseId?.trim() || undefined,
+            };
             if (editId) {
-                await studentSuccessApi.update(editId, data);
+                await studentSuccessApi.update(editId, payload);
                 toast.success('Success story updated');
             } else {
-                await studentSuccessApi.create(data);
+                await studentSuccessApi.create(payload);
                 toast.success('Success story created');
             }
             reset();
@@ -56,11 +73,10 @@ export default function AdminStudentSuccessPage() {
         setEditId(story.id);
         setIsEditing(true);
         setValue('studentName', story.studentName);
-        setValue('courseId', story.courseId);
+        setValue('courseId', story.courseId || '');
         setValue('achievement', story.achievement);
         setValue('title', story.title);
         setValue('story', story.story);
-        setValue('studentImage', story.studentImage);
         setValue('videoUrl', story.videoUrl);
         setValue('featured', story.featured);
         setValue('isPublished', story.isPublished);
@@ -114,26 +130,24 @@ export default function AdminStudentSuccessPage() {
                                 {errors.studentName && <span className="text-red-500 text-xs">Required</span>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Course ID</label>
-                                <input
+                                <label className="block text-sm font-medium text-gray-700">Course</label>
+                                <select
                                     {...register('courseId')}
-                                    placeholder="Optional Course ID"
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                />
+                                >
+                                    <option value="">Select course (optional)</option>
+                                    {courses.map((course) => (
+                                        <option key={course.id} value={course.id}>
+                                            {course.title}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Achievement (Short)</label>
                                 <input
                                     {...register('achievement', { required: 'Required' })}
                                     placeholder="e.g. Landed a job at Google"
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Image URL</label>
-                                <input
-                                    {...register('studentImage')}
-                                    placeholder="https://..."
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                                 />
                             </div>
@@ -196,14 +210,11 @@ export default function AdminStudentSuccessPage() {
                         {stories.map((story) => (
                             <li key={story.id} className="p-4 hover:bg-gray-50 transition">
                                 <div className="flex items-center justify-between">
-                                    {/* Left Side: Image & Info */}
                                     <div className="flex items-center space-x-4">
-                                        <div className="relative h-16 w-16 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
-                                            {story.studentImage ? (
-                                                <Image src={story.studentImage} alt={story.studentName} fill className="object-cover" />
-                                            ) : (
-                                                <span className="flex items-center justify-center h-full text-xs text-gray-400">No Img</span>
-                                            )}
+                                        <div className="h-12 w-12 rounded-full bg-[var(--primary-100)] flex items-center justify-center flex-shrink-0">
+                                            <span className="text-[var(--primary-700)] font-semibold text-lg">
+                                                {story.studentName?.charAt(0) || '?'}
+                                            </span>
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-medium text-gray-900">{story.studentName}</h3>
