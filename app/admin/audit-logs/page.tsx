@@ -267,14 +267,14 @@ export default function AdminAuditLogsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {(log.changes || log.metadata) && (
+                        {Boolean(log.changes || log.metadata) && (
                           <span className="text-xs text-[var(--primary-600)]">
                             {expandedId === log.id ? 'Hide' : 'View'}
                           </span>
                         )}
                       </td>
                     </tr>
-                    {expandedId === log.id && (log.changes || log.metadata || log.requestPath) && (
+                    {expandedId === log.id && Boolean(log.changes || log.metadata || log.requestPath) && (
                       <tr className="bg-[var(--muted)]/10 border-b border-[var(--border)]">
                         <td colSpan={7} className="px-4 py-3">
                           <div className="space-y-2 text-xs font-mono overflow-x-auto">
@@ -284,7 +284,7 @@ export default function AdminAuditLogsPage() {
                             {log.ipAddress && (
                               <p><span className="text-[var(--muted-foreground)]">IP:</span> {log.ipAddress}</p>
                             )}
-                            {log.changes && (
+                            {Boolean(log.changes) && (
                               <div>
                                 <span className="text-[var(--muted-foreground)]">Changes:</span>
                                 <pre className="mt-1 p-2 bg-[var(--background)] rounded border border-[var(--border)] overflow-x-auto max-h-40 overflow-y-auto">
@@ -292,7 +292,7 @@ export default function AdminAuditLogsPage() {
                                 </pre>
                               </div>
                             )}
-                            {log.metadata && (
+                            {Boolean(log.metadata) && (
                               <div>
                                 <span className="text-[var(--muted-foreground)]">Metadata:</span>
                                 <pre className="mt-1 p-2 bg-[var(--background)] rounded border border-[var(--border)] overflow-x-auto max-h-40 overflow-y-auto">
