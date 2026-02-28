@@ -5,8 +5,9 @@ export interface StudentSuccess {
   id: string;
   studentName: string;
   studentImage?: string;
+  videoUrl?: string;
   courseId?: string;
-  course?: { title: string }; // Assuming including course returns object
+  course?: { title: string };
   title: string;
   story: string;
   achievement?: string;
@@ -23,6 +24,7 @@ export interface StudentSuccess {
 export interface CreateStudentSuccessRequest {
   studentName: string;
   studentImage?: string;
+  videoUrl?: string;
   courseId?: string;
   title: string;
   story: string;
@@ -48,10 +50,10 @@ export interface ApiResponse<T = unknown> {
  */
 export const studentSuccessApi = {
   /**
-   * Get all student success stories
+   * Get all student success stories (admin: all; public endpoint returns only published)
    */
-  getAll: async (): Promise<ApiResponse<StudentSuccess[]>> => {
-    const response = await apiClient.get(API_ENDPOINTS.STUDENT_SUCCESS.LIST);
+  getAll: async (params?: { featured?: boolean; limit?: number }): Promise<ApiResponse<StudentSuccess[]>> => {
+    const response = await apiClient.get(API_ENDPOINTS.STUDENT_SUCCESS.LIST, { params });
     return response.data;
   },
 

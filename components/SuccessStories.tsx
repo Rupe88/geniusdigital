@@ -1,63 +1,84 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { studentSuccessApi, StudentSuccess } from '@/lib/api/studentSuccess';
 
-interface SuccessStory {
-  id: number;
-  name: string;
-  youtubeId: string;
+/** Extract YouTube video ID from URL or return as-is if already an ID */
+function getYoutubeId(url: string): string | null {
+  if (!url || !url.trim()) return null;
+  const s = url.trim();
+  const watchMatch = s.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (watchMatch) return watchMatch[1];
+  const shortMatch = s.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (shortMatch) return shortMatch[1];
+  if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+  return null;
 }
 
-const successStories: SuccessStory[] = [
-  {
-    id: 1,
-    name: 'Meera Rajbansi',
-    youtubeId: '9Sg7MdWeJlc', // https://www.youtube.com/watch?v=9Sg7MdWeJlc
-  },
-  {
-    id: 2,
-    name: 'Pawan Rawal',
-    youtubeId: 'Nq8MSEwBolY', // https://www.youtube.com/watch?v=Nq8MSEwBolY
-  },
-  {
-    id: 3,
-    name: 'Chandra Ranabhat',
-    youtubeId: 'PHjZMrVhyYk', // https://www.youtube.com/watch?v=PHjZMrVhyYk
-  },
-];
-
 export const SuccessStories: React.FC = () => {
+  const [stories, setStories] = useState<StudentSuccess[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const hasCarousel = successStories.length > 1;
+  const hasCarousel = stories.length > 1;
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchStories = async () => {
+      try {
+        const res = await studentSuccessApi.getAll({ limit: 50 });
+        if (!cancelled && res?.data) {
+          setStories(res.data);
+        }
+      } catch (err) {
+        if (!cancelled) setStories([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchStories();
+    return () => { cancelled = true; };
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
-    const scrollAmount = 404; // Card width (400) + gap (24)
+    const scrollAmount = 404;
     const currentScroll = scrollContainerRef.current.scrollLeft;
-    const newScroll = direction === 'left' 
-      ? currentScroll - scrollAmount 
-      : currentScroll + scrollAmount;
-    
-    scrollContainerRef.current.scrollTo({
-      left: newScroll,
-      behavior: 'smooth',
-    });
+    const newScroll = direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount;
+    scrollContainerRef.current.scrollTo({ left: newScroll, behavior: 'smooth' });
   };
+
+  if (loading || stories.length === 0) {
+    if (loading) {
+      return (
+        <section className="pt-8 pb-8 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <h2 className="section-title text-gray-900">Success Stories</h2>
+            </div>
+            <div className="flex gap-6 overflow-x-auto py-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[280px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+    return null;
+  }
 
   return (
     <section className="pt-8 pb-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="mb-6">
-          <h2 className="section-title text-gray-900">
-            Success Stories
-          </h2>
+          <h2 className="section-title text-gray-900">Success Stories</h2>
         </div>
 
-        {/* Stories Carousel with YouTube videos */}
         <div className="relative min-h-[320px] flex items-center">
-          {/* Navigation Arrows - Only show if more than 1 story */}
           {hasCarousel && (
             <>
               <button
@@ -77,44 +98,58 @@ export const SuccessStories: React.FC = () => {
             </>
           )}
 
-          {/* Scrollable Container */}
           <div
             ref={scrollContainerRef}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
               hasCarousel ? 'scroll-smooth' : 'justify-start'
             }`}
           >
-            {successStories.map((story) => (
-              <div
-                key={story.id}
-                className="flex-shrink-0 w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
-              >
-                {/* YouTube video */}
-                <div className="relative w-full h-52 p-2">
-                  <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-                    <iframe
-                      className="absolute inset-0 w-full h-full"
-                      src={`https://www.youtube.com/embed/${story.youtubeId}`}
-                      title={story.name}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    />
+            {stories.map((story) => {
+              const youtubeId = story.videoUrl ? getYoutubeId(story.videoUrl) : null;
+              return (
+                <div
+                  key={story.id}
+                  className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[280px] sm:w-[360px] lg:w-[400px] bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg"
+                >
+                  <div className="relative w-full h-52 p-2">
+                    {youtubeId ? (
+                      <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
+                        <iframe
+                          className="absolute inset-0 w-full h-full"
+                          src={`https://www.youtube.com/embed/${youtubeId}`}
+                          title={story.studentName}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : story.studentImage ? (
+                      <img
+                        src={story.studentImage}
+                        alt={story.studentName}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
+                        <span className="text-[var(--primary-700)] font-semibold text-2xl">
+                          {story.studentName.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-5 py-3">
+                    <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 line-clamp-2 uppercase">
+                      {story.studentName}
+                    </h3>
+                    {story.achievement && (
+                      <p className="text-sm text-gray-600 line-clamp-1 mt-0.5">{story.achievement}</p>
+                    )}
                   </div>
                 </div>
-
-                {/* Name only */}
-                <div className="px-5 pt-0 pb-0">
-                  <h3 className="text-base md:text-lg font-bold tracking-wide text-gray-900 mb-1 line-clamp-2 uppercase">
-                    {story.name}
-                  </h3>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
     </section>
   );
 };
-
-

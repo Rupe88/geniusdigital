@@ -61,6 +61,7 @@ export default function AdminStudentSuccessPage() {
         setValue('title', story.title);
         setValue('story', story.story);
         setValue('studentImage', story.studentImage);
+        setValue('videoUrl', story.videoUrl);
         setValue('featured', story.featured);
         setValue('isPublished', story.isPublished);
 
@@ -135,6 +136,15 @@ export default function AdminStudentSuccessPage() {
                                     placeholder="https://..."
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">YouTube Video URL (optional)</label>
+                                <input
+                                    {...register('videoUrl')}
+                                    placeholder="https://youtube.com/watch?v=... or video ID"
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                />
+                                <p className="text-xs text-gray-500 mt-0.5">Paste YouTube link or video ID. Shown on home page when set.</p>
                             </div>
                         </div>
 
