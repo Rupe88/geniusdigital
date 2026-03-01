@@ -98,8 +98,46 @@ export default function CouponDetailPage({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-red-600"></div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="h-9 w-32 skeleton-shimmer rounded" />
+            <div className="space-y-2">
+              <div className="h-8 w-48 skeleton-shimmer rounded" />
+              <div className="h-4 w-36 skeleton-shimmer rounded" />
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <div className="h-9 w-16 skeleton-shimmer rounded" />
+            <div className="h-9 w-20 skeleton-shimmer rounded" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="p-6">
+              <div className="h-6 w-40 skeleton-shimmer rounded mb-4" />
+              <div className="space-y-4">
+                <div><div className="h-3 w-24 skeleton-shimmer rounded mb-1" /><div className="h-6 w-32 skeleton-shimmer rounded" /></div>
+                <div><div className="h-3 w-20 skeleton-shimmer rounded mb-1" /><div className="h-4 w-full skeleton-shimmer rounded" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><div className="h-3 w-24 skeleton-shimmer rounded mb-1" /><div className="h-4 w-20 skeleton-shimmer rounded" /></div>
+                  <div><div className="h-3 w-28 skeleton-shimmer rounded mb-1" /><div className="h-4 w-16 skeleton-shimmer rounded" /></div>
+                </div>
+                <div><div className="h-3 w-16 skeleton-shimmer rounded mb-1" /><div className="h-6 w-20 skeleton-shimmer rounded" /></div>
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="h-6 w-36 skeleton-shimmer rounded mb-4" />
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-4 w-full skeleton-shimmer rounded" />
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }

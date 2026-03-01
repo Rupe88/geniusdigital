@@ -152,8 +152,50 @@ export default function ViewProductPage({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-red-600"></div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="h-9 w-36 skeleton-shimmer rounded" />
+            <div className="space-y-2">
+              <div className="h-8 w-64 skeleton-shimmer rounded" />
+              <div className="h-4 w-48 skeleton-shimmer rounded" />
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <div className="h-9 w-24 skeleton-shimmer rounded" />
+            <div className="h-9 w-20 skeleton-shimmer rounded" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="p-6">
+              <div className="h-6 w-40 skeleton-shimmer rounded mb-4" />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="aspect-square skeleton-shimmer rounded" />
+                ))}
+              </div>
+            </Card>
+            <Card className="p-6">
+              <div className="h-6 w-48 skeleton-shimmer rounded mb-4" />
+              <div className="space-y-4">
+                <div className="h-4 w-full skeleton-shimmer rounded" />
+                <div className="h-4 w-5/6 skeleton-shimmer rounded" />
+                <div className="h-4 w-4/5 skeleton-shimmer rounded" />
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="h-6 w-32 skeleton-shimmer rounded mb-4" />
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-4 w-full skeleton-shimmer rounded" />
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }

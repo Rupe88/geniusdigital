@@ -111,8 +111,47 @@ export default function AdminCouponsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-red-600"></div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-64 skeleton-shimmer rounded" />
+            <div className="h-4 w-56 skeleton-shimmer rounded" />
+          </div>
+          <div className="h-10 w-36 skeleton-shimmer rounded" />
+        </div>
+        <Card className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 skeleton-shimmer rounded" />
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Code', 'Description', 'Discount', 'Usage', 'Valid Period', 'Status', 'Actions'].map((h) => (
+                    <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4"><div className="h-4 w-20 skeleton-shimmer rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-40 skeleton-shimmer rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-16 skeleton-shimmer rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-12 skeleton-shimmer rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-32 skeleton-shimmer rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-6 w-14 skeleton-shimmer rounded" /></td>
+                    <td className="px-6 py-4 text-right"><div className="h-8 w-20 skeleton-shimmer rounded ml-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </div>
     );
   }
