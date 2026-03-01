@@ -15,11 +15,12 @@ import {
   FaUsers,
   FaDollarSign,
   FaCheck,
-  FaTimes,
   FaExclamationTriangle,
-  FaFilter
 } from 'react-icons/fa';
-import toast from 'react-hot-toast';
+import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 export const AdminReferralDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<ReferralAnalytics | null>(null);
@@ -60,7 +61,7 @@ export const AdminReferralDashboard: React.FC = () => {
       setPagination(conversionsResult.pagination);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
-      toast.error('Failed to load referral data');
+      showError('Failed to load referral data');
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export const AdminReferralDashboard: React.FC = () => {
       setConversions(result.data);
       setPagination(result.pagination);
     } catch (err) {
-      toast.error('Failed to load conversions');
+      showError('Failed to load conversions');
     }
   };
 
@@ -101,35 +102,48 @@ export const AdminReferralDashboard: React.FC = () => {
 
     try {
       const result = await markCommissionsAsPaid(selectedConversions);
-      toast.success(`Marked ${result.conversionsUpdated} commissions as paid (NPR ${(result.totalAmount || 0).toFixed(2)})`);
+      showSuccess(`Marked ${result.conversionsUpdated} commissions as paid (NPR ${(result.totalAmount || 0).toFixed(2)})`);
 
       // Refresh data
       await loadData();
       setSelectedConversions([]);
     } catch (err) {
-      toast.error('Failed to mark commissions as paid');
+      showError('Failed to mark commissions as paid');
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      PAID: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800'
+    const config: Record<string, { label: string; className: string }> = {
+      PENDING: {
+        label: 'Pending',
+        className: 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-900/40 dark:text-amber-100 dark:border-amber-600',
+      },
+      PAID: {
+        label: 'Paid',
+        className: 'bg-green-100 text-green-900 border border-green-300 dark:bg-green-900/40 dark:text-green-100 dark:border-green-600',
+      },
+      CANCELLED: {
+        label: 'Cancelled',
+        className: 'bg-slate-200 text-slate-800 border border-slate-300 dark:bg-slate-600/40 dark:text-slate-200 dark:border-slate-500',
+      },
     };
-
-    return `inline-flex px-2 py-1 text-xs font-semibold rounded-none ${styles[status] || 'bg-gray-100 text-gray-800'}`;
+    const { label, className } = config[status] || { label: status, className: 'bg-[var(--muted)] text-[var(--foreground)] border border-[var(--border)]' };
+    return (
+      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border ${className}`}>
+        {label}
+      </span>
+    );
   };
 
   const getFraudBadge = (isFraudulent: boolean) => {
     return isFraudulent ? (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-none bg-red-100 text-red-800">
-        <FaExclamationTriangle className="w-3 h-3 mr-1" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-red-400 bg-red-100 text-red-900 dark:bg-red-900/50 dark:text-red-100 dark:border-red-600">
+        <FaExclamationTriangle className="w-3 h-3 shrink-0" />
         Fraudulent
       </span>
     ) : (
-      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-none bg-green-100 text-green-800">
-        <FaCheck className="w-3 h-3 mr-1" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-green-400 bg-green-100 text-green-900 dark:bg-green-900/50 dark:text-green-100 dark:border-green-600">
+        <FaCheck className="w-3 h-3 shrink-0" />
         Clean
       </span>
     );
@@ -138,192 +152,141 @@ export const AdminReferralDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-24 rounded-none"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-24 rounded border border-[var(--border)] bg-[var(--muted)]/20" />
           ))}
         </div>
-        <div className="bg-gray-200 h-96 rounded-none"></div>
+        <div className="h-96 rounded border border-[var(--border)] bg-[var(--muted)]/20" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-none p-6">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
+      <Card className="p-6 border-red-200 bg-red-50/50">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 text-red-500">
+            <FaExclamationTriangle className="h-6 w-6" />
           </div>
-          <div className="ml-3">
+          <div>
             <h3 className="text-sm font-medium text-red-800">Error loading referral data</h3>
-            <div className="mt-2 text-sm text-red-700">
-              <p>{error}</p>
-            </div>
-            <div className="mt-4">
-              <button
-                onClick={loadData}
-                className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-none text-sm font-medium"
-              >
-                Try Again
-              </button>
-            </div>
+            <p className="mt-2 text-sm text-red-700">{error}</p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={loadData}>
+              Try Again
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Referral System Admin</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Manage referral conversions, commissions, and analytics
-        </p>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]">Referral System Admin</h1>
+        <p className="mt-1 text-[var(--muted-foreground)]">Manage referral conversions, commissions, and analytics</p>
       </div>
 
       {/* Analytics Cards */}
       {analytics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white overflow-hidden shadow rounded-none border-l-4 border-blue-500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card className="border-l-4 border-l-blue-500">
             <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FaLink className="h-6 w-6 text-blue-500" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <FaLink className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Links
-                    </dt>
-                    <dd className="text-2xl font-bold text-gray-900">
-                      {analytics.totalLinks.toLocaleString()}
-                    </dd>
-                  </dl>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-sm font-medium text-[var(--muted-foreground)] truncate">Total Links</dt>
+                  <dd className="text-xl font-bold text-[var(--foreground)]">{analytics.totalLinks.toLocaleString()}</dd>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-none border-l-4 border-indigo-500">
+          <Card className="border-l-4 border-l-indigo-500">
             <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FaEye className="h-6 w-6 text-indigo-500" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                  <FaEye className="h-5 w-5 text-indigo-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Clicks
-                    </dt>
-                    <dd className="text-2xl font-bold text-gray-900">
-                      {analytics.totalClicks.toLocaleString()}
-                    </dd>
-                  </dl>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-sm font-medium text-[var(--muted-foreground)] truncate">Total Clicks</dt>
+                  <dd className="text-xl font-bold text-[var(--foreground)]">{analytics.totalClicks.toLocaleString()}</dd>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-none border-l-4 border-green-500">
+          <Card className="border-l-4 border-l-emerald-500">
             <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FaUsers className="h-6 w-6 text-green-500" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <FaUsers className="h-5 w-5 text-emerald-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Conversions
-                    </dt>
-                    <dd className="text-2xl font-bold text-gray-900">
-                      {analytics.totalConversions.toLocaleString()}
-                    </dd>
-                  </dl>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-sm font-medium text-[var(--muted-foreground)] truncate">Conversions</dt>
+                  <dd className="text-xl font-bold text-[var(--foreground)]">{analytics.totalConversions.toLocaleString()}</dd>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-none border-l-4 border-purple-500">
+          <Card className="border-l-4 border-l-purple-500">
             <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FaDollarSign className="h-6 w-6 text-purple-500" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <FaDollarSign className="h-5 w-5 text-purple-600" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Commission
-                    </dt>
-                    <dd className="text-2xl font-bold text-gray-900">
-                      {`NPR ${Number(analytics.totalCommission || 0).toFixed(0)}`}
-                    </dd>
-                  </dl>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-sm font-medium text-[var(--muted-foreground)] truncate">Total Commission</dt>
+                  <dd className="text-xl font-bold text-[var(--foreground)]">{`NPR ${Number(analytics.totalCommission || 0).toFixed(0)}`}</dd>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 overflow-hidden shadow rounded-none">
+          <Card className="border-l-4 border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10">
             <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-none bg-white/20 flex items-center justify-center">
-                    <FaCheck className="h-5 w-5 text-white" />
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded bg-emerald-200 dark:bg-emerald-800/50 flex items-center justify-center">
+                  <FaCheck className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-green-100">
-                      Conversion Rate
-                    </dt>
-                    <dd className="text-2xl font-bold text-white">
-                      {analytics.totalClicks > 0
-                        ? ((analytics.totalConversions / analytics.totalClicks) * 100).toFixed(1)
-                        : '0'}%
-                    </dd>
-                  </dl>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-sm font-medium text-emerald-700 dark:text-emerald-400 truncate">Conversion Rate</dt>
+                  <dd className="text-xl font-bold text-emerald-800 dark:text-emerald-300">
+                    {analytics.totalClicks > 0 ? ((analytics.totalConversions / analytics.totalClicks) * 100).toFixed(1) : '0'}%
+                  </dd>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* Conversions Management */}
-      <div className="bg-white shadow rounded-none">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Referral Conversions
-            </h3>
-
+      <Card padding="none">
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+            <h3 className="text-lg font-medium text-[var(--foreground)]">Referral Conversions</h3>
             {selectedConversions.length > 0 && (
-              <button
-                onClick={handleMarkAsPaid}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-none text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
+              <Button onClick={handleMarkAsPaid} size="sm">
                 <FaCheck className="w-4 h-4 mr-2" />
                 Mark {selectedConversions.length} as Paid
-              </button>
+              </Button>
             )}
           </div>
 
           {/* Filters */}
           <div className="mb-4 flex flex-wrap gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Status</label>
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange({ status: e.target.value })}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-none"
+                className="w-full min-w-[140px] px-4 py-2 border border-[var(--border)] rounded bg-[var(--background)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary-500)] focus:outline-none text-sm"
               >
                 <option value="">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -331,15 +294,12 @@ export const AdminReferralDashboard: React.FC = () => {
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fraud Status
-              </label>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Fraud Status</label>
               <select
                 value={filters.isFraudulent}
                 onChange={(e) => handleFilterChange({ isFraudulent: e.target.value })}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-none"
+                className="w-full min-w-[140px] px-4 py-2 border border-[var(--border)] rounded bg-[var(--background)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary-500)] focus:outline-none text-sm"
               >
                 <option value="">All</option>
                 <option value="false">Clean</option>
@@ -350,91 +310,61 @@ export const AdminReferralDashboard: React.FC = () => {
 
           {/* Conversions Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-[var(--border)]">
+              <thead className="bg-[var(--muted)]/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                     <input
                       type="checkbox"
                       checked={selectedConversions.length === conversions.length && conversions.length > 0}
                       onChange={handleSelectAll}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded-none"
+                      className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary-700)] focus:ring-[var(--primary-500)]"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Referrer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Course
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Converted User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fraud Check
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Referrer</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Course</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Converted User</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Amount</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Status</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Fraud Check</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Date</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-[var(--border)]">
                 {conversions.map((conversion) => (
-                  <tr key={conversion.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={conversion.id} className="hover:bg-[var(--muted)]/20">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedConversions.includes(conversion.id)}
                         onChange={() => handleSelectConversion(conversion.id)}
                         disabled={conversion.status !== 'PENDING' || conversion.isFraudulent}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded-none disabled:opacity-50"
+                        className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary-700)] focus:ring-[var(--primary-500)] disabled:opacity-50"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {conversion.referralLink?.user?.fullName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {conversion.referralLink?.user?.email}
-                      </div>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[var(--foreground)]">{conversion.referralLink?.user?.fullName || '—'}</div>
+                      <div className="text-sm text-[var(--muted-foreground)] truncate max-w-[180px]" title={conversion.referralLink?.user?.email}>{conversion.referralLink?.user?.email || '—'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {conversion.referralLink?.course?.title}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        NPR {conversion.referralLink?.course?.price}
-                      </div>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[var(--foreground)]">{conversion.referralLink?.course?.title || '—'}</div>
+                      <div className="text-sm text-[var(--muted-foreground)]">NPR {conversion.referralLink?.course?.price ?? '—'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {conversion.convertedBy?.fullName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {conversion.convertedBy?.email}
-                      </div>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[var(--foreground)]">{conversion.convertedBy?.fullName || '—'}</div>
+                      <div className="text-sm text-[var(--muted-foreground)] truncate max-w-[180px]" title={conversion.convertedBy?.email}>{conversion.convertedBy?.email || '—'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--foreground)]">
                       {`NPR ${Number(conversion.commissionAmount || 0).toFixed(2)}`}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(conversion.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">{getStatusBadge(conversion.status)}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       {getFraudBadge(conversion.isFraudulent)}
                       {conversion.fraudReason && (
-                        <div className="text-xs text-red-600 mt-1 max-w-xs truncate" title={conversion.fraudReason}>
-                          {conversion.fraudReason}
-                        </div>
+                        <div className="text-xs text-red-600 mt-1 max-w-[160px] truncate" title={conversion.fraudReason}>{conversion.fraudReason}</div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-[var(--muted-foreground)]">
                       {new Date(conversion.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -444,10 +374,10 @@ export const AdminReferralDashboard: React.FC = () => {
           </div>
 
           {conversions.length === 0 && (
-            <div className="text-center py-8">
-              <FaUsers className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No conversions found</h3>
-              <p className="mt-1 text-sm text-gray-500">
+            <div className="text-center py-12">
+              <FaUsers className="mx-auto h-12 w-12 text-[var(--muted-foreground)] opacity-50" />
+              <h3 className="mt-3 text-sm font-medium text-[var(--foreground)]">No conversions found</h3>
+              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                 {filters.status || filters.isFraudulent ? 'Try adjusting your filters' : 'Conversions will appear here when users enroll through referral links'}
               </p>
             </div>
@@ -455,35 +385,33 @@ export const AdminReferralDashboard: React.FC = () => {
 
           {/* Pagination */}
           {pagination && pagination.pages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
+            <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-t border-[var(--border)] mt-4">
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Page {pagination.page} of {pagination.pages} • {pagination.total} total
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleFilterChange({ page: pagination.page - 1 })}
                   disabled={pagination.page === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-none text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Previous
-                </button>
-                <button
+                  <HiChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm px-2">{pagination.page} / {pagination.pages}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleFilterChange({ page: pagination.page + 1 })}
                   disabled={pagination.page === pagination.pages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-none text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing page <span className="font-medium">{pagination.page}</span> of{' '}
-                    <span className="font-medium">{pagination.pages}</span>
-                  </p>
-                </div>
+                  <HiChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
