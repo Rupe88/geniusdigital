@@ -52,42 +52,45 @@ export default function AdminAffiliateApplicationsPage() {
       <div className="flex flex-col gap-4">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-primary-600 transition-colors w-fit"
+          className="inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary-600)] transition-colors w-fit"
         >
           <HiArrowLeft className="h-4 w-4" />
           Back to Admin
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)] tracking-tight flex items-center gap-2">
-            <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-100 text-primary-600">
-              <HiDocumentText className="h-5 w-5" />
-            </span>
-            Affiliate Applications
-          </h1>
-          <p className="text-[var(--muted-foreground)] mt-1.5 text-sm">
-            Applications submitted from the Become A Affiliate form.
-          </p>
-        </div>
-      </div>
 
-      <Card padding="md" className="border border-[var(--border)] bg-[var(--background)]">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-50 text-primary-600">
-            <HiDocumentText className="h-6 w-6" />
-          </span>
+        {/* Flex row: Title + Total Applications */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <p className="text-sm font-medium text-[var(--muted-foreground)]">Total applications</p>
-            <p className="text-2xl font-bold text-[var(--foreground)]">
-              {loading ? '—' : pagination.total.toLocaleString()}
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)] tracking-tight flex items-center gap-2">
+              <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--primary-100)] text-[var(--primary-600)]">
+                <HiDocumentText className="h-5 w-5" />
+              </span>
+              Affiliate Applications
+            </h1>
+            <p className="text-[var(--muted-foreground)] mt-1.5 text-sm">
+              Applications submitted from the Become An Affiliate form.
             </p>
           </div>
+          <Card padding="md" className="border border-[var(--border)] bg-[var(--background)] shrink-0 sm:min-w-[200px]">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--primary-50)] text-[var(--primary-600)]">
+                <HiDocumentText className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-[var(--muted-foreground)]">Total applications</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">
+                  {loading ? '—' : pagination.total.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
 
       <Card padding="lg" className="border border-[var(--border)] shadow-sm">
         <h2 className="text-sm font-semibold text-[var(--foreground)] uppercase tracking-wider mb-4 flex items-center gap-2">
           <HiFilter className="h-4 w-4 text-[var(--muted-foreground)]" />
-          Search
+          Search applications
         </h2>
         <div className="relative">
           <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
@@ -96,12 +99,18 @@ export default function AdminAffiliateApplicationsPage() {
             placeholder="Search by name, email, phone, country, occupation..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-[var(--border)] rounded-lg bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
           />
         </div>
       </Card>
 
       <Card padding="none" className="border border-[var(--border)] shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 border-b border-[var(--border)]">
+          <h3 className="text-base font-semibold text-[var(--foreground)]">Applications list</h3>
+          <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
+            {loading ? 'Loading...' : `${applications.length} of ${pagination.total} applications`}
+          </p>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1200px]">
             <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)] sticky top-0 z-10">
