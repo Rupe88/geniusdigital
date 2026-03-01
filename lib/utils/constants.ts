@@ -48,6 +48,9 @@ export const API_ENDPOINTS = {
     ACCOUNT_TRANSACTIONS: '/admin/account/transactions',
     ACCOUNT_BALANCE: '/admin/account/balance',
     ACCOUNT_STATEMENT: '/admin/account/statement',
+    // Mass Email
+    MASS_EMAIL_AUDIENCE_COUNT: '/admin/mass-email/audience-count',
+    MASS_EMAIL_SEND: '/admin/mass-email/send',
   },
   // Courses
   COURSES: {

@@ -79,8 +79,7 @@ const adminMenuCategories: MenuCategory[] = [
     icon: HiChat,
     items: [
       { href: `${ROUTES.ADMIN}/consultations`, label: 'Consultations', icon: HiChat },
-      { href: `${ROUTES.ADMIN}/contact-submissions`, label: 'Contact Submissions', icon: HiMail },
-      { href: `${ROUTES.ADMIN}/newsletter`, label: 'Newsletter', icon: HiMail },
+      { href: `${ROUTES.ADMIN}/mass-email`, label: 'Mass Email', icon: HiMail },
       { href: `${ROUTES.ADMIN}/notifications`, label: 'Notifications', icon: HiBell },
     ],
   },
