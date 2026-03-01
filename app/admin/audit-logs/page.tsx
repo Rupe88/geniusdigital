@@ -194,8 +194,33 @@ export default function AdminAuditLogsPage() {
       {/* Table */}
       <Card padding="none">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--primary-500)] border-t-transparent" />
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px]">
+              <thead>
+                <tr className="border-b border-[var(--border)] bg-[var(--muted)]/50">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">Time</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">User</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">Action</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">Entity</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">Description</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">Risk</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--foreground)]">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-3"><div className="h-4 skeleton-shimmer rounded w-28" /></td>
+                    <td className="px-4 py-3"><div className="h-4 skeleton-shimmer rounded w-24" /></td>
+                    <td className="px-4 py-3"><div className="h-5 skeleton-shimmer rounded w-14" /></td>
+                    <td className="px-4 py-3"><div className="h-4 skeleton-shimmer rounded w-20" /></td>
+                    <td className="px-4 py-3"><div className="h-4 skeleton-shimmer rounded w-32" /></td>
+                    <td className="px-4 py-3"><div className="h-6 skeleton-shimmer rounded w-12" /></td>
+                    <td className="px-4 py-3"><div className="h-4 skeleton-shimmer rounded w-10" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-[var(--muted-foreground)]">
@@ -255,11 +280,13 @@ export default function AdminAuditLogsPage() {
                       <td className="px-4 py-3">
                         {log.riskScore != null && log.riskScore > 0 ? (
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded ${
-                              log.flagged ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border ${
+                              log.flagged
+                                ? 'bg-red-100 text-red-900 border-red-300 dark:bg-red-900/40 dark:text-red-100 dark:border-red-600'
+                                : 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-700/40 dark:text-slate-200 dark:border-slate-600'
                             }`}
                           >
-                            {log.flagged && <HiExclamation className="h-3 w-3" />}
+                            {log.flagged && <HiExclamation className="h-3 w-3 shrink-0" />}
                             {log.riskScore}
                           </span>
                         ) : (
