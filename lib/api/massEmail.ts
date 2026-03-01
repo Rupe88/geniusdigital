@@ -26,6 +26,8 @@ export interface SendMassEmailParams {
   body: string;
   audience: MassEmailAudience;
   courseId?: string | null;
+  linkUrl?: string | null;
+  linkText?: string | null;
   batchSize?: number;
   delayMs?: number;
 }

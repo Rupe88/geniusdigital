@@ -27,9 +27,12 @@ const registerSchema = z.object({
     .min(1, 'Phone number is required')
     .refine((val) => {
       const digits = val.replace(/\D/g, '');
-      const normalized = digits.length === 12 && digits.startsWith('977') ? digits.slice(2) : digits;
-      return normalized.length === 10 && normalized.startsWith('98');
-    }, 'Please enter a valid 10-digit Nepal mobile (e.g. 98XXXXXXXX)'),
+      let normalized = digits;
+      if (digits.startsWith('977') && digits.length === 13) normalized = digits.slice(3);
+      const validPrefixes = ['96', '97', '98'];
+      const prefix = normalized.slice(0, 2);
+      return normalized.length === 10 && validPrefixes.includes(prefix);
+    }, 'Please enter a valid 10-digit Nepal mobile (96, 97 or 98XXXXXXXX)'),
   otpChannel: z.enum(['email', 'sms', 'both']).optional(),
 });
 
@@ -37,8 +40,8 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
-  if (digits.length === 12 && digits.startsWith('977')) return digits.slice(2);
-  if (digits.length === 11 && digits.startsWith('977')) return digits.slice(2);
+  if (digits.startsWith('977') && digits.length === 13) return digits.slice(3);
+  if (digits.length === 10 && ['96', '97', '98'].includes(digits.slice(0, 2))) return digits;
   return digits.length === 10 ? digits : phone;
 }
 
@@ -231,7 +234,7 @@ export default function RegisterPage() {
               <input
                 type="tel"
                 className="block w-full rounded-none border-0 bg-[var(--input)] py-1.5 px-3 text-sm text-[var(--foreground)] focus:outline-none"
-                placeholder="98XXXXXXXX"
+                placeholder="96/97/98XXXXXXXX"
                 {...register('phone')}
               />
             </div>

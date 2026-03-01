@@ -17,6 +17,8 @@ const AUDIENCE_OPTIONS: { value: MassEmailAudience; label: string }[] = [
 export default function AdminMassEmailPage() {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
   const [audience, setAudience] = useState<MassEmailAudience>('all_users');
   const [courseId, setCourseId] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
@@ -89,6 +91,8 @@ export default function AdminMassEmailPage() {
         body: body.trim(),
         audience,
         courseId: audience === 'course_enrolled' ? courseId : null,
+        linkUrl: linkUrl.trim() || null,
+        linkText: linkText.trim() || null,
       });
       setLastResult({ sent: result.sent, failed: result.failed, total: result.total });
       showSuccess(`Sent to ${result.sent} recipients${result.failed > 0 ? ` (${result.failed} failed)` : ''}`);
@@ -193,6 +197,32 @@ export default function AdminMassEmailPage() {
               rows={12}
               className="w-full max-w-2xl px-4 py-2 border border-[var(--border)] rounded-none bg-[var(--background)] text-[var(--foreground)] font-mono text-sm focus:ring-2 focus:ring-[var(--primary-500)] focus:outline-none resize-y"
             />
+          </div>
+
+          {/* Link option (CTA) */}
+          <div className="space-y-3 p-4 border border-[var(--border)] rounded bg-[var(--muted)]/20 max-w-2xl">
+            <p className="text-sm font-medium text-[var(--foreground)]">Call-to-action link (optional)</p>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Add a clickable button at the end of your message. Both URL and text must be set.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs text-[var(--muted-foreground)] mb-1">Link URL</label>
+                <Input
+                  placeholder="https://example.com/page"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs text-[var(--muted-foreground)] mb-1">Link text</label>
+                <Input
+                  placeholder="Visit Now"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Actions */}
