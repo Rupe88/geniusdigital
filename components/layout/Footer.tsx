@@ -27,7 +27,7 @@ const categories = [
 ];
 
 const usefulLinks = [
-  { label: 'About Us', href: ROUTES.HOME },
+  { label: 'About Us', href: ROUTES.ABOUT },
   { label: 'Courses', href: ROUTES.COURSES },
   { label: 'Privacy Statement', href: '/privacy' },
   { label: 'Terms & Condition', href: '/terms' },
