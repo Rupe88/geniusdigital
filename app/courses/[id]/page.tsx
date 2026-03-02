@@ -16,6 +16,7 @@ import * as installmentApi from '@/lib/api/installments';
 import * as chapterApi from '@/lib/api/chapters';
 import { validateCoupon } from '@/lib/api/coupon';
 import { reviewsApi } from '@/lib/api/reviews';
+import { courseCommentsApi, type CourseComment as CourseCommentType } from '@/lib/api/courseComments';
 import { Course, Lesson, Review, Chapter } from '@/lib/types/course';
 import { formatPrice, formatCurrency, getYouTubeEmbedUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -33,7 +34,7 @@ import {
 } from 'react-icons/fa';
 import { ShareButton } from '@/components/referrals/ShareButton';
 
-type TabType = 'overview' | 'chapters' | 'instructors' | 'reviews';
+type TabType = 'overview' | 'chapters' | 'instructors' | 'reviews' | 'comments';
 
 type SearchParamsLike = Record<string, string | string[] | undefined>;
 function getParam(sp: SearchParamsLike | null, key: string): string | null {
@@ -70,6 +71,11 @@ export default function CourseDetailPage({
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [comments, setComments] = useState<CourseCommentType[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentsPagination, setCommentsPagination] = useState<{ page: number; total: number; pages: number }>({ page: 1, total: 0, pages: 1 });
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountAmount: number; finalAmount: number } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -110,6 +116,12 @@ export default function CourseDetailPage({
       fetchLessons(params.id as string);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (activeTab === 'comments' && course?.id) {
+      fetchComments(course.id);
+    }
+  }, [activeTab, course?.id]);
 
   // Clear promo URL when switching to a different course so we don't show the previous course's video
   useEffect(() => {
@@ -219,6 +231,61 @@ export default function CourseDetailPage({
     } catch (error) {
       console.error('Error fetching reviews:', error);
       setReviews([]);
+    }
+  };
+
+  const fetchComments = async (courseId: string, page = 1) => {
+    try {
+      setCommentsLoading(true);
+      const res = await courseCommentsApi.getByCourse(courseId, { page, limit: 20 });
+      if (res.success && res.data) {
+        setComments(res.data);
+        if (res.pagination) {
+          setCommentsPagination({
+            page: res.pagination.page,
+            total: res.pagination.total,
+            pages: res.pagination.pages,
+          });
+        }
+      } else {
+        setComments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!course || !commentText.trim()) return;
+    try {
+      setSubmittingComment(true);
+      const res = await courseCommentsApi.create(course.id, commentText.trim());
+      if (res.success && res.data) {
+        showSuccess('Comment posted.');
+        setCommentText('');
+        setComments((prev) => [res.data!, ...prev]);
+        setCommentsPagination((p) => ({ ...p, total: p.total + 1 }));
+      }
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : 'Failed to post comment');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    if (!course) return;
+    try {
+      await courseCommentsApi.delete(id);
+      showSuccess('Comment removed.');
+      setComments((prev) => prev.filter((c) => c.id !== id));
+      setCommentsPagination((p) => ({ ...p, total: Math.max(0, p.total - 1) }));
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : 'Failed to delete comment');
     }
   };
 
@@ -614,6 +681,7 @@ export default function CourseDetailPage({
                   { id: 'chapters', label: 'Chapters' },
                   { id: 'instructors', label: 'Instructors' },
                   { id: 'reviews', label: 'Reviews' },
+                  { id: 'comments', label: 'Comments' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -862,6 +930,80 @@ export default function CourseDetailPage({
                     ) : (
                       <div className="text-center py-12 bg-[var(--muted)] rounded-lg">
                         <p className="text-gray-500">No reviews yet. Be the first to share your thoughts!</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'comments' && (
+                <div className="space-y-6 animate-fadeIn">
+                  {course.isEnrolled && isAuthenticated && (
+                    <div className="p-6 bg-[var(--muted)] rounded-lg">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Add a comment</h4>
+                      <form onSubmit={handleSubmitComment} className="space-y-4">
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          required
+                          maxLength={2000}
+                          rows={3}
+                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:ring-2 focus:ring-[var(--primary-500)] focus:border-[var(--primary-700)] transition-all outline-none resize-none"
+                          placeholder="Share your thoughts about this course..."
+                        />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">{commentText.length}/2000</span>
+                          <Button type="submit" isLoading={submittingComment} variant="primary" className="h-10 px-6 rounded-lg">
+                            Post comment
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                  {!course.isEnrolled && (
+                    <p className="text-gray-500 text-sm py-2">Enroll in this course to leave a comment.</p>
+                  )}
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Comments {commentsPagination.total > 0 && `(${commentsPagination.total})`}
+                    </h4>
+                    {commentsLoading ? (
+                      <div className="py-12 text-center text-gray-500">Loading comments...</div>
+                    ) : comments.length > 0 ? (
+                      <ul className="space-y-4">
+                        {comments.map((comment) => (
+                          <li key={comment.id} className="p-5 bg-[var(--muted)] rounded-lg">
+                            <div className="flex items-start gap-4">
+                              <div className="relative w-10 h-10 rounded-full bg-[var(--primary-700)] flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
+                                {comment.user?.profileImage ? (
+                                  <Image src={comment.user.profileImage} alt={comment.user.fullName || 'User'} fill className="object-cover" sizes="40px" />
+                                ) : (
+                                  (comment.user?.fullName || 'U')[0]
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <span className="font-semibold text-gray-900">{comment.user?.fullName || 'Anonymous'}</span>
+                                  <span className="text-xs text-gray-400">{new Date(comment.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+                                </div>
+                                <p className="text-gray-700 mt-1 whitespace-pre-wrap break-words">{comment.content}</p>
+                                {(user?.id === comment.userId || user?.role === 'ADMIN') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    className="mt-2 text-xs text-red-600 hover:underline"
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-center py-12 bg-[var(--muted)] rounded-lg">
+                        <p className="text-gray-500">No comments yet. Be the first to comment!</p>
                       </div>
                     )}
                   </div>

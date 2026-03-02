@@ -240,6 +240,12 @@ export const API_ENDPOINTS = {
     CREATE: '/reviews',
     BY_ID: (id: string) => `/reviews/${id}`,
   },
+  // Course comments (flat, enrolled users)
+  COURSE_COMMENTS: {
+    BY_COURSE: (courseId: string) => `/course-comments/course/${courseId}`,
+    CREATE: (courseId: string) => `/course-comments/course/${courseId}`,
+    DELETE: (id: string) => `/course-comments/${id}`,
+  },
   // Student Success
   STUDENT_SUCCESS: {
     LIST: '/student-success',
