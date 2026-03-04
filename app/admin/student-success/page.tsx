@@ -163,13 +163,13 @@ export default function AdminStudentSuccessPage() {
                                 {errors.achievement && <span className="text-red-500 text-xs">Required</span>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">YouTube Video URL (optional)</label>
+                                <label className="block text-sm font-medium text-gray-700">Video URL (YouTube or Google Drive)</label>
                                 <input
                                     {...register('videoUrl')}
                                     placeholder="https://youtube.com/watch?v=... or video ID"
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                                 />
-                                <p className="text-xs text-gray-500 mt-0.5">Paste YouTube link or video ID. Shown on home page when set.</p>
+                                <p className="text-xs text-gray-500 mt-0.5">Paste YouTube link/ID or Google Drive file link. Shown on home page when set.</p>
                             </div>
                         </div>
 

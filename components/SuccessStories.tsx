@@ -16,6 +16,17 @@ function getYoutubeId(url: string): string | null {
   return null;
 }
 
+/** Extract Google Drive file ID from URL */
+function getGoogleDriveId(url: string): string | null {
+  if (!url || !url.trim()) return null;
+  const s = url.trim();
+  const match = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  const idMatch = s.match(/id=([a-zA-Z0-9_-]+)/);
+  if (idMatch) return idMatch[1];
+  return null;
+}
+
 export const SuccessStories: React.FC = () => {
   const [stories, setStories] = useState<StudentSuccess[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,12 +111,13 @@ export const SuccessStories: React.FC = () => {
 
           <div
             ref={scrollContainerRef}
-            className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              hasCarousel ? 'scroll-smooth' : 'justify-start'
-            }`}
+            className={`flex gap-6 overflow-x-auto hide-scrollbar ${hasCarousel ? 'scroll-smooth' : 'justify-start'
+              }`}
           >
             {stories.map((story) => {
               const youtubeId = story.videoUrl ? getYoutubeId(story.videoUrl) : null;
+              const driveId = story.videoUrl && !youtubeId ? getGoogleDriveId(story.videoUrl) : null;
+
               return (
                 <div
                   key={story.id}
@@ -119,6 +131,16 @@ export const SuccessStories: React.FC = () => {
                           src={`https://www.youtube.com/embed/${youtubeId}`}
                           title={story.studentName}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : driveId ? (
+                      <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
+                        <iframe
+                          className="absolute inset-0 w-full h-full"
+                          src={`https://drive.google.com/file/d/${driveId}/preview`}
+                          title={story.studentName}
+                          allow="autoplay"
                           allowFullScreen
                         />
                       </div>
