@@ -36,7 +36,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-  const testimonialsScrollRef = useRef<HTMLDivElement | null>(null);
   const ongoingCoursesRef = useRef<HTMLDivElement>(null);
   const popularCoursesRef = useRef<HTMLDivElement>(null);
   const clientSayRef = useRef<HTMLDivElement>(null);
@@ -59,7 +58,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const testimonialsData = await testimonialApi.getTestimonials({ limit: 3, featured: true }).catch(() => ({ data: [] }));
+        const testimonialsData = await testimonialApi.getTestimonials({ limit: 10, featured: true }).catch(() => ({ data: [] }));
         setTestimonials(testimonialsData.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -127,28 +126,15 @@ export default function HomePage() {
 
   const hasTestimonialsCarousel = testimonials.length > 1;
 
-  const scrollTestimonials = (direction: 'left' | 'right') => {
-    if (!testimonialsScrollRef.current) return;
-    const cardWidthWithGap = 404;
-    const current = testimonialsScrollRef.current.scrollLeft;
-    const next =
-      direction === 'left' ? current - cardWidthWithGap : current + cardWidthWithGap;
-
-    testimonialsScrollRef.current.scrollTo({
-      left: next,
-      behavior: 'smooth',
-    });
-  };
-
   // Ongoing Courses scroll function
   const scrollOngoingCourses = (direction: 'left' | 'right') => {
     if (!ongoingCoursesRef.current) return;
     const scrollAmount = 404; // Card width (400) + gap (24)
     const currentScroll = ongoingCoursesRef.current.scrollLeft;
-    const newScroll = direction === 'left' 
-      ? currentScroll - scrollAmount 
+    const newScroll = direction === 'left'
+      ? currentScroll - scrollAmount
       : currentScroll + scrollAmount;
-    
+
     ongoingCoursesRef.current.scrollTo({
       left: newScroll,
       behavior: 'smooth',
@@ -160,10 +146,10 @@ export default function HomePage() {
     if (!popularCoursesRef.current) return;
     const scrollAmount = 404; // Card width (400) + gap (24)
     const currentScroll = popularCoursesRef.current.scrollLeft;
-    const newScroll = direction === 'left' 
-      ? currentScroll - scrollAmount 
+    const newScroll = direction === 'left'
+      ? currentScroll - scrollAmount
       : currentScroll + scrollAmount;
-    
+
     popularCoursesRef.current.scrollTo({
       left: newScroll,
       behavior: 'smooth',
@@ -243,10 +229,18 @@ export default function HomePage() {
     if (!clientSayRef.current) return;
     const scrollAmount = 404; // Card width (400) + gap (24)
     const currentScroll = clientSayRef.current.scrollLeft;
-    const newScroll = direction === 'left' 
-      ? currentScroll - scrollAmount 
+    const maxScroll = clientSayRef.current.scrollWidth - clientSayRef.current.clientWidth;
+
+    let newScroll = direction === 'left'
+      ? currentScroll - scrollAmount
       : currentScroll + scrollAmount;
-    
+
+    if (direction === 'right' && currentScroll >= maxScroll - 10) {
+      newScroll = 0;
+    } else if (direction === 'left' && currentScroll <= 10) {
+      newScroll = maxScroll;
+    }
+
     clientSayRef.current.scrollTo({
       left: newScroll,
       behavior: 'smooth',
@@ -291,7 +285,7 @@ export default function HomePage() {
     if (!hasTestimonialsCarousel || !testimonials.length) return;
 
     const interval = setInterval(() => {
-      scrollTestimonials('right');
+      scrollClientSay('right');
     }, 5000);
 
     return () => clearInterval(interval);
@@ -360,7 +354,7 @@ export default function HomePage() {
   ];
 
   const testimonialsToShow =
-    (testimonials && testimonials.length ? testimonials : fallbackTestimonials).slice(0, 3);
+    (testimonials && testimonials.length ? testimonials : fallbackTestimonials);
 
   return (
     <div className="min-h-screen">
@@ -407,9 +401,8 @@ export default function HomePage() {
             {/* Scrollable Container */}
             <div
               ref={ongoingCoursesRef}
-              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-                ongoingCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
-              } ${ongoingIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${ongoingCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
+                } ${ongoingIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleOngoingMouseDown}
               onMouseMove={handleOngoingMouseMove}
               onMouseUp={handleOngoingMouseUp}
@@ -481,9 +474,8 @@ export default function HomePage() {
             {/* Scrollable Container */}
             <div
               ref={popularCoursesRef}
-              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-                popularCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
-              } ${popularIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${popularCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
+                } ${popularIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handlePopularMouseDown}
               onMouseMove={handlePopularMouseMove}
               onMouseUp={handlePopularMouseUp}
@@ -556,9 +548,8 @@ export default function HomePage() {
             {/* Scrollable Container */}
             <div
               ref={clientSayRef}
-              className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-                testimonialsToShow.length > 1 ? 'scroll-smooth' : 'justify-start'
-              } ${clientSayIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`flex gap-6 overflow-x-auto hide-scrollbar ${testimonialsToShow.length > 1 ? 'scroll-smooth' : 'justify-start'
+                } ${clientSayIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleClientSayMouseDown}
               onMouseMove={handleClientSayMouseMove}
               onMouseUp={handleClientSayMouseUp}
