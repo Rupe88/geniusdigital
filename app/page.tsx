@@ -451,8 +451,8 @@ export default function HomePage() {
           </div>
 
           <div className="relative min-h-[320px] flex items-center">
-            {/* Navigation Arrows - Only show if more than 3 courses */}
-            {popularCourses.length > 3 && (
+            {/* Navigation Arrows - Only show if more than 6 courses */}
+            {popularCourses.length > 6 && (
               <>
                 <button
                   onClick={() => scrollPopularCourses('left')}
@@ -474,8 +474,7 @@ export default function HomePage() {
             {/* Scrollable Container */}
             <div
               ref={popularCoursesRef}
-              className={`flex gap-6 overflow-x-auto hide-scrollbar ${popularCourses.length > 3 ? 'scroll-smooth' : 'justify-start'
-                } ${popularIsDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ${popularCourses.length > 6 ? 'overflow-x-auto' : ''}`}
               onMouseDown={handlePopularMouseDown}
               onMouseMove={handlePopularMouseMove}
               onMouseUp={handlePopularMouseUp}
@@ -483,10 +482,10 @@ export default function HomePage() {
             >
               {popularCoursesLoading && (
                 <>
-                  {[1, 2, 3].map((i) => (
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
                       key={i}
-                      className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] h-72 bg-gray-100 animate-pulse rounded-lg"
+                      className="w-full h-72 bg-gray-100 animate-pulse rounded-lg"
                     />
                   ))}
                 </>
@@ -507,7 +506,7 @@ export default function HomePage() {
                     price={course.price}
                     oldPrice={course.oldPrice}
                     slug={course.slug}
-                    className="flex-shrink-0 w-[min(calc(100vw-2rem),400px)] min-w-[260px] sm:w-[360px] lg:w-[400px]"
+                    className="w-full"
                   />
                 ))}
             </div>

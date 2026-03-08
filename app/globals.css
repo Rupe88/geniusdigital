@@ -253,16 +253,18 @@ img {
   font-weight: 550;
   letter-spacing: 0.05em;
   position: relative;
-  display: inline-block;
+  display: block;
   padding-bottom: 0.5em;
+  text-align: center;
 }
 .section-title::after {
   content: '';
   position: absolute;
-  left: 0;
+  left: 50%;
   bottom: 0;
-  width: 100%;
+  width: 30%;
   height: 4px;
   background: var(--primary-700);
   border-radius: 2px;
+  transform: translateX(-50%);
 }

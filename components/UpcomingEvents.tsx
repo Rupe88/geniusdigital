@@ -232,7 +232,7 @@ export const UpcomingEvents: React.FC = () => {
           <div
             ref={scrollContainerRef}
             className={`flex gap-6 overflow-x-auto hide-scrollbar ${
-              showCarousel ? 'scroll-smooth' : 'justify-start'
+              showCarousel ? 'scroll-smooth' : totalItems === 1 ? 'justify-start pl-[calc(50%-200px)]' : 'justify-start'
             } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
