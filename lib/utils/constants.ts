@@ -71,6 +71,9 @@ export const API_ENDPOINTS = {
     PROGRESS: (id: string) => `/enrollments/${id}/progress`, // Get progress for enrollment
     UNENROLL: (courseId: string) => `/enrollments/course/${courseId}`, // User: unenroll from course
     ADMIN_GRANT: '/enrollments/admin/grant', // Admin: manually grant course access
+    ADMIN_GRANT_PARTIAL: '/enrollments/admin/grant-partial', // Admin: grant partial access
+    ADMIN_EXTEND_ACCESS: '/enrollments/admin/extend-access', // Admin: extend access
+    CHECK_EXPIRY: (courseId: string) => `/enrollments/check-expiry/${courseId}`, // Check access expiry
   },
   // Payments
   PAYMENTS: {

@@ -153,7 +153,7 @@ export const grantPartialAccess = async (data: {
   adminNotes?: string;
 }): Promise<Enrollment> => {
   try {
-    const response = await apiClient.post<ApiResponse<Enrollment>>('/api/enrollments/admin/grant-partial', data);
+    const response = await apiClient.post<ApiResponse<Enrollment>>(API_ENDPOINTS.ENROLLMENTS.ADMIN_GRANT_PARTIAL, data);
     const payload = response.data;
     if (!payload.success || !payload.data) {
       throw new Error(payload.message || 'Failed to grant partial access');
@@ -170,7 +170,7 @@ export const extendAccess = async (data: {
   adminNotes?: string;
 }): Promise<Enrollment> => {
   try {
-    const response = await apiClient.post<ApiResponse<Enrollment>>('/api/enrollments/admin/extend-access', data);
+    const response = await apiClient.post<ApiResponse<Enrollment>>(API_ENDPOINTS.ENROLLMENTS.ADMIN_EXTEND_ACCESS, data);
     const payload = response.data;
     if (!payload.success || !payload.data) {
       throw new Error(payload.message || 'Failed to extend access');
@@ -198,7 +198,7 @@ export const checkAccessExpiry = async (courseId: string): Promise<{
   warningLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }> => {
   try {
-    const response = await apiClient.get<ApiResponse<any>>(`/api/enrollments/check-expiry/${courseId}`);
+    const response = await apiClient.get<ApiResponse<any>>(API_ENDPOINTS.ENROLLMENTS.CHECK_EXPIRY(courseId));
     const payload = response.data;
     if (!payload.success || !payload.data) {
       throw new Error(payload.message || 'Failed to check access expiry');
