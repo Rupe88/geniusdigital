@@ -1193,15 +1193,6 @@ export default function CourseDetailPage({
                         <p className="font-medium text-gray-900">{totalLessons}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[var(--muted)] flex items-center justify-center text-gray-600">
-                        <HiClock className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Access</p>
-                        <p className="font-medium text-gray-900">Lifetime</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
