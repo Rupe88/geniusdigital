@@ -18,6 +18,27 @@ export default function ConsultationPage() {
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateConsultationRequest>();
 
+  // Define specific category order (same as courses page)
+  const categoryOrder = ['Vastu', 'Numerology', 'Money and Wealth', 'NLP'];
+  
+  // Sort categories according to the defined order, then alphabetically for others
+  const sortedCategories = [...categories].sort((a, b) => {
+    const aIndex = categoryOrder.indexOf(a.name);
+    const bIndex = categoryOrder.indexOf(b.name);
+    
+    // If both are in the defined order, sort by that order
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    
+    // If only one is in the defined order, prioritize it
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    
+    // If neither is in the defined order, sort alphabetically
+    return a.name.localeCompare(b.name);
+  });
+
   const fetchCategories = useCallback(async () => {
     setCategoriesLoading(true);
     try {
@@ -115,27 +136,17 @@ export default function ConsultationPage() {
                 ) : (
                   <div className="p-4 sm:p-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {categories.map((cat) => (
+                      {sortedCategories.map((cat) => (
                         <button
                           key={cat.id}
                           type="button"
                           onClick={() => setSelectedCategory(cat)}
                           className="flex items-center gap-4 p-4 rounded-lg border-2 border-gray-100 hover:border-[var(--primary-300)] hover:bg-[var(--primary-50)]/50 transition-all text-left group"
                         >
-                          <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                            {cat.image ? (
-                              <Image
-                                src={cat.image}
-                                alt={cat.name}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform"
-                                sizes="64px"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl font-bold">
-                                {cat.name.charAt(0)}
-                              </div>
-                            )}
+                          <div className="w-8 h-8 rounded-full bg-[var(--primary-100)] flex items-center justify-center flex-shrink-0">
+                            <span className="text-[var(--primary-700)] font-semibold text-sm">
+                              {cat.name.charAt(0)}
+                            </span>
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="font-semibold text-gray-900">{cat.name}</span>
