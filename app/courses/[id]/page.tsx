@@ -92,9 +92,8 @@ export default function CourseDetailPage({
       const data = await reviewsApi.create({
         courseId: course.id,
         rating: reviewRating,
-        title: 'Course Review', // Added because API type requires it
         comment: reviewComment,
-      } as any);
+      });
 
       if (data.success) {
         showSuccess('Review submitted successfully!');

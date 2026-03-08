@@ -237,7 +237,10 @@ export const API_ENDPOINTS = {
   // Reviews
   REVIEWS: {
     LIST: '/reviews',
-    CREATE: '/reviews',
+    BY_COURSE: (courseId: string) => `/reviews/course/${courseId}`,
+    CREATE: (courseId: string) => `/reviews/course/${courseId}`,
+    MY_REVIEW: (courseId: string) => `/reviews/course/${courseId}/my-review`,
+    DELETE: (courseId: string) => `/reviews/course/${courseId}`,
     BY_ID: (id: string) => `/reviews/${id}`,
   },
   // Course comments (flat, enrolled users)

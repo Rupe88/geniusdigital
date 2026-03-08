@@ -24,8 +24,7 @@ export interface Review {
 export interface CreateReviewRequest {
   courseId: string;
   rating: number;
-  title: string;
-  comment: string;
+  comment?: string;
 }
 
 export interface UpdateReviewRequest {
@@ -57,7 +56,7 @@ export const reviewsApi = {
    * Get reviews for a specific course
    */
   getByCourse: async (courseId: string): Promise<ApiResponse<Review[]>> => {
-    const response = await apiClient.get(`${API_ENDPOINTS.REVIEWS.LIST}/course/${courseId}`);
+    const response = await apiClient.get(API_ENDPOINTS.REVIEWS.BY_COURSE(courseId));
     return response.data;
   },
 
@@ -73,7 +72,8 @@ export const reviewsApi = {
    * Create new review
    */
   create: async (data: CreateReviewRequest): Promise<ApiResponse<Review>> => {
-    const response = await apiClient.post(API_ENDPOINTS.REVIEWS.CREATE, data);
+    const { courseId, ...reviewData } = data;
+    const response = await apiClient.post(API_ENDPOINTS.REVIEWS.CREATE(courseId), reviewData);
     return response.data;
   },
 
@@ -86,10 +86,10 @@ export const reviewsApi = {
   },
 
   /**
-   * Delete review (admin only)
+   * Delete review
    */
-  delete: async (id: string): Promise<ApiResponse> => {
-    const response = await apiClient.delete(API_ENDPOINTS.REVIEWS.BY_ID(id));
+  delete: async (courseId: string): Promise<ApiResponse> => {
+    const response = await apiClient.delete(API_ENDPOINTS.REVIEWS.DELETE(courseId));
     return response.data;
   },
 };
