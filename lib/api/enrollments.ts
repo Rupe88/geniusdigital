@@ -4,7 +4,7 @@ import { Enrollment } from '@/lib/types/course';
 import { PaginatedResponse, ApiResponse, Pagination } from '@/lib/types/api';
 
 export const getUserEnrollments = async (params?: {
-  status?: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status?: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
   page?: number;
   limit?: number;
 }): Promise<PaginatedResponse<Enrollment>> => {
@@ -32,7 +32,7 @@ export const getUserEnrollments = async (params?: {
 };
 
 export const getAllEnrollments = async (params?: {
-  status?: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status?: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
   courseId?: string;
   userId?: string;
   search?: string;
@@ -138,6 +138,72 @@ export const grantCourseAccess = async (userId: string, courseId: string): Promi
     if (!payload.success) {
       throw new Error(payload.message || 'Failed to grant course access');
     }
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+// Partial Access Functions
+export const grantPartialAccess = async (data: {
+  userId: string;
+  courseId: string;
+  accessType: 'PARTIAL' | 'TRIAL';
+  durationDays: number;
+  pricePaid?: number;
+  adminNotes?: string;
+}): Promise<Enrollment> => {
+  try {
+    const response = await apiClient.post<ApiResponse<Enrollment>>('/api/enrollments/admin/grant-partial', data);
+    const payload = response.data;
+    if (!payload.success || !payload.data) {
+      throw new Error(payload.message || 'Failed to grant partial access');
+    }
+    return payload.data;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const extendAccess = async (data: {
+  enrollmentId: string;
+  durationDays: number;
+  adminNotes?: string;
+}): Promise<Enrollment> => {
+  try {
+    const response = await apiClient.post<ApiResponse<Enrollment>>('/api/enrollments/admin/extend-access', data);
+    const payload = response.data;
+    if (!payload.success || !payload.data) {
+      throw new Error(payload.message || 'Failed to extend access');
+    }
+    return payload.data;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const checkAccessExpiry = async (courseId: string): Promise<{
+  enrollment: {
+    id: string;
+    status: string;
+    accessType?: string;
+    accessExpiresAt?: string;
+    grantedByAdmin?: boolean;
+  };
+  course: {
+    id: string;
+    title: string;
+  };
+  accessStatus: 'FULL_ACCESS' | 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED';
+  daysRemaining?: number;
+  warningLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}> => {
+  try {
+    const response = await apiClient.get<ApiResponse<any>>(`/api/enrollments/check-expiry/${courseId}`);
+    const payload = response.data;
+    if (!payload.success || !payload.data) {
+      throw new Error(payload.message || 'Failed to check access expiry');
+    }
+    return payload.data;
   } catch (error) {
     throw new Error(handleApiError(error));
   }

@@ -129,10 +129,18 @@ export interface Enrollment {
   id: string;
   userId: string;
   courseId: string;
-  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  status: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
   progress: number;
   enrolledAt: string;
   completedAt?: string;
+  
+  // Partial Access Fields
+  accessType?: 'FULL' | 'PARTIAL' | 'TRIAL';
+  accessExpiresAt?: string;
+  pricePaid: number;
+  grantedByAdmin?: boolean;
+  adminNotes?: string;
+  
   course?: Course;
   user?: {
     id: string;
@@ -140,7 +148,6 @@ export interface Enrollment {
     email: string;
     profileImage?: string;
   };
-  pricePaid: number;
   paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
   paymentMethod?: string;
   createdAt?: string;

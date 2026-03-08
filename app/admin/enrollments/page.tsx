@@ -17,7 +17,7 @@ import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiDownload, HiFilter, HiTrash, HiSearch, HiUpload } from 'react-icons/hi';
 
-type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -31,6 +31,14 @@ export default function AdminEnrollmentsPage() {
   const [grantUserId, setGrantUserId] = useState<string | null>(null);
   const [grantCourseId, setGrantCourseId] = useState('');
   const [grantLoading, setGrantLoading] = useState(false);
+  
+  // Partial Access State
+  const [showPartialAccessModal, setShowPartialAccessModal] = useState(false);
+  const [partialAccessType, setPartialAccessType] = useState<'PARTIAL' | 'TRIAL'>('PARTIAL');
+  const [partialAccessDuration, setPartialAccessDuration] = useState(7);
+  const [partialAccessPrice, setPartialAccessPrice] = useState('');
+  const [partialAccessNotes, setPartialAccessNotes] = useState('');
+  
   const [studentResults, setStudentResults] = useState<User[]>([]);
   const [studentSearchLoading, setStudentSearchLoading] = useState(false);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
@@ -178,6 +186,67 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
+  const handleGrantPartialAccess = async () => {
+    if (!grantEmail.trim()) {
+      showError('Please search and select a student to grant access');
+      return;
+    }
+    if (!grantCourseId) {
+      showError('Please select a course to grant access');
+      return;
+    }
+
+    let userId = grantUserId;
+    if (!userId) {
+      // Fallback: search by email
+      try {
+        const usersResult = await adminApi.getAllUsers({
+          page: 1,
+          limit: 1,
+          search: grantEmail.trim(),
+        });
+        userId = usersResult.data[0]?.id;
+      } catch {
+        showError('Failed to find student');
+        return;
+      }
+    }
+    if (!userId) {
+      showError('No student found. Search by email or name and select from the list.');
+      return;
+    }
+
+    try {
+      setGrantLoading(true);
+      await enrollmentApi.grantPartialAccess({
+        userId,
+        courseId: grantCourseId,
+        accessType: partialAccessType,
+        durationDays: partialAccessDuration,
+        pricePaid: partialAccessPrice ? parseFloat(partialAccessPrice) : undefined,
+        adminNotes: partialAccessNotes,
+      });
+      showSuccess(`Partial access granted successfully for ${partialAccessDuration} days`);
+
+      // Reset form
+      setGrantEmail('');
+      setGrantUserId(null);
+      setGrantCourseId('');
+      setStudentResults([]);
+      setShowStudentDropdown(false);
+      setShowPartialAccessModal(false);
+      setPartialAccessType('PARTIAL');
+      setPartialAccessDuration(7);
+      setPartialAccessPrice('');
+      setPartialAccessNotes('');
+      fetchEnrollments();
+    } catch (error) {
+      showError(Object(error).message || 'Failed to grant partial access');
+    } finally {
+      setGrantLoading(false);
+    }
+  };
+
   const handleDeleteEnrollment = async (id: string) => {
     if (!confirm('Are you sure you want to remove this enrollment?')) return;
     try {
@@ -195,6 +264,7 @@ export default function AdminEnrollmentsPage() {
       case 'PENDING': return 'warning';
       case 'COMPLETED': return 'info';
       case 'CANCELLED': return 'danger';
+      case 'EXPIRED': return 'danger';
       default: return 'default';
     }
   };
@@ -412,14 +482,24 @@ export default function AdminEnrollmentsPage() {
               </span>
             </div>
           </div>
-          <Button
-            variant="primary"
-            onClick={handleGrantAccess}
-            disabled={grantLoading}
-            className="w-full md:w-auto"
-          >
-            {grantLoading ? 'Granting access...' : 'Grant Access'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              onClick={handleGrantAccess}
+              disabled={grantLoading}
+              className="flex-1"
+            >
+              {grantLoading ? 'Granting access...' : 'Grant Full Access'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowPartialAccessModal(true)}
+              disabled={!grantUserId || !grantCourseId}
+              className="flex-1"
+            >
+              Grant Partial Access
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -527,6 +607,7 @@ export default function AdminEnrollmentsPage() {
               { value: 'PENDING', label: 'Pending' },
               { value: 'COMPLETED', label: 'Completed' },
               { value: 'CANCELLED', label: 'Cancelled' },
+              { value: 'EXPIRED', label: 'Expired' },
             ]}
           />
         </div>
@@ -554,6 +635,8 @@ export default function AdminEnrollmentsPage() {
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Course</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Enrolled Date</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Status</th>
+                <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Access Type</th>
+                <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Expires At</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Price Paid</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)] text-right">Actions</th>
               </tr>
@@ -562,14 +645,14 @@ export default function AdminEnrollmentsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={6} className="px-6 py-4">
+                    <td colSpan={8} className="px-6 py-4">
                       <div className="h-4 bg-[var(--muted)] rounded-none w-full"></div>
                     </td>
                   </tr>
                 ))
               ) : enrollments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={8} className="px-6 py-12 text-center text-[var(--muted-foreground)]">
                     No enrollments found matching your criteria.
                   </td>
                 </tr>
@@ -593,6 +676,29 @@ export default function AdminEnrollmentsPage() {
                       <Badge variant={getStatusColor(enrollment.status)}>
                         {enrollment.status}
                       </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        enrollment.accessType === 'PARTIAL' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : enrollment.accessType === 'TRIAL'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {enrollment.accessType || 'FULL'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {enrollment.accessExpiresAt ? (
+                        <div className="text-sm">
+                          <div>{formatDate(enrollment.accessExpiresAt)}</div>
+                          {new Date(enrollment.accessExpiresAt) < new Date() && (
+                            <span className="text-red-500 text-xs">Expired</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No expiration</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 font-medium">
                       Rs. {(enrollment.pricePaid || 0).toLocaleString()}
@@ -640,6 +746,95 @@ export default function AdminEnrollmentsPage() {
           </div>
         )}
       </Card>
+
+      {/* Partial Access Modal */}
+      {showPartialAccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-6">
+              Grant Partial Access
+            </h3>
+            
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Access Type
+                </label>
+                <select
+                  className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  value={partialAccessType}
+                  onChange={(e) => setPartialAccessType(e.target.value as 'PARTIAL' | 'TRIAL')}
+                >
+                  <option value="PARTIAL">Partial Access</option>
+                  <option value="TRIAL">Trial Access</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Duration (Days)
+                </label>
+                <select
+                  className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  value={partialAccessDuration}
+                  onChange={(e) => setPartialAccessDuration(parseInt(e.target.value))}
+                >
+                  <option value={7}>7 Days</option>
+                  <option value={10}>10 Days</option>
+                  <option value={14}>14 Days</option>
+                  <option value={20}>20 Days</option>
+                  <option value={30}>30 Days</option>
+                  <option value={60}>60 Days</option>
+                  <option value={90}>90 Days</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Price Paid (Optional)
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Enter amount paid"
+                  value={partialAccessPrice}
+                  onChange={(e) => setPartialAccessPrice(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Admin Notes (Optional)
+                </label>
+                <textarea
+                  className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                  rows={3}
+                  placeholder="Add notes about this partial access grant..."
+                  value={partialAccessNotes}
+                  onChange={(e) => setPartialAccessNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t border-[var(--border)]">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPartialAccessModal(false)}
+                  className="flex-1 h-10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleGrantPartialAccess}
+                  disabled={grantLoading}
+                  className="flex-1 h-10"
+                >
+                  {grantLoading ? 'Granting...' : 'Grant Access'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

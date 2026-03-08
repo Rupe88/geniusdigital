@@ -9,11 +9,13 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import { Enrollment } from '@/lib/types/course';
+import { formatDate } from '@/lib/utils/helpers';
 
 export default function MyCoursesPage() {
   const router = useRouter();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessInfo, setAccessInfo] = useState<Record<string, any | null>>({});
 
   useEffect(() => {
     fetchEnrollments();
@@ -23,6 +25,21 @@ export default function MyCoursesPage() {
     try {
       const data = await enrollmentApi.getUserEnrollments();
       setEnrollments(data.data);
+      
+      // Check access expiry for each enrollment
+      const accessPromises = data.data.map(async (enrollment) => {
+        try {
+          const accessData = await enrollmentApi.checkAccessExpiry(enrollment.courseId);
+          return { [enrollment.courseId]: accessData };
+        } catch (error) {
+          console.error(`Error checking access for course ${enrollment.courseId}:`, error);
+          return { [enrollment.courseId]: null };
+        }
+      });
+      
+      const accessResults = await Promise.all(accessPromises);
+      const accessMap = Object.assign({}, ...accessResults);
+      setAccessInfo(accessMap);
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     } finally {
@@ -73,9 +90,49 @@ export default function MyCoursesPage() {
                     ></div>
                   </div>
                 </div>
+                
+                {/* Access Expiry Information */}
+                {accessInfo[enrollment.courseId] && (
+                  <div className="mb-4">
+                    {accessInfo[enrollment.courseId].accessStatus === 'FULL_ACCESS' ? (
+                      <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
+                        Full Access
+                      </div>
+                    ) : (
+                      <div className={`text-sm px-2 py-1 rounded ${
+                        accessInfo[enrollment.courseId].warningLevel === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                        accessInfo[enrollment.courseId].warningLevel === 'HIGH' ? 'bg-orange-100 text-orange-700' :
+                        accessInfo[enrollment.courseId].warningLevel === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        <div className="flex justify-between items-center">
+                          <span>
+                            {accessInfo[enrollment.courseId].accessStatus === 'EXPIRED' ? 'Access Expired' :
+                             accessInfo[enrollment.courseId].accessStatus === 'EXPIRING_SOON' ? 'Expires Soon' :
+                             'Partial Access'}
+                          </span>
+                          {accessInfo[enrollment.courseId].daysRemaining !== undefined && (
+                            <span className="font-medium">
+                              {accessInfo[enrollment.courseId].daysRemaining < 0 
+                                ? `${Math.abs(accessInfo[enrollment.courseId].daysRemaining)} days ago`
+                                : `${accessInfo[enrollment.courseId].daysRemaining} days left`
+                              }
+                            </span>
+                          )}
+                        </div>
+                        {accessInfo[enrollment.courseId].accessExpiresAt && (
+                          <div className="text-xs mt-1 opacity-75">
+                            Expires: {formatDate(accessInfo[enrollment.courseId].accessExpiresAt)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className={`text-sm px-2 py-1 rounded-none ${enrollment.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
                       enrollment.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' :
+                      enrollment.status === 'EXPIRED' ? 'bg-red-100 text-red-700' :
                         'bg-gray-100 text-gray-700'
                     }`}>
                     {enrollment.status}
