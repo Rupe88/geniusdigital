@@ -133,10 +133,12 @@ export default function MyCoursesPage() {
                   <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         enrollment.accessType === 'PARTIAL' 
                           ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
+                          : enrollment.accessType === 'FULL'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
-                    {enrollment.accessType || 'FULL'}
-                  </div>
+                        {enrollment.accessType || 'FULL'}
+                      </div>
                   <Link
                     href={`/dashboard/courses/${enrollment.courseId}/learn`}
                     onClick={(e) => e.stopPropagation()}
