@@ -24,6 +24,27 @@ export default function CoursesPage() {
     pages: 0,
   });
 
+  // Define specific category order
+  const categoryOrder = ['Vastu', 'Numerology', 'Money and Wealth', 'NLP'];
+  
+  // Sort categories according to the defined order, then alphabetically for others
+  const sortedCategories = [...categories].sort((a, b) => {
+    const aIndex = categoryOrder.indexOf(a.name);
+    const bIndex = categoryOrder.indexOf(b.name);
+    
+    // If both are in the defined order, sort by that order
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    
+    // If only one is in the defined order, prioritize it
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    
+    // If neither is in the defined order, sort alphabetically
+    return a.name.localeCompare(b.name);
+  });
+
   // Load course categories once
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +170,7 @@ export default function CoursesPage() {
               >
                 All
               </button>
-              {categories.map((cat) => (
+              {sortedCategories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
