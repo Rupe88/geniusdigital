@@ -579,6 +579,15 @@ export default function CourseDetailPage({
           <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-3xl">
             {course.shortDescription}
           </p>
+          {/* Course Category */}
+          {course.category && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Category:</span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[var(--primary-100)] text-[var(--primary-800)]">
+                {course.category.name}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
