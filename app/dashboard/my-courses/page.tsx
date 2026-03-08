@@ -130,13 +130,13 @@ export default function MyCoursesPage() {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm px-2 py-1 rounded-none ${enrollment.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                      enrollment.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' :
-                      enrollment.status === 'EXPIRED' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                    }`}>
-                    {enrollment.status}
-                  </span>
+                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        enrollment.accessType === 'PARTIAL' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                    {enrollment.accessType || 'FULL'}
+                  </div>
                   <Link
                     href={`/dashboard/courses/${enrollment.courseId}/learn`}
                     onClick={(e) => e.stopPropagation()}

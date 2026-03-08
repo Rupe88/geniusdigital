@@ -147,7 +147,7 @@ export const grantCourseAccess = async (userId: string, courseId: string): Promi
 export const grantPartialAccess = async (data: {
   userId: string;
   courseId: string;
-  accessType: 'PARTIAL' | 'TRIAL';
+  accessType: 'PARTIAL';
   durationDays: number;
   pricePaid?: number;
   adminNotes?: string;

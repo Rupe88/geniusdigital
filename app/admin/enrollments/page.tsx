@@ -34,7 +34,6 @@ export default function AdminEnrollmentsPage() {
   
   // Partial Access State
   const [showPartialAccessModal, setShowPartialAccessModal] = useState(false);
-  const [partialAccessType, setPartialAccessType] = useState<'PARTIAL' | 'TRIAL'>('PARTIAL');
   const [partialAccessDuration, setPartialAccessDuration] = useState(7);
   const [partialAccessPrice, setPartialAccessPrice] = useState('');
   const [partialAccessNotes, setPartialAccessNotes] = useState('');
@@ -221,7 +220,7 @@ export default function AdminEnrollmentsPage() {
       await enrollmentApi.grantPartialAccess({
         userId,
         courseId: grantCourseId,
-        accessType: partialAccessType,
+        accessType: 'PARTIAL',
         durationDays: partialAccessDuration,
         pricePaid: partialAccessPrice ? parseFloat(partialAccessPrice) : undefined,
         adminNotes: partialAccessNotes,
@@ -235,7 +234,6 @@ export default function AdminEnrollmentsPage() {
       setStudentResults([]);
       setShowStudentDropdown(false);
       setShowPartialAccessModal(false);
-      setPartialAccessType('PARTIAL');
       setPartialAccessDuration(7);
       setPartialAccessPrice('');
       setPartialAccessNotes('');
@@ -681,8 +679,6 @@ export default function AdminEnrollmentsPage() {
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         enrollment.accessType === 'PARTIAL' 
                           ? 'bg-blue-100 text-blue-800' 
-                          : enrollment.accessType === 'TRIAL'
-                          ? 'bg-purple-100 text-purple-800'
                           : 'bg-green-100 text-green-800'
                       }`}>
                         {enrollment.accessType || 'FULL'}
@@ -756,20 +752,6 @@ export default function AdminEnrollmentsPage() {
             </h3>
             
             <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Access Type
-                </label>
-                <select
-                  className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
-                  value={partialAccessType}
-                  onChange={(e) => setPartialAccessType(e.target.value as 'PARTIAL' | 'TRIAL')}
-                >
-                  <option value="PARTIAL">Partial Access</option>
-                  <option value="TRIAL">Trial Access</option>
-                </select>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
                   Duration (Days)
