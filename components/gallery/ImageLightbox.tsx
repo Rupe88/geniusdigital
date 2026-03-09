@@ -43,6 +43,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
   if (!isOpen || images.length === 0) return null;
 
   const image = images[currentIndex];
+  if (!image?.imageUrl) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">

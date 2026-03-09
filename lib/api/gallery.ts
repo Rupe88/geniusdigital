@@ -3,17 +3,24 @@ import { apiClient, handleApiResponse, handleApiError } from './axios';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
 import { PaginatedResponse, ApiResponse, Pagination } from '@/lib/types/api';
 
+export type GalleryMediaType = 'IMAGE' | 'VIDEO';
+
 export interface GalleryItem {
   id: string;
   title?: string | null;
-  imageUrl: string;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
+  mediaType?: GalleryMediaType;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateGalleryItemData {
   title?: string;
-  files?: File[]; // For file upload (multiple)
+  files?: File[]; // For image file upload (multiple)
+  mediaType?: GalleryMediaType;
+  videoUrl?: string; // For YouTube/Google Drive link
+  videoFile?: File; // For uploaded video
 }
 
 export interface UpdateGalleryItemData extends Partial<CreateGalleryItemData> {}
@@ -89,17 +96,40 @@ export const getGalleryItemById = async (id: string): Promise<GalleryItem> => {
 // Admin: Create gallery item
 export const createGalleryItem = async (data: CreateGalleryItemData): Promise<GalleryItem[]> => {
   try {
-    // Either file or URL must be provided
-    if (!data.files || data.files.length === 0) {
-      throw new Error('Please upload at least one image file');
+    const mediaType: GalleryMediaType = data.mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE';
+
+    // Validate required media based on type
+    if (mediaType === 'IMAGE') {
+      if (!data.files || data.files.length === 0) {
+        throw new Error('Please upload at least one image file');
+      }
+    } else if (mediaType === 'VIDEO') {
+      const hasVideoFile = !!data.videoFile;
+      const hasVideoUrl = !!data.videoUrl && data.videoUrl.trim().length > 0;
+      if (!hasVideoFile && !hasVideoUrl) {
+        throw new Error('Please upload a video file or provide a YouTube/Google Drive link');
+      }
     }
 
     const formData = new FormData();
 
     if (data.title) formData.append('title', data.title.trim());
-    data.files.forEach((file) => {
-      formData.append('files', file);
-    });
+    formData.append('mediaType', mediaType);
+
+    if (mediaType === 'IMAGE' && data.files) {
+      data.files.forEach((file) => {
+        formData.append('files', file);
+      });
+    }
+
+    if (mediaType === 'VIDEO') {
+      if (data.videoUrl && data.videoUrl.trim()) {
+        formData.append('videoUrl', data.videoUrl.trim());
+      }
+      if (data.videoFile) {
+        formData.append('video', data.videoFile);
+      }
+    }
 
     const response = await apiClient.post<ApiResponse<GalleryItem[]>>(API_ENDPOINTS.GALLERY.LIST, formData, {
       headers: {
@@ -135,10 +165,21 @@ export const updateGalleryItem = async (id: string, data: UpdateGalleryItemData)
 
     if (data.title !== undefined) formData.append('title', data.title.trim());
 
-    // Handle file upload
+    if (data.mediaType) {
+      formData.append('mediaType', data.mediaType);
+    }
+
+    // Handle image file upload (update uses single file field)
     if (data.files && data.files.length > 0) {
-      // Only first file used for update
       formData.append('file', data.files[0]);
+    }
+
+    // Handle video updates
+    if (data.videoUrl && data.videoUrl.trim()) {
+      formData.append('videoUrl', data.videoUrl.trim());
+    }
+    if (data.videoFile) {
+      formData.append('video', data.videoFile);
     }
 
     const response = await apiClient.put<ApiResponse<GalleryItem>>(API_ENDPOINTS.GALLERY.BY_ID(id), formData, {

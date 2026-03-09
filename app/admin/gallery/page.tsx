@@ -123,6 +123,13 @@ export default function AdminGalleryPage() {
                     className="object-cover"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
+                ) : item.videoUrl ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-black/70 text-white px-4 text-center">
+                    <span className="text-xs uppercase tracking-wide mb-1">Video</span>
+                    <span className="text-[10px] text-white/80 break-words line-clamp-2">
+                      {item.videoUrl}
+                    </span>
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <HiPhotograph className="h-12 w-12 text-gray-400" />

@@ -60,7 +60,7 @@ export const Gallery: React.FC = () => {
     };
   }, []);
 
-  const displayItems = items.filter((item) => item.imageUrl);
+  const displayItems = items.filter((item) => item.imageUrl || item.videoUrl);
   
   // Add "See More" if we have items
   const withSeeMore = displayItems.length > 0 
@@ -156,14 +156,25 @@ export const Gallery: React.FC = () => {
     index: number
   ) => {
     const isSeeMore = 'isMore' in item && item.isMore;
-    const src = isSeeMore ? '' : (item as GalleryItem).imageUrl;
-    const alt = isSeeMore ? 'See more' : (item as GalleryItem).title || `Gallery ${index + 1}`;
+    const galleryItem = item as GalleryItem;
+    const isVideo = !!galleryItem.videoUrl && !galleryItem.imageUrl;
+    const src = isSeeMore || isVideo ? '' : galleryItem.imageUrl || '';
+    const alt = isSeeMore
+      ? 'See more'
+      : galleryItem.title || (isVideo ? 'Gallery video' : `Gallery ${index + 1}`);
 
     const content = (
       <div className="aspect-[4/3] relative">
         {isSeeMore ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-gray-700 text-lg font-semibold">
             See More
+          </div>
+        ) : isVideo ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white px-3 text-center">
+            <span className="text-xs uppercase tracking-wide mb-1">Video</span>
+            <span className="text-[10px] text-white/80 line-clamp-2">
+              {galleryItem.title || galleryItem.videoUrl}
+            </span>
           </div>
         ) : (
           <img

@@ -41,8 +41,8 @@ export default function GalleryPage() {
         if (cancelled) return;
         const data = res.data || [];
         setItems(data);
-        const withImages = data.filter((item) => item.imageUrl);
-        setDisplayCount(Math.min(LOAD_STEP, withImages.length || LOAD_STEP));
+        const withMedia = data.filter((item) => item.imageUrl || item.videoUrl);
+        setDisplayCount(Math.min(LOAD_STEP, withMedia.length || LOAD_STEP));
       })
       .catch(() => {
         if (!cancelled) setItems([]);
@@ -57,6 +57,11 @@ export default function GalleryPage() {
   }, []);
 
   const displayItems = useMemo(
+    () => items.filter((item) => item.imageUrl || item.videoUrl),
+    [items]
+  );
+
+  const imagesOnly = useMemo(
     () => items.filter((item) => item.imageUrl),
     [items]
   );
@@ -73,10 +78,10 @@ export default function GalleryPage() {
     setDisplayCount((prev) => Math.min(prev + LOAD_STEP, displayItems.length));
   };
 
-  const openLightbox = (indexInVisible: number) => {
-    const item = visibleItems[indexInVisible];
-    const globalIndex = displayItems.findIndex((i) => i.id === item.id);
-    setLightboxIndex(globalIndex === -1 ? 0 : globalIndex);
+  const openLightboxById = (id: string) => {
+    const idx = imagesOnly.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    setLightboxIndex(idx);
     setLightboxOpen(true);
   };
 
@@ -84,13 +89,13 @@ export default function GalleryPage() {
 
   const nextImage = () => {
     setLightboxIndex((prev) =>
-      prev + 1 >= displayItems.length ? 0 : prev + 1
+      prev + 1 >= imagesOnly.length ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
     setLightboxIndex((prev) =>
-      prev - 1 < 0 ? displayItems.length - 1 : prev - 1
+      prev - 1 < 0 ? imagesOnly.length - 1 : prev - 1
     );
   };
 
@@ -148,24 +153,54 @@ export default function GalleryPage() {
           <>
             {/* Asymmetric collage grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
-              {visibleItems.map((item, index) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => openLightbox(index)}
-                  className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
-                    index
-                  )}`}
-                >
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title || 'Gallery image'}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-300" />
-                </button>
-              ))}
+              {visibleItems.map((item, index) => {
+                const isVideo = !item.imageUrl && !!item.videoUrl;
+
+                if (isVideo) {
+                  return (
+                    <a
+                      key={item.id}
+                      href={item.videoUrl as string}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
+                        index
+                      )}`}
+                    >
+                      <div className="absolute inset-0 bg-black/85" />
+                      <div className="relative w-full h-full flex flex-col items-center justify-center px-4 text-center">
+                        <div className="text-xs uppercase tracking-wide text-white/80 mb-1">Video</div>
+                        <div className="text-sm font-semibold text-white line-clamp-2">
+                          {item.title || 'Open video'}
+                        </div>
+                        <div className="mt-2 text-[10px] text-white/70 line-clamp-2 break-words">
+                          {item.videoUrl}
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-300" />
+                    </a>
+                  );
+                }
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => openLightboxById(item.id)}
+                    className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
+                      index
+                    )}`}
+                  >
+                    <img
+                      src={item.imageUrl as string}
+                      alt={item.title || 'Gallery image'}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-300" />
+                  </button>
+                );
+              })}
             </div>
 
             {/* Load More */}
@@ -177,7 +212,7 @@ export default function GalleryPage() {
                   className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium transition-colors"
                 >
                   Load {remaining > LOAD_STEP ? LOAD_STEP : remaining} More
-                  {remaining > 1 ? ' Images' : ' Image'}
+                  {remaining > 1 ? ' Items' : ' Item'}
                 </button>
               </div>
             )}
@@ -187,7 +222,7 @@ export default function GalleryPage() {
 
       {/* Lightbox */}
       <ImageLightbox
-        images={displayItems}
+        images={imagesOnly}
         currentIndex={lightboxIndex}
         isOpen={lightboxOpen}
         onClose={closeLightbox}
