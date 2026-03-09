@@ -220,18 +220,58 @@ export const Gallery: React.FC = () => {
       : galleryItem.title || (isVideo ? 'Gallery video' : `Gallery ${index + 1}`);
 
     const content = (
-      <div className="aspect-[4/3] relative">
+      <div className="aspect-[4/3] relative overflow-hidden bg-black">
         {isSeeMore ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-gray-700 text-lg font-semibold">
             See More
           </div>
-        ) : isVideo ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white px-3 text-center">
-            <span className="text-xs uppercase tracking-wide mb-1">Video</span>
-            <span className="text-[10px] text-white/80 line-clamp-2">
-              {galleryItem.title || galleryItem.videoUrl}
-            </span>
-          </div>
+        ) : isVideo && galleryItem.videoUrl ? (
+          (() => {
+            const yt = getYouTubeEmbedUrl(galleryItem.videoUrl as string);
+            const drive = getDrivePreviewUrl(galleryItem.videoUrl as string);
+
+            if (yt) {
+              return (
+                <iframe
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  src={yt}
+                  title={galleryItem.title || 'Gallery video'}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              );
+            }
+
+            if (drive) {
+              return (
+                <iframe
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  src={drive}
+                  title={galleryItem.title || 'Gallery video'}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              );
+            }
+
+            if (isDirectVideoUrl(galleryItem.videoUrl as string)) {
+              return (
+                <video
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  src={galleryItem.videoUrl as string}
+                  muted
+                  loop
+                  playsInline
+                />
+              );
+            }
+
+            return (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white px-3 text-center">
+                <span className="text-xs uppercase tracking-wide">Video</span>
+              </div>
+            );
+          })()
         ) : (
           <img
             src={src}
