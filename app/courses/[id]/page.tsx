@@ -68,7 +68,7 @@ export default function CourseDetailPage({
   const [promoStreamError, setPromoStreamError] = useState<string | null>(null);
   const promoFetchedForCourseId = useRef<string | null>(null);
   const promoVideoRef = useRef<HTMLVideoElement>(null);
-  const [reviewRating, setReviewRating] = useState(5);
+  const reviewRating = 5;
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [comments, setComments] = useState<CourseCommentType[]>([]);
@@ -875,19 +875,12 @@ export default function CourseDetailPage({
                       <form onSubmit={handleSubmitReview} className="space-y-4">
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-gray-700">Your rating</label>
-                          <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button
-                                key={star}
-                                type="button"
-                                onClick={() => setReviewRating(star)}
-                                className={`text-3xl transition-colors ${star <= reviewRating ? 'text-yellow-400' : 'text-gray-300'
-                                  }`}
-                              >
-                                ★
-                              </button>
+                          <div className="flex gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className="text-3xl text-yellow-400">★</span>
                             ))}
                           </div>
+                          <p className="text-xs text-gray-500">Only 5-star reviews are allowed.</p>
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-gray-700">Your review</label>
