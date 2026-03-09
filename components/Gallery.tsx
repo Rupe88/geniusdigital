@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
+import { Modal } from '@/components/ui/Modal';
 
 const ITEMS_PER_ROW = 7;
 const HOMEPAGE_LIMIT = 21;
@@ -12,6 +13,59 @@ const HOMEPAGE_LIMIT = 21;
 const getRowItems = <T,>(items: T[], rowIndex: number, itemsPerRow: number): T[] => {
   const startIndex = rowIndex * itemsPerRow;
   return items.slice(startIndex, startIndex + itemsPerRow);
+};
+
+const getYouTubeEmbedUrl = (url: string): string | null => {
+  try {
+    const u = new URL(url);
+
+    if (u.hostname.includes('youtu.be')) {
+      const id = u.pathname.split('/').filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+
+    if (u.hostname.includes('youtube.com')) {
+      if (u.pathname.startsWith('/watch')) {
+        const id = u.searchParams.get('v');
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      if (u.pathname.startsWith('/shorts/')) {
+        const id = u.pathname.split('/').filter(Boolean)[1];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      if (u.pathname.startsWith('/embed/')) {
+        const id = u.pathname.split('/').filter(Boolean)[1];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const getDrivePreviewUrl = (url: string): string | null => {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes('drive.google.com')) return null;
+
+    const parts = u.pathname.split('/').filter(Boolean);
+    const dIndex = parts.findIndex((p) => p === 'd');
+    if (parts[0] === 'file' && dIndex !== -1 && parts[dIndex + 1]) {
+      const id = parts[dIndex + 1];
+      return `https://drive.google.com/file/d/${id}/preview`;
+    }
+
+    const id = u.searchParams.get('id');
+    if (id) return `https://drive.google.com/file/d/${id}/preview`;
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const isDirectVideoUrl = (url: string): boolean => {
+  return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(url);
 };
 
 export const Gallery: React.FC = () => {
@@ -25,6 +79,8 @@ export const Gallery: React.FC = () => {
   const [startX, setStartX] = useState(0);
   const [scrollLefts, setScrollLefts] = useState({ row1: 0, row2: 0, row3: 0 });
   const [windowWidth, setWindowWidth] = useState(0);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title?: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -187,6 +243,23 @@ export const Gallery: React.FC = () => {
       </div>
     );
 
+    // Video cards open a player modal so users can actually watch from landing page.
+    if (isVideo && galleryItem.videoUrl) {
+      return (
+        <button
+          key={`${rowKey}-${galleryItem.id || 'video'}-${index}`}
+          type="button"
+          onClick={() => {
+            setActiveVideo({ url: galleryItem.videoUrl as string, title: galleryItem.title });
+            setVideoModalOpen(true);
+          }}
+          className={`block text-left ${cardClass}`}
+        >
+          {content}
+        </button>
+      );
+    }
+
     return (
       <Link
         key={`${rowKey}-${(item as GalleryItem).id || 'see-more'}-${index}`}
@@ -220,6 +293,64 @@ export const Gallery: React.FC = () => {
         <div className="mb-6">
           <h2 className="section-title text-gray-900">Our Gallery</h2>
         </div>
+
+        <Modal
+          isOpen={videoModalOpen}
+          onClose={() => {
+            setVideoModalOpen(false);
+            setActiveVideo(null);
+          }}
+          title={activeVideo?.title || 'Video'}
+          size="xl"
+        >
+          {activeVideo?.url ? (
+            <div className="w-full">
+              {getYouTubeEmbedUrl(activeVideo.url) ? (
+                <div className="relative w-full aspect-video bg-black">
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src={getYouTubeEmbedUrl(activeVideo.url) as string}
+                    title={activeVideo.title || 'YouTube video'}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ) : getDrivePreviewUrl(activeVideo.url) ? (
+                <div className="relative w-full aspect-video bg-black">
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src={getDrivePreviewUrl(activeVideo.url) as string}
+                    title={activeVideo.title || 'Google Drive video'}
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                </div>
+              ) : isDirectVideoUrl(activeVideo.url) ? (
+                <video
+                  className="w-full rounded-none bg-black"
+                  src={activeVideo.url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <div className="rounded-none border border-[var(--border)] p-4">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-2">
+                    Can’t preview this link here. Open it directly:
+                  </p>
+                  <a
+                    href={activeVideo.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-[var(--primary-700)] underline break-words"
+                  >
+                    {activeVideo.url}
+                  </a>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </Modal>
 
         <div className="relative min-h-[320px] flex items-center">
         {showButtons && (
