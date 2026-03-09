@@ -6,6 +6,8 @@ import { HiPhotograph } from 'react-icons/hi';
 import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
 import { ImageLightbox } from '@/components/gallery/ImageLightbox';
+import { Modal } from '@/components/ui/Modal';
+import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 
 const LOAD_STEP = 16;
 
@@ -23,6 +25,10 @@ const getCardSize = (index: number) => {
   return 'col-span-1 row-span-1';
 };
 
+const isDirectVideoUrl = (url: string): boolean => {
+  return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(url);
+};
+
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +36,8 @@ export default function GalleryPage() {
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title?: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +159,62 @@ export default function GalleryPage() {
           </div>
         ) : (
           <>
+            <Modal
+              isOpen={videoModalOpen}
+              onClose={() => {
+                setVideoModalOpen(false);
+                setActiveVideo(null);
+              }}
+              title={activeVideo?.title || 'Video'}
+              size="xl"
+            >
+              {activeVideo?.url ? (
+                <div className="w-full">
+                  {getYouTubeEmbedUrl(activeVideo.url) ? (
+                    <div className="relative w-full aspect-video bg-black">
+                      <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src={getYouTubeEmbedUrl(activeVideo.url) as string}
+                        title={activeVideo.title || 'YouTube video'}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : getGoogleDriveEmbedUrl(activeVideo.url) ? (
+                    <div className="relative w-full aspect-video bg-black">
+                      <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src={getGoogleDriveEmbedUrl(activeVideo.url) as string}
+                        title={activeVideo.title || 'Google Drive video'}
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : isDirectVideoUrl(activeVideo.url) ? (
+                    <video
+                      className="w-full rounded-none bg-black"
+                      src={activeVideo.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <div className="rounded-none border border-gray-200 p-4">
+                      <p className="text-sm text-gray-600 mb-2">Can’t preview this link here. Open it directly:</p>
+                      <a
+                        href={activeVideo.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-[#c01e2e] underline break-words font-medium"
+                      >
+                        {activeVideo.url}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </Modal>
+
             {/* Asymmetric collage grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
               {visibleItems.map((item, index) => {
@@ -158,11 +222,13 @@ export default function GalleryPage() {
 
                 if (isVideo) {
                   return (
-                    <a
+                    <button
                       key={item.id}
-                      href={item.videoUrl as string}
-                      target="_blank"
-                      rel="noreferrer noopener"
+                      type="button"
+                      onClick={() => {
+                        setActiveVideo({ url: item.videoUrl as string, title: item.title });
+                        setVideoModalOpen(true);
+                      }}
                       className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
                         index
                       )}`}
@@ -178,7 +244,7 @@ export default function GalleryPage() {
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-300" />
-                    </a>
+                    </button>
                   );
                 }
 
