@@ -15,6 +15,67 @@ import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiPencil, HiTrash, HiPlus, HiPhotograph, HiExclamation } from 'react-icons/hi';
 
+const getYouTubeEmbedUrl = (url: string): string | null => {
+  try {
+    const u = new URL(url);
+
+    // youtu.be/<id>
+    if (u.hostname.includes('youtu.be')) {
+      const id = u.pathname.split('/').filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+
+    // youtube.com/watch?v=<id>
+    if (u.hostname.includes('youtube.com')) {
+      if (u.pathname.startsWith('/watch')) {
+        const id = u.searchParams.get('v');
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      // youtube.com/shorts/<id>
+      if (u.pathname.startsWith('/shorts/')) {
+        const id = u.pathname.split('/').filter(Boolean)[1];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      // youtube.com/embed/<id>
+      if (u.pathname.startsWith('/embed/')) {
+        const id = u.pathname.split('/').filter(Boolean)[1];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const getDrivePreviewUrl = (url: string): string | null => {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes('drive.google.com')) return null;
+
+    // /file/d/<id>/view or /file/d/<id>/edit
+    const parts = u.pathname.split('/').filter(Boolean);
+    const dIndex = parts.findIndex((p) => p === 'd');
+    if (parts[0] === 'file' && dIndex !== -1 && parts[dIndex + 1]) {
+      const id = parts[dIndex + 1];
+      return `https://drive.google.com/file/d/${id}/preview`;
+    }
+
+    // /open?id=<id>
+    const id = u.searchParams.get('id');
+    if (id) return `https://drive.google.com/file/d/${id}/preview`;
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const isDirectVideoUrl = (url: string): boolean => {
+  return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(url);
+};
+
 export default function AdminGalleryPage() {
   const router = useRouter();
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -124,12 +185,61 @@ export default function AdminGalleryPage() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                 ) : item.videoUrl ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-black/70 text-white px-4 text-center">
-                    <span className="text-xs uppercase tracking-wide mb-1">Video</span>
-                    <span className="text-[10px] text-white/80 break-words line-clamp-2">
-                      {item.videoUrl}
-                    </span>
-                  </div>
+                  (() => {
+                    const yt = getYouTubeEmbedUrl(item.videoUrl);
+                    const drive = getDrivePreviewUrl(item.videoUrl);
+
+                    if (yt) {
+                      return (
+                        <iframe
+                          className="absolute inset-0 w-full h-full"
+                          src={yt}
+                          title={item.title || 'YouTube video'}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      );
+                    }
+
+                    if (drive) {
+                      return (
+                        <iframe
+                          className="absolute inset-0 w-full h-full"
+                          src={drive}
+                          title={item.title || 'Google Drive video'}
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                        />
+                      );
+                    }
+
+                    if (isDirectVideoUrl(item.videoUrl)) {
+                      return (
+                        <video
+                          className="absolute inset-0 w-full h-full object-cover"
+                          src={item.videoUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                        />
+                      );
+                    }
+
+                    return (
+                      <a
+                        href={item.videoUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="w-full h-full flex flex-col items-center justify-center bg-black/70 text-white px-4 text-center"
+                      >
+                        <span className="text-xs uppercase tracking-wide mb-1">Video</span>
+                        <span className="text-[10px] text-white/80 break-words line-clamp-2">
+                          {item.videoUrl}
+                        </span>
+                        <span className="mt-2 text-xs underline">Open</span>
+                      </a>
+                    );
+                  })()
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <HiPhotograph className="h-12 w-12 text-gray-400" />
