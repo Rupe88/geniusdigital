@@ -45,7 +45,7 @@ export default function PromotionalPopup() {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 cursor-pointer"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transition-opacity duration-300 cursor-pointer"
             onClick={handleClose}
             role="button"
             tabIndex={0}
@@ -53,19 +53,19 @@ export default function PromotionalPopup() {
             aria-label="Close popup"
         >
             <div
-                className="relative w-full max-w-[min(calc(100vw-1rem),512px)] sm:max-w-lg bg-white rounded-lg sm:rounded-xl shadow-2xl animate-in fade-in duration-300 cursor-pointer overflow-hidden"
+                className="relative w-full max-w-[min(calc(100vw-2rem),520px)] bg-white rounded-xl shadow-2xl animate-in fade-in duration-300 cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
                 role="presentation"
             >
                 <button
                     onClick={handleClose}
-                    className="absolute top-2 right-2 sm:-top-3 sm:-right-3 p-2 bg-white/95 sm:bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10"
+                    className="absolute top-2 right-2 z-20 flex items-center justify-center w-9 h-9 bg-white/95 hover:bg-white text-gray-800 rounded-full shadow-lg border border-gray-200/50 transition-colors shrink-0"
                     aria-label="Close"
                 >
                     <HiX className="w-5 h-5" />
                 </button>
 
-                <div className="relative w-full aspect-[4/5] sm:aspect-square overflow-hidden rounded-t-lg sm:rounded-lg">
+                <div className="relative w-full aspect-[4/5] sm:aspect-square overflow-hidden rounded-xl">
                     {popup.linkUrl ? (
                         <Link
                             href={popup.linkUrl}
