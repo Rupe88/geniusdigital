@@ -189,25 +189,10 @@ export const Footer: React.FC = () => {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10 bg-[#0a111d]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-[18px] text-gray-300 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-left">
+        <div className="mx-auto max-w-7xl px-4 py-4 text-center text-[18px] text-gray-300 sm:px-6 lg:px-8">
+          <p>
             &copy; {year} Sanskar Academy. All rights reserved
           </p>
-          <a
-            href="https://digitalpathshalanepal.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="text-center font-medium hover:text-white flex items-center gap-2"
-          >
-            Developed By Digital Pathshala LMS
-            <Image
-              src="/dplms.png"
-              alt="Digital Pathshala LMS logo"
-              width={20}
-              height={20}
-              className="object-contain"
-            />
-          </a>
         </div>
       </div>
     </footer>
