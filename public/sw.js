@@ -12,7 +12,13 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
   );
-  self.skipWaiting();
+  // Wait for client to send SKIP_WAITING (user clicked "Refresh" in update banner)
+  // self.skipWaiting();
+});
+
+// When user clicks "Refresh" in update banner, activate the waiting worker
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
