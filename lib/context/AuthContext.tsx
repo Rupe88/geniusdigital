@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { User, LoginRequest, RegisterRequest, VerifyOtpRequest } from '@/lib/types/auth';
 import * as authApi from '@/lib/api/auth';
 import { shouldRefreshToken, getTimeUntilExpiry } from '@/lib/utils/tokenUtils';
@@ -32,16 +33,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (isRetry = false) => {
     try {
       const userData = await authApi.getMe();
       setUser(userData);
-    } catch {
-      setUser(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+    } catch (err) {
+      const is401 =
+        axios.isAxiosError(err) && err.response?.status === 401;
+      if (is401) {
+        setUser(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        }
+      } else if (!isRetry && typeof window !== 'undefined') {
+        // Network/timeout/5xx: keep tokens and retry once (helps PWA after refresh)
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          await new Promise((r) => setTimeout(r, 1500));
+          await refreshUser(true);
+          return;
+        }
       }
+      setUser(null);
     } finally {
       setLoading(false);
     }

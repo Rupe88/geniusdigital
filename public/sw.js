@@ -2,7 +2,7 @@
 // - Caches core assets on install
 // - Serves cached assets when offline (network-first for navigation)
 
-const CACHE_NAME = 'sanskar-academy-cache-v1';
+const CACHE_NAME = 'sanskar-academy-cache-v2';
 const CORE_ASSETS = [
   '/',
   '/manifest.webmanifest',
@@ -30,11 +30,18 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  const url = new URL(request.url);
+
+  // Never cache API calls or Next.js data – always network (keeps auth/state correct in PWA)
+  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/_next')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Only handle GET requests
   if (request.method !== 'GET') return;
 
-  // Network-first for navigation requests
+  // Network-first for navigation requests (always get fresh HTML so auth state restores)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(() => caches.match('/'))
@@ -42,7 +49,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for other assets
+  // Cache-first for other same-origin static assets only
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
