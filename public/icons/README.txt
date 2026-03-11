@@ -1,0 +1,6 @@
+Place your PWA icons here:
+- icon-192.png (192x192 PNG)
+- icon-512.png (512x512 PNG)
+
+These are referenced from public/manifest.webmanifest.
+

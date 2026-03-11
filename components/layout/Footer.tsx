@@ -10,7 +10,7 @@ import {
   FiPhone,
   FiMapPin,
 } from 'react-icons/fi';
-import { SiApple, SiGoogleplay } from 'react-icons/si';
+import { PwaInstall } from '@/components/PwaInstall';
 import { ROUTES } from '@/lib/utils/constants';
 
 const categories = [
@@ -151,38 +151,16 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Download our app */}
+          {/* Install our app (PWA) */}
           <div className="space-y-4 text-sm">
             <h4 className="text-lg font-semibold tracking-wide relative">
-              Download Our App
+              Install Our App
               <span className="mt-2 block h-0.5 w-16 bg-white/60" />
             </h4>
-            <div className="space-y-3">
-              <a
-                href="https://play.google.com"
-                className="flex items-center gap-3 rounded-none border border-white/15 bg-white/5 px-4 py-3 text-left transition hover:border-white/30 hover:bg-white/10"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <SiGoogleplay className="text-2xl" />
-                <div>
-                  <p className="text-xs text-gray-200/80">Get on</p>
-                  <p className="text-sm font-semibold">Play Store</p>
-                </div>
-              </a>
-              <a
-                href="https://www.apple.com/app-store/"
-                className="flex items-center gap-3 rounded-none border border-white/15 bg-white/5 px-4 py-3 text-left transition hover:border-white/30 hover:bg-white/10"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <SiApple className="text-2xl" />
-                <div>
-                  <p className="text-xs text-gray-200/80">Get On</p>
-                  <p className="text-sm font-semibold">App Store</p>
-                </div>
-              </a>
-            </div>
+            <p className="text-gray-100/80">
+              Install Sanskar Academy on your phone or computer for quick access.
+            </p>
+            <PwaInstall />
           </div>
         </div>
       </div>

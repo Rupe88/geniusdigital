@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/context/CartContext";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import ContentProtection from "@/components/ContentProtection";
+import { PwaInit } from "@/components/PwaInit";
 
 export const metadata: Metadata = {
     title: "Sanskar Academy - Master in Scientific Vastu & Modern Numerology",
@@ -18,6 +19,11 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" data-scroll-behavior="smooth">
+            <head>
+                <link rel="manifest" href="/manifest.webmanifest" />
+                <meta name="theme-color" content="#c01e2e" />
+                <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+            </head>
             <body
                 className="antialiased min-h-screen flex flex-col"
                 suppressHydrationWarning
@@ -26,11 +32,12 @@ export default function RootLayout({
                     <ContentProtection />
                     <CartProvider>
                         <ToasterProvider />
+                        <PwaInit />
                         <LayoutWrapper>
                             {children}
                         </LayoutWrapper>
-                </CartProvider>
-            </AuthProvider>
+                    </CartProvider>
+                </AuthProvider>
             </body>
         </html>
     );
