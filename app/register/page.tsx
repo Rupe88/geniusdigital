@@ -298,7 +298,9 @@ export default function RegisterPage() {
             const origin = typeof window !== 'undefined' ? window.location.origin : '';
             const state = origin ? encodeURIComponent(origin) : '';
             const url = `${getApiBaseUrl()}/auth/google${state ? `?state=${state}` : ''}`;
-            window.location.href = url;
+            // Important: keep OAuth inside the same PWA window so tokens land in the PWA storage.
+            // Opening a new tab can complete login in the browser but not in the installed PWA.
+            window.location.assign(url);
           }}
         >
           {googleLoading ? (

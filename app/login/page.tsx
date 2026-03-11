@@ -28,6 +28,18 @@ function getParam(sp: SearchParamsLike | null, key: string): string | null {
   return Array.isArray(v) ? v[0] ?? null : (v ?? null);
 }
 
+function isStandalonePwa(): boolean {
+  if (typeof window === 'undefined') return false;
+  const nav = window.navigator as unknown as { standalone?: boolean };
+  return window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true;
+}
+
+function isIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(ua);
+}
+
 function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
   const router = useRouter();
   const { login, refreshUser } = useAuth();
@@ -189,9 +201,12 @@ function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
             onClick={() => {
               setGoogleLoading(true);
               const origin = typeof window !== 'undefined' ? window.location.origin : '';
+              // Send the full frontend origin as state so backend can validate and redirect back correctly
               const state = origin ? encodeURIComponent(origin) : '';
               const url = `${getApiBaseUrl()}/auth/google${state ? `?state=${state}` : ''}`;
-              window.location.href = url;
+              // Important: keep OAuth inside the same PWA window so tokens land in the PWA storage.
+              // Opening a new tab can complete login in the browser but not in the installed PWA.
+              window.location.assign(url);
             }}
           >
             {googleLoading ? (
