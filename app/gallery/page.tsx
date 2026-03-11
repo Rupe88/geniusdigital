@@ -32,7 +32,8 @@ const isDirectVideoUrl = (url: string): boolean => {
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [displayCount, setDisplayCount] = useState(LOAD_STEP);
+  const [videoCount, setVideoCount] = useState(LOAD_STEP);
+  const [imageCount, setImageCount] = useState(LOAD_STEP);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -49,8 +50,10 @@ export default function GalleryPage() {
         if (cancelled) return;
         const data = res.data || [];
         setItems(data);
-        const withMedia = data.filter((item) => item.imageUrl || item.videoUrl);
-        setDisplayCount(Math.min(LOAD_STEP, withMedia.length || LOAD_STEP));
+        const videos = data.filter((item) => !!item.videoUrl && !item.imageUrl);
+        const images = data.filter((item) => !!item.imageUrl);
+        setVideoCount(Math.min(LOAD_STEP, videos.length || LOAD_STEP));
+        setImageCount(Math.min(LOAD_STEP, images.length || LOAD_STEP));
       })
       .catch(() => {
         if (!cancelled) setItems([]);
@@ -64,8 +67,13 @@ export default function GalleryPage() {
     };
   }, []);
 
-  const displayItems = useMemo(
-    () => items.filter((item) => item.imageUrl || item.videoUrl),
+  const videoItems = useMemo(
+    () => items.filter((item) => !!item.videoUrl && !item.imageUrl),
+    [items]
+  );
+
+  const imageItems = useMemo(
+    () => items.filter((item) => !!item.imageUrl),
     [items]
   );
 
@@ -74,16 +82,27 @@ export default function GalleryPage() {
     [items]
   );
 
-  const visibleItems = useMemo(
-    () => displayItems.slice(0, Math.min(displayCount, displayItems.length)),
-    [displayItems, displayCount]
+  const visibleVideos = useMemo(
+    () => videoItems.slice(0, Math.min(videoCount, videoItems.length)),
+    [videoItems, videoCount]
   );
 
-  const canLoadMore = displayCount < displayItems.length;
-  const remaining = displayItems.length - displayCount;
+  const visibleImages = useMemo(
+    () => imageItems.slice(0, Math.min(imageCount, imageItems.length)),
+    [imageItems, imageCount]
+  );
 
-  const handleLoadMore = () => {
-    setDisplayCount((prev) => Math.min(prev + LOAD_STEP, displayItems.length));
+  const canLoadMoreVideos = videoCount < videoItems.length;
+  const canLoadMoreImages = imageCount < imageItems.length;
+  const remainingVideos = videoItems.length - videoCount;
+  const remainingImages = imageItems.length - imageCount;
+
+  const handleLoadMoreVideos = () => {
+    setVideoCount((prev) => Math.min(prev + LOAD_STEP, videoItems.length));
+  };
+
+  const handleLoadMoreImages = () => {
+    setImageCount((prev) => Math.min(prev + LOAD_STEP, imageItems.length));
   };
 
   const openLightboxById = (id: string) => {
@@ -138,7 +157,7 @@ export default function GalleryPage() {
               </div>
             ))}
           </div>
-        ) : displayItems.length === 0 ? (
+        ) : (videoItems.length + imageItems.length) === 0 ? (
           // Empty state
           <div className="text-center py-16 text-gray-500 flex flex-col items-center">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -215,86 +234,124 @@ export default function GalleryPage() {
               ) : null}
             </Modal>
 
-            {/* Asymmetric collage grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
-              {visibleItems.map((item, index) => {
-                const isVideo = !item.imageUrl && !!item.videoUrl;
+            {/* Videos Section */}
+            {videoItems.length > 0 && (
+              <section className="mb-10">
+                <div className="flex items-end justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">Videos</h2>
+                    <p className="text-sm text-gray-600">Watch highlights from our events and trainings.</p>
+                  </div>
+                </div>
 
-                if (isVideo) {
-                  const videoUrl = item.videoUrl as string;
-                  const ytThumb = getYouTubeThumbnailUrl(videoUrl, 'hqdefault');
-                  return (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
+                  {visibleVideos.map((item, index) => {
+                    const videoUrl = item.videoUrl as string;
+                    const ytThumb = getYouTubeThumbnailUrl(videoUrl, 'hqdefault');
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveVideo({ url: videoUrl, title: item.title });
+                          setVideoModalOpen(true);
+                        }}
+                        className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
+                          index
+                        )}`}
+                      >
+                        {ytThumb ? (
+                          <>
+                            <img
+                              src={ytThumb}
+                              alt={item.title || 'Video'}
+                              className="absolute inset-0 w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
+                          </>
+                        ) : (
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+                        )}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+                          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                            <svg
+                              className="w-6 h-6 md:w-7 md:h-7 text-[#c01e2e] ml-1"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                              aria-hidden
+                            >
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                          <div className="mt-2 text-sm font-semibold text-white line-clamp-2 drop-shadow-md">
+                            {item.title || 'Play video'}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {canLoadMoreVideos && (
+                  <div className="flex items-center justify-center mt-8">
+                    <button
+                      type="button"
+                      onClick={handleLoadMoreVideos}
+                      className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium transition-colors"
+                    >
+                      Load {remainingVideos > LOAD_STEP ? LOAD_STEP : remainingVideos} More
+                      {remainingVideos > 1 ? ' Videos' : ' Video'}
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Images Section */}
+            {imageItems.length > 0 && (
+              <section>
+                <div className="flex items-end justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">Gallery Images</h2>
+                    <p className="text-sm text-gray-600">Photos from our community moments.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-[180px]">
+                  {visibleImages.map((item, index) => (
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => {
-                        setActiveVideo({ url: videoUrl, title: item.title });
-                        setVideoModalOpen(true);
-                      }}
+                      onClick={() => openLightboxById(item.id)}
                       className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
                         index
                       )}`}
                     >
-                      {ytThumb ? (
-                        <>
-                          <img
-                            src={ytThumb}
-                            alt={item.title || 'Video'}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
-                        </>
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
-                      )}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
-                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                          <svg className="w-6 h-6 md:w-7 md:h-7 text-[#c01e2e] ml-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                        <div className="mt-2 text-sm font-semibold text-white line-clamp-2 drop-shadow-md">
-                          {item.title || 'Play video'}
-                        </div>
-                      </div>
+                      <img
+                        src={item.imageUrl as string}
+                        alt={item.title || 'Gallery image'}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-300" />
                     </button>
-                  );
-                }
+                  ))}
+                </div>
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => openLightboxById(item.id)}
-                    className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
-                      index
-                    )}`}
-                  >
-                    <img
-                      src={item.imageUrl as string}
-                      alt={item.title || 'Gallery image'}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-300" />
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Load More */}
-            {canLoadMore && (
-              <div className="flex items-center justify-center mt-10">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium transition-colors"
-                >
-                  Load {remaining > LOAD_STEP ? LOAD_STEP : remaining} More
-                  {remaining > 1 ? ' Items' : ' Item'}
-                </button>
-              </div>
+                {canLoadMoreImages && (
+                  <div className="flex items-center justify-center mt-8">
+                    <button
+                      type="button"
+                      onClick={handleLoadMoreImages}
+                      className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50 font-medium transition-colors"
+                    >
+                      Load {remainingImages > LOAD_STEP ? LOAD_STEP : remainingImages} More
+                      {remainingImages > 1 ? ' Images' : ' Image'}
+                    </button>
+                  </div>
+                )}
+              </section>
             )}
           </>
         )}

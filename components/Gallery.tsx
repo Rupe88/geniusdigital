@@ -73,10 +73,12 @@ export const Gallery: React.FC = () => {
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
   const row3Ref = useRef<HTMLDivElement>(null);
+  const videoRowRef = useRef<HTMLDivElement>(null);
 
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeRow, setActiveRow] = useState<'row1' | 'row2' | 'row3' | null>(null);
   const [startX, setStartX] = useState(0);
   const [scrollLefts, setScrollLefts] = useState({ row1: 0, row2: 0, row3: 0 });
   const [windowWidth, setWindowWidth] = useState(0);
@@ -117,7 +119,12 @@ export const Gallery: React.FC = () => {
     };
   }, []);
 
-  const displayItems = items.filter((item) => item.imageUrl || item.videoUrl);
+  // Split media into separate sections (Videos + Images)
+  const videoItems = items.filter((item) => !!item.videoUrl && !item.imageUrl);
+  const imageItems = items.filter((item) => !!item.imageUrl);
+
+  // Homepage slider is for images only (videos are shown in a separate section above)
+  const displayItems = imageItems;
   
   // Add "See More" if we have items
   const withSeeMore = displayItems.length > 0 
@@ -155,52 +162,56 @@ export const Gallery: React.FC = () => {
     });
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (rowKey: 'row1' | 'row2' | 'row3') => (e: React.MouseEvent) => {
     setIsDragging(true);
+    setActiveRow(rowKey);
     setStartX(e.pageX);
-    setScrollLefts({
-      row1: row1Ref.current?.scrollLeft || 0,
-      row2: row2Ref.current?.scrollLeft || 0,
-      row3: row3Ref.current?.scrollLeft || 0,
-    });
-    [row1Ref, row2Ref, row3Ref].forEach((ref) => {
-      if (ref.current) {
-        ref.current.style.cursor = 'grabbing';
-        ref.current.style.userSelect = 'none';
-      }
-    });
+    setScrollLefts((prev) => ({
+      ...prev,
+      [rowKey]: (rowKey === 'row1' ? row1Ref.current?.scrollLeft
+        : rowKey === 'row2' ? row2Ref.current?.scrollLeft
+        : row3Ref.current?.scrollLeft) || 0,
+    }));
+    const ref = rowKey === 'row1' ? row1Ref : rowKey === 'row2' ? row2Ref : row3Ref;
+    if (ref.current) {
+      ref.current.style.cursor = 'grabbing';
+      ref.current.style.userSelect = 'none';
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
     const walk = (e.pageX - startX) * 2;
-    [row1Ref, row2Ref, row3Ref].forEach((ref, index) => {
-      if (ref.current) {
-        const key = index === 0 ? 'row1' : index === 1 ? 'row2' : 'row3';
-        ref.current.scrollLeft = scrollLefts[key] - walk;
-      }
-    });
+    if (!activeRow) return;
+    const ref = activeRow === 'row1' ? row1Ref : activeRow === 'row2' ? row2Ref : row3Ref;
+    if (ref.current) {
+      ref.current.scrollLeft = scrollLefts[activeRow] - walk;
+    }
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    [row1Ref, row2Ref, row3Ref].forEach((ref) => {
+    if (activeRow) {
+      const ref = activeRow === 'row1' ? row1Ref : activeRow === 'row2' ? row2Ref : row3Ref;
       if (ref.current) {
         ref.current.style.cursor = 'grab';
         ref.current.style.userSelect = 'auto';
       }
-    });
+    }
+    setActiveRow(null);
   };
 
   const handleMouseLeave = () => {
     setIsDragging(false);
-    [row1Ref, row2Ref, row3Ref].forEach((ref) => {
+    if (activeRow) {
+      const ref = activeRow === 'row1' ? row1Ref : activeRow === 'row2' ? row2Ref : row3Ref;
       if (ref.current) {
         ref.current.style.cursor = 'grab';
         ref.current.style.userSelect = 'auto';
       }
-    });
+    }
+    setActiveRow(null);
   };
 
 
@@ -408,6 +419,98 @@ export const Gallery: React.FC = () => {
           ) : null}
         </Modal>
 
+        {/* Videos section (separate from photos) */}
+        {videoItems.length > 0 && (
+          <div className="mb-10 relative">
+            <div className="flex items-end justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Videos</h3>
+                <p className="text-sm text-gray-600">Watch highlights from our events and trainings.</p>
+              </div>
+              <Link href="/gallery" className="text-sm font-medium text-[#c01e2e] hover:underline">
+                View all
+              </Link>
+            </div>
+
+            {/* Show scroll arrows only when we have more than 3 videos */}
+            {videoItems.length > 3 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!videoRowRef.current) return;
+                    const current = videoRowRef.current.scrollLeft;
+                    videoRowRef.current.scrollTo({ left: current - 360, behavior: 'smooth' });
+                  }}
+                  className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-[var(--primary-700)] text-white w-9 h-9 rounded-full border-2 border-[var(--primary-700)] hover:bg-[var(--primary-800)] shadow-lg items-center justify-center"
+                  aria-label="Previous videos"
+                >
+                  <HiChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!videoRowRef.current) return;
+                    const current = videoRowRef.current.scrollLeft;
+                    videoRowRef.current.scrollTo({ left: current + 360, behavior: 'smooth' });
+                  }}
+                  className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-[var(--primary-700)] text-white w-9 h-9 rounded-full border-2 border-[var(--primary-700)] hover:bg-[var(--primary-800)] shadow-lg items-center justify-center"
+                  aria-label="Next videos"
+                >
+                  <HiChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            )}
+
+            <div
+              ref={videoRowRef}
+              className="flex gap-6 overflow-x-auto hide-scrollbar scroll-smooth py-1"
+            >
+              {videoItems.map((v) => {
+                const videoUrl = v.videoUrl as string;
+                const ytThumb = getYouTubeThumbnailUrl(videoUrl, 'hqdefault');
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveVideo({ url: videoUrl, title: v.title });
+                      setVideoModalOpen(true);
+                    }}
+                    className="group relative flex-shrink-0 w-[min(320px,calc(100vw-3rem))] sm:w-[320px] overflow-hidden rounded-lg border border-gray-200 bg-black shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] transition-all"
+                  >
+                    <div className="aspect-[4/3] relative w-full">
+                      {ytThumb ? (
+                        <img
+                          src={ytThumb}
+                          alt={v.title || 'Video'}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+                        <div className="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <svg className="w-7 h-7 text-[#c01e2e] ml-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-white text-left">
+                      <div className="text-sm font-semibold text-gray-900 line-clamp-2">
+                        {v.title || 'Play video'}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Photos section (existing slider) */}
         <div className="relative min-h-[320px] flex items-center">
         {showButtons && (
           <>
@@ -440,7 +543,7 @@ export const Gallery: React.FC = () => {
               className={`flex gap-6 overflow-x-auto hide-scrollbar ${
                 hasScrollableContent ? 'scroll-smooth' : 'justify-start'
               } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
-              onMouseDown={handleMouseDown}
+              onMouseDown={handleMouseDown('row1')}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
@@ -452,7 +555,7 @@ export const Gallery: React.FC = () => {
               className={`flex gap-6 overflow-x-auto hide-scrollbar ${
                 hasScrollableContent ? 'scroll-smooth' : 'justify-start'
               } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
-              onMouseDown={handleMouseDown}
+              onMouseDown={handleMouseDown('row2')}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
@@ -464,7 +567,7 @@ export const Gallery: React.FC = () => {
               className={`flex gap-6 overflow-x-auto hide-scrollbar ${
                 hasScrollableContent ? 'scroll-smooth' : 'justify-start'
               } ${isDragging ? 'cursor-grabbing' : hasScrollableContent ? 'cursor-grab' : 'cursor-default'}`}
-              onMouseDown={handleMouseDown}
+              onMouseDown={handleMouseDown('row3')}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
