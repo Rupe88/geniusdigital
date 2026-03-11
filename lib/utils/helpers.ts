@@ -109,16 +109,31 @@ export const handleError = (error: unknown): string => {
 };
 
 /**
- * Get YouTube embed URL from a regular YouTube link
+ * Get YouTube video ID from URL (for embed or thumbnail)
  */
-export const getYouTubeEmbedUrl = (url: string): string | null => {
+export const getYouTubeVideoId = (url: string): string | null => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  if (match && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}`;
-  }
+  if (match && match[2].length === 11) return match[2];
   return null;
+};
+
+/**
+ * Get YouTube embed URL from a regular YouTube link
+ */
+export const getYouTubeEmbedUrl = (url: string): string | null => {
+  const id = getYouTubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}` : null;
+};
+
+/**
+ * Get YouTube thumbnail image URL (works on desktop and PWA; no iframe required)
+ * quality: 'default' (120x90), 'mqdefault' (320x180), 'hqdefault' (480x360), 'sddefault' (640x480), 'maxresdefault' (1280x720)
+ */
+export const getYouTubeThumbnailUrl = (url: string, quality: 'default' | 'mqdefault' | 'hqdefault' | 'sddefault' | 'maxresdefault' = 'hqdefault'): string | null => {
+  const id = getYouTubeVideoId(url);
+  return id ? `https://img.youtube.com/vi/${id}/${quality}.jpg` : null;
 };
 
 /**

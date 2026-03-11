@@ -7,7 +7,7 @@ import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
 import { ImageLightbox } from '@/components/gallery/ImageLightbox';
 import { Modal } from '@/components/ui/Modal';
-import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
+import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl, getYouTubeThumbnailUrl } from '@/lib/utils/helpers';
 
 const LOAD_STEP = 16;
 
@@ -221,29 +221,43 @@ export default function GalleryPage() {
                 const isVideo = !item.imageUrl && !!item.videoUrl;
 
                 if (isVideo) {
+                  const videoUrl = item.videoUrl as string;
+                  const ytThumb = getYouTubeThumbnailUrl(videoUrl, 'hqdefault');
                   return (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => {
-                        setActiveVideo({ url: item.videoUrl as string, title: item.title });
+                        setActiveVideo({ url: videoUrl, title: item.title });
                         setVideoModalOpen(true);
                       }}
                       className={`group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${getCardSize(
                         index
                       )}`}
                     >
-                      <div className="absolute inset-0 bg-black/85" />
-                      <div className="relative w-full h-full flex flex-col items-center justify-center px-4 text-center">
-                        <div className="text-xs uppercase tracking-wide text-white/80 mb-1">Video</div>
-                        <div className="text-sm font-semibold text-white line-clamp-2">
-                          {item.title || 'Open video'}
+                      {ytThumb ? (
+                        <>
+                          <img
+                            src={ytThumb}
+                            alt={item.title || 'Video'}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+                      )}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                          <svg className="w-6 h-6 md:w-7 md:h-7 text-[#c01e2e] ml-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
                         </div>
-                        <div className="mt-2 text-[10px] text-white/70 line-clamp-2 break-words">
-                          {item.videoUrl}
+                        <div className="mt-2 text-sm font-semibold text-white line-clamp-2 drop-shadow-md">
+                          {item.title || 'Play video'}
                         </div>
                       </div>
-                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-300" />
                     </button>
                   );
                 }

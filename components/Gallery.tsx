@@ -6,6 +6,7 @@ import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
 import { Modal } from '@/components/ui/Modal';
+import { getYouTubeThumbnailUrl } from '@/lib/utils/helpers';
 
 const ITEMS_PER_ROW = 7;
 const HOMEPAGE_LIMIT = 21;
@@ -227,18 +228,27 @@ export const Gallery: React.FC = () => {
           </div>
         ) : isVideo && galleryItem.videoUrl ? (
           (() => {
-            const yt = getYouTubeEmbedUrl(galleryItem.videoUrl as string);
-            const drive = getDrivePreviewUrl(galleryItem.videoUrl as string);
+            const videoUrl = galleryItem.videoUrl as string;
+            const ytThumb = getYouTubeThumbnailUrl(videoUrl, 'hqdefault');
+            const drive = getDrivePreviewUrl(videoUrl);
 
-            if (yt) {
+            if (ytThumb) {
               return (
-                <iframe
-                  className="absolute inset-0 w-full h-full pointer-events-none"
-                  src={yt}
-                  title={galleryItem.title || 'Gallery video'}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
+                <>
+                  <img
+                    src={ytThumb}
+                    alt={galleryItem.title || 'Video'}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+                    <div className="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <svg className="w-7 h-7 text-[#c01e2e] ml-1" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </>
               );
             }
 
@@ -254,20 +264,26 @@ export const Gallery: React.FC = () => {
               );
             }
 
-            if (isDirectVideoUrl(galleryItem.videoUrl as string)) {
+            if (isDirectVideoUrl(videoUrl)) {
               return (
                 <video
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                  src={galleryItem.videoUrl as string}
+                  src={videoUrl}
                   muted
                   loop
                   playsInline
+                  preload="metadata"
                 />
               );
             }
 
             return (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white px-3 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 text-white px-3 text-center">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-2">
+                  <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
                 <span className="text-xs uppercase tracking-wide">Video</span>
               </div>
             );
