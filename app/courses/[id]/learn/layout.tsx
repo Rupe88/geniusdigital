@@ -47,13 +47,23 @@ function LearnLayoutInner({
 
   // Flat playlist: lessons in order (by chapter then lesson order)
   const playlistLessons = useMemo(() => {
-    if (!chapters.length || !lessons.length) return lessons.slice().sort((a, b) => a.order - b.order);
+    const visibleLessons = lessons.filter(
+      (l) => l && typeof l.title === 'string' && l.title.trim().length > 0
+    );
+
+    if (!chapters.length || !visibleLessons.length) {
+      return visibleLessons.slice().sort((a, b) => a.order - b.order);
+    }
     const out: Lesson[] = [];
     for (const ch of chapters) {
-      const chLessons = lessons.filter((l) => l.chapterId === ch.id).sort((a, b) => a.order - b.order);
+      const chLessons = visibleLessons
+        .filter((l) => l.chapterId === ch.id)
+        .sort((a, b) => a.order - b.order);
       out.push(...chLessons);
     }
-    const rest = lessons.filter((l) => !chapters.some((c) => c.id === l.chapterId)).sort((a, b) => a.order - b.order);
+    const rest = visibleLessons
+      .filter((l) => !chapters.some((c) => c.id === l.chapterId))
+      .sort((a, b) => a.order - b.order);
     return [...out, ...rest];
   }, [chapters, lessons]);
 

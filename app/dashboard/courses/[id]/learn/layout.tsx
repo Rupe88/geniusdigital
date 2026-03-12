@@ -27,11 +27,16 @@ function LearnLayoutInner({
 
   // Clean A2 layout: group lessons under chapter headings (no per-lesson/per-chapter progress UI).
   const lessonsByChapter = useMemo(() => {
+    // Only count/render lessons that have a non-empty title, so header total matches what user actually sees
+    const visibleLessons = lessons.filter(
+      (l) => l && typeof l.title === 'string' && l.title.trim().length > 0
+    );
+
     const byChapter = new Map<string, Lesson[]>();
     for (const ch of chapters) byChapter.set(ch.id, []);
     const noChapter: Lesson[] = [];
 
-    for (const l of lessons) {
+    for (const l of visibleLessons) {
       if (l.chapterId && byChapter.has(l.chapterId)) byChapter.get(l.chapterId)!.push(l);
       else noChapter.push(l);
     }
@@ -43,7 +48,7 @@ function LearnLayoutInner({
     return {
       byChapter,
       noChapter: noChapter.slice().sort((a, b) => a.order - b.order),
-      total: lessons.length,
+      total: visibleLessons.length,
     };
   }, [chapters, lessons]);
 
