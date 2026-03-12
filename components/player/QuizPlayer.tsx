@@ -133,19 +133,22 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     const displayTotal = derivedTotal || result.totalQuestions;
     const displayPercentage =
       displayTotal > 0 ? (displayCorrect / displayTotal) * 100 : result.percentage;
+    const allCorrect = displayTotal > 0 && displayCorrect === displayTotal;
+    // Treat quiz as passed when either backend says so OR all answers are correct on the client
+    const effectivePassed = result.passed || allCorrect;
 
         return (
             <Card padding="lg" className="max-w-4xl mx-auto border-2 border-[var(--border)] overflow-hidden">
-        <div className={`p-8 text-center ${result.passed ? 'bg-green-50' : 'bg-red-50'}`}>
+        <div className={`p-8 text-center ${effectivePassed ? 'bg-green-50' : 'bg-red-50'}`}>
                     <div className="flex justify-center mb-6">
-                        {result.passed ? (
+            {effectivePassed ? (
                             <HiCheckCircle className="w-20 h-20 text-green-500 animate-bounce" />
                         ) : (
                             <HiXCircle className="w-20 h-20 text-red-500 animate-pulse" />
                         )}
                     </div>
           <h2 className="text-4xl font-black text-gray-900 mb-2">
-                        {result.passed ? 'Excellent Work!' : 'Keep Practicing!'}
+            {effectivePassed ? 'Excellent Work!' : 'Keep Practicing!'}
                     </h2>
                     <p className="text-lg font-bold text-gray-600">
                         You answered{' '}
