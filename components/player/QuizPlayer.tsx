@@ -114,9 +114,29 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     }
 
     if (result) {
+    // Derive correct answers / percentage on the client to avoid any backend scoring mismatch
+    const normalizeToArray = (value: string | string[]): string[] =>
+      (Array.isArray(value) ? value : [value]).map((v) => String(v).trim().toLowerCase()).filter(Boolean);
+
+    const derivedTotal = result.totalQuestions || (result.results?.length ?? 0);
+    const derivedCorrect =
+      result.results?.filter((r) => {
+        if (r.userAnswer == null || r.correctAnswer == null) return false;
+        const userArr = normalizeToArray(r.userAnswer as string | string[]);
+        const correctArr = normalizeToArray(r.correctAnswer as string | string[]);
+        if (!userArr.length || !correctArr.length || userArr.length !== correctArr.length) return false;
+        // All answers must match (order-insensitive)
+        return userArr.every((u) => correctArr.includes(u));
+      }).length ?? result.correctAnswers;
+
+    const displayCorrect = derivedTotal > 0 ? derivedCorrect : result.correctAnswers;
+    const displayTotal = derivedTotal || result.totalQuestions;
+    const displayPercentage =
+      displayTotal > 0 ? (displayCorrect / displayTotal) * 100 : result.percentage;
+
         return (
             <Card padding="lg" className="max-w-4xl mx-auto border-2 border-[var(--border)] overflow-hidden">
-                <div className={`p-8 text-center ${result.passed ? 'bg-green-50' : 'bg-red-50'}`}>
+        <div className={`p-8 text-center ${result.passed ? 'bg-green-50' : 'bg-red-50'}`}>
                     <div className="flex justify-center mb-6">
                         {result.passed ? (
                             <HiCheckCircle className="w-20 h-20 text-green-500 animate-bounce" />
@@ -124,18 +144,18 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                             <HiXCircle className="w-20 h-20 text-red-500 animate-pulse" />
                         )}
                     </div>
-                    <h2 className="text-4xl font-black text-gray-900 mb-2">
+          <h2 className="text-4xl font-black text-gray-900 mb-2">
                         {result.passed ? 'Excellent Work!' : 'Keep Practicing!'}
                     </h2>
                     <p className="text-lg font-bold text-gray-600">
                         You answered{' '}
                         <span className="text-[var(--primary-700)] text-3xl mx-1">
-                            {result.correctAnswers}
+              {displayCorrect}
                         </span>
-                        out of {result.totalQuestions} questions correctly
+            out of {displayTotal} questions correctly
                     </p>
                     <div className="mt-4 inline-block px-6 py-2 rounded-none font-black uppercase tracking-widest text-sm bg-white shadow-sm">
-                        {result.percentage.toFixed(0)}% Accuracy • {result.correctAnswers}/{result.totalQuestions} Correct
+            {displayPercentage.toFixed(0)}% Accuracy • {displayCorrect}/{displayTotal} Correct
                     </div>
                 </div>
 
