@@ -110,14 +110,19 @@ export const submitQuiz = async (
     const responseData = response.data;
     if (responseData.success && responseData.data) {
       const d = responseData.data;
+      const totalQuestions = d.results?.length ?? 0;
       const correctAnswers = d.results?.filter((r) => r.isCorrect).length ?? 0;
+      const derivedPercentage =
+        totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : d.percentage;
+      const passed = d.isPassed || (totalQuestions > 0 && correctAnswers === totalQuestions);
+
       return {
         score: d.score,
         totalPoints: d.maxScore,
-        percentage: d.percentage,
-        passed: d.isPassed,
+        percentage: derivedPercentage,
+        passed,
         correctAnswers,
-        totalQuestions: d.results?.length ?? 0,
+        totalQuestions,
         results: d.results ?? [],
       };
     }
