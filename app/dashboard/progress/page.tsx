@@ -87,15 +87,15 @@ function CourseProgressCard({
 
   return (
     <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-300)] hover:shadow-lg transition-all duration-200">
-      <div className="flex flex-col sm:flex-row">
+      <div className="flex flex-col md:flex-row">
         {enrollment.course?.thumbnail && (
-          <div className="relative w-full sm:w-40 h-40 sm:h-auto sm:min-h-[140px] flex-shrink-0">
+          <div className="relative w-full md:w-72 lg:w-80 md:h-44 lg:h-48 flex-shrink-0 bg-white p-2">
             <StorageImage
               src={enrollment.course.thumbnail}
               alt={enrollment.course.title ?? 'Course'}
               fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, 160px"
+              className="object-contain rounded-lg"
+              sizes="(max-width: 768px) 100vw, 320px"
             />
           </div>
         )}

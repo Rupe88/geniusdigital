@@ -56,26 +56,32 @@ export default function MyCoursesPage() {
       ) : enrollments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enrollments.map((enrollment) => (
-            <Card
+            <div
               key={enrollment.id}
-              hover
-              className="overflow-hidden cursor-pointer"
-              // Click card anywhere to open learning inside dashboard
-              // (button link below will stop propagation)
+              className="bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg cursor-pointer"
               onClick={() => router.push(`/dashboard/courses/${enrollment.courseId}/learn`)}
             >
-              {enrollment.course?.thumbnail && (
-                <div className="relative h-48 w-full">
+              {/* Thumbnail - match Courses card sizing */}
+              <div className="relative w-full h-52 p-2">
+                {enrollment.course?.thumbnail ? (
                   <StorageImage
                     src={enrollment.course.thumbnail}
                     alt={enrollment.course.title}
                     fill
-                    className="object-cover"
+                    className="object-cover rounded-lg"
                   />
-                </div>
-              )}
-              <div className="p-4">
-                <h3 className="text-xl font-semibold text-[var(--foreground)] mb-2">
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
+                    <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                      {enrollment.course?.title?.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="px-5 pt-0 pb-4">
+                <h3 className="text-base font-[550] md:text-lg leading-6 antialiased tracking-[0.05em] text-gray-900 mb-2 line-clamp-2">
                   {enrollment.course?.title}
                 </h3>
                 <div className="mb-4">
@@ -87,7 +93,7 @@ export default function MyCoursesPage() {
                     <div
                       className="bg-[var(--primary-700)] h-2 rounded-none"
                       style={{ width: `${enrollment.progress}%` }}
-                    ></div>
+                    />
                   </div>
                 </div>
                 
@@ -129,7 +135,7 @@ export default function MyCoursesPage() {
                     )}
                   </div>
                 )}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-1">
                   <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         enrollment.accessType === 'PARTIAL' 
                           ? 'bg-blue-100 text-blue-800' 
@@ -149,7 +155,7 @@ export default function MyCoursesPage() {
                   </Link>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       ) : (
