@@ -38,6 +38,7 @@ interface LocalLesson {
 import { FileUpload } from '@/components/ui/FileUpload';
 import * as lessonApi from '@/lib/api/lessons';
 import * as chapterApi from '@/lib/api/chapters';
+import * as quizApi from '@/lib/api/quizzes';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import {
   HiPlus,
@@ -302,44 +303,91 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
     setShowLessonModal(true);
   };
 
-  const handleEditLesson = (lesson: Lesson | LocalLesson) => {
+  const handleEditLesson = async (lesson: Lesson | LocalLesson) => {
     setEditingLesson(lesson);
     setSelectedChapterId((lesson as Lesson).chapterId || '');
 
-    // Default quiz data if not present
-    let quizData: QuizData;
+    // Helper to normalize quiz from any source (Lesson.quiz or API) into QuizData shape
+    const buildQuizData = (q: any | null | undefined): QuizData => {
+      if (!q) {
+        return {
+          title: '',
+          questions: [
+            {
+              question: '',
+              questionType: 'multiple_choice',
+              options: ['', '', '', ''],
+              correctAnswer: '',
+              points: 1,
+            },
+          ],
+        };
+      }
 
-    // Check if it's a server Lesson (has .quiz) or LocalLesson (has .quiz object directly or inside quizData sometimes)
-    if ('quiz' in lesson && lesson.quiz) {
-      // It's a server Lesson or LocalLesson with quiz property
-      const q = lesson.quiz as any; // Using any temporarily to bridge types, but logic is safe
-      quizData = {
+      return {
         title: q.title || '',
         description: q.description || '',
         timeLimit: q.timeLimit || 0,
         passingScore: q.passingScore || 70,
-        questions: q.questions?.map((q: any) => {
-          const qt = q.questionType || 'multiple_choice';
-          const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(qt);
-          let options: string[] = [];
-          if (isObjective && q.options != null) {
-            options = Array.isArray(q.options) ? q.options : (typeof q.options === 'string' ? JSON.parse(q.options || '[]') : ['', '', '', '']);
-          }
-          if (isObjective && options.length === 0) options = qt === 'true_false' ? ['True', 'False'] : ['', '', '', ''];
-          return {
-            question: q.question,
-            questionType: qt as QuizQuestionType,
-            options,
-            correctAnswer: q.correctAnswer || '',
-            points: q.points || 1,
-          };
-        }) || [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
+        questions:
+          q.questions?.map((qq: any) => {
+            const qt = qq.questionType || 'multiple_choice';
+            const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(qt);
+            let options: string[] = [];
+
+            if (isObjective && qq.options != null) {
+              options = Array.isArray(qq.options)
+                ? qq.options
+                : typeof qq.options === 'string'
+                ? JSON.parse(qq.options || '[]')
+                : ['', '', '', ''];
+            }
+
+            if (isObjective && options.length === 0) {
+              options = qt === 'true_false' ? ['True', 'False'] : ['', '', '', ''];
+            }
+
+            return {
+              question: qq.question,
+              questionType: qt as QuizQuestionType,
+              options,
+              correctAnswer: qq.correctAnswer || '',
+              points: qq.points || 1,
+            };
+          }) ??
+          [
+            {
+              question: '',
+              questionType: 'multiple_choice',
+              options: ['', '', '', ''],
+              correctAnswer: '',
+              points: 1,
+            },
+          ],
       };
+    };
+
+    // Default quiz data if not present
+    let quizData: QuizData;
+
+    if (lesson.lessonType === 'QUIZ') {
+      // First preference: quiz already hydrated on the lesson object
+      if ('quiz' in lesson && lesson.quiz) {
+        quizData = buildQuizData(lesson.quiz);
+      } else if (courseId) {
+        // Fallback: fetch quiz by lesson id from API so previous questions/answers show up when editing
+        try {
+          const apiQuiz = await quizApi.getQuizByLesson(lesson.id);
+          quizData = buildQuizData(apiQuiz);
+        } catch (error) {
+          console.error('Failed to load quiz for lesson', lesson.id, error);
+          quizData = buildQuizData(null);
+        }
+      } else {
+        quizData = buildQuizData(null);
+      }
     } else {
-      quizData = {
-        title: '',
-        questions: [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
-      };
+      quizData = buildQuizData(null);
     }
 
     setLessonForm({
