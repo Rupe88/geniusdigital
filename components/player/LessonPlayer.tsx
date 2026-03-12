@@ -296,12 +296,37 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 );
             }
 
-            case 'QUIZ':
-                if (quizLoading && !quizData) {
+            case 'QUIZ': {
+                const effectiveQuiz = quizData || lesson.quiz;
+                const hasQuestions =
+                    !!effectiveQuiz && Array.isArray((effectiveQuiz as any).questions) && (effectiveQuiz as any).questions.length > 0;
+
+                // While we are still loading questions for this quiz (and nothing to show yet),
+                // render a skeleton instead of the "No questions yet" empty state.
+                if (quizLoading && !hasQuestions) {
                     return (
-                        <div className="text-center p-20 bg-gray-50 border-2 border-dashed border-gray-200">
-                            <HiVideoCamera className="w-10 h-10 mx-auto text-gray-300 mb-3 animate-pulse" />
-                            <p className="text-gray-500 font-bold">Loading quiz...</p>
+                        <div className="max-w-3xl mx-auto space-y-6">
+                            <div className="bg-white p-6 rounded-none border border-gray-200 shadow-sm flex items-center justify-between">
+                                <div className="space-y-2">
+                                    <div className="h-5 w-40 bg-gray-100 rounded-md animate-pulse" />
+                                    <div className="h-3 w-28 bg-gray-100 rounded-md animate-pulse" />
+                                </div>
+                                <div className="w-36 md:w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full w-1/3 bg-gray-200 animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-none border border-gray-200 shadow-sm p-8 space-y-6">
+                                <div className="h-4 w-32 bg-gray-100 rounded-md animate-pulse" />
+                                <div className="h-6 w-3/4 bg-gray-100 rounded-md animate-pulse" />
+                                <div className="space-y-3 pt-4">
+                                    {Array.from({ length: 4 }).map((_, idx) => (
+                                        <div key={idx} className="flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-md bg-gray-100 animate-pulse" />
+                                            <div className="flex-1 h-10 rounded-md bg-gray-100 animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     );
                 }
@@ -316,7 +341,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                     );
                 }
 
-                if (!quizData && !lesson.quiz) {
+                if (!effectiveQuiz) {
                     return (
                         <div className="text-center p-20 bg-gray-50 border-2 border-dashed border-gray-200">
                             <HiClipboardList className="w-16 h-16 mx-auto text-gray-300 mb-4" />
@@ -327,12 +352,13 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
 
                 return (
                     <QuizPlayer
-                        quiz={(quizData || lesson.quiz)!}
+                        quiz={effectiveQuiz as any}
                         onComplete={(result) => {
                             if (result.passed && onComplete) onComplete();
                         }}
                     />
                 );
+            }
 
             case 'ASSIGNMENT':
                 return (
