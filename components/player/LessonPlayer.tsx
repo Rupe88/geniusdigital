@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Lesson } from '@/lib/types/course';
+import { Lesson, Quiz } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload, HiRefresh } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
 import { getVideoEmbedUrl, getDocumentOpenUrl, isGoogleClassroomUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
+import { getQuizByLesson } from '@/lib/api/quizzes';
 
 interface LessonPlayerProps {
     lesson: Lesson;
@@ -20,6 +21,11 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     const [autoRetryUsed, setAutoRetryUsed] = useState(false);
     const fetchedForLessonId = useRef<string | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Quiz data fetched from API (ensures questions array is present)
+  const [quizData, setQuizData] = useState<Quiz | null>(lesson.quiz ?? null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizError, setQuizError] = useState<string | null>(null);
 
     const retryVideo = () => {
         setSecureVideoError(null);
@@ -36,6 +42,34 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     useEffect(() => {
         setAutoRetryUsed(false);
     }, [lesson.id]);
+
+  // Fetch quiz for QUIZ lessons so that uploaded questions always show up
+  useEffect(() => {
+    if (lesson.lessonType !== 'QUIZ') return;
+
+    let cancelled = false;
+    setQuizError(null);
+    setQuizLoading(true);
+
+    getQuizByLesson(lesson.id)
+      .then((quiz) => {
+        if (!cancelled && quiz) {
+          setQuizData(quiz);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setQuizError(err instanceof Error ? err.message : 'Failed to load quiz');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setQuizLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lesson.id, lesson.lessonType]);
 
     useEffect(() => {
         if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl) return;
@@ -263,15 +297,41 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
             }
 
             case 'QUIZ':
-                return lesson.quiz ? (
-                    <QuizPlayer quiz={lesson.quiz} onComplete={(result) => {
-                        if (result.passed && onComplete) onComplete();
-                    }} />
-                ) : (
-                    <div className="text-center p-20 bg-gray-50 border-2 border-dashed border-gray-200">
-                        <HiClipboardList className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <p className="text-gray-500 font-bold">No quiz data found for this lesson.</p>
-                    </div>
+                if (quizLoading && !quizData) {
+                    return (
+                        <div className="text-center p-20 bg-gray-50 border-2 border-dashed border-gray-200">
+                            <HiVideoCamera className="w-10 h-10 mx-auto text-gray-300 mb-3 animate-pulse" />
+                            <p className="text-gray-500 font-bold">Loading quiz...</p>
+                        </div>
+                    );
+                }
+
+                if (quizError && !quizData) {
+                    return (
+                        <div className="text-center p-20 bg-gray-50 border-2 border-dashed border-gray-200">
+                            <HiClipboardList className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                            <p className="text-gray-500 font-bold">Could not load quiz for this lesson.</p>
+                            <p className="text-sm text-gray-400 mt-2">{quizError}</p>
+                        </div>
+                    );
+                }
+
+                if (!quizData && !lesson.quiz) {
+                    return (
+                        <div className="text-center p-20 bg-gray-50 border-2 border-dashed border-gray-200">
+                            <HiClipboardList className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                            <p className="text-gray-500 font-bold">No quiz data found for this lesson.</p>
+                        </div>
+                    );
+                }
+
+                return (
+                    <QuizPlayer
+                        quiz={(quizData || lesson.quiz)!}
+                        onComplete={(result) => {
+                            if (result.passed && onComplete) onComplete();
+                        }}
+                    />
                 );
 
             case 'ASSIGNMENT':
