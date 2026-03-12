@@ -279,7 +279,8 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                         Question {currentQuestionIndex + 1} of {questions.length}
                     </p>
                 </div>
-                <div className="w-32 h-3 bg-gray-100 rounded-none overflow-hidden">
+                {/* Quiz progress bar (visual indicator only) */}
+                <div className="w-36 md:w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
                         className="h-full bg-[var(--primary-700)] transition-all duration-500"
                         style={{ width: `${questions.length ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0}%` }}
