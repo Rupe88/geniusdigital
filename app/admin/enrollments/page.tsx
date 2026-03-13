@@ -770,6 +770,10 @@ export default function AdminEnrollmentsPage() {
                   <option value={30}>30 Days</option>
                   <option value={60}>60 Days</option>
                   <option value={90}>90 Days</option>
+                  <option value={365}>1 Year</option>
+                  <option value={548}>1.5 Years</option>
+                  <option value={730}>2 Years</option>
+                  <option value={1095}>3 Years</option>
                 </select>
               </div>
 
