@@ -1,15 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  FiFacebook,
-  FiInstagram,
-  FiYoutube,
-  FiLinkedin,
-  FiMail,
-  FiPhone,
-  FiMapPin,
-} from 'react-icons/fi';
+import { FiFacebook, FiInstagram, FiYoutube, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
+import { FaTiktok } from 'react-icons/fa';
 import { PwaInstall } from '@/components/PwaInstall';
 import { ROUTES } from '@/lib/utils/constants';
 
@@ -76,11 +69,11 @@ export const Footer: React.FC = () => {
                 <FiYoutube />
               </a>
               <a
-                href="https://linkedin.com"
-                aria-label="LinkedIn"
+                href="https://tiktok.com"
+                aria-label="TikTok"
                 className="transition hover:text-white/70"
               >
-                <FiLinkedin />
+                <FaTiktok />
               </a>
             </div>
           </div>
