@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
 import { ROUTES } from '@/lib/utils/constants';
@@ -17,6 +17,7 @@ export const Navbar: React.FC = () => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const { items: cartItems, itemCount, total } = useCart();
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
@@ -38,6 +39,19 @@ export const Navbar: React.FC = () => {
     { label: 'Blogs', href: ROUTES.BLOGS },
     { label: 'Gallery', href: ROUTES.GALLERY },
   ];
+
+  const handleNumerologyClick = () => {
+    const target = '/numerology';
+    if (!isAuthenticated) {
+      const redirectPath =
+        typeof window !== 'undefined'
+          ? `${window.location.pathname}${window.location.search}`
+          : target;
+      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectPath)}`);
+      return;
+    }
+    router.push(target);
+  };
 
   const isActive = (href: string) => {
     // Home route should match exactly
@@ -99,6 +113,7 @@ export const Navbar: React.FC = () => {
 
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
+    { label: 'Numerology', href: '/numerology', icon: HiAcademicCap },
     { label: 'Become A Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     {
       label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',
@@ -144,6 +159,15 @@ export const Navbar: React.FC = () => {
                 </Link>
               );
             })}
+
+            {/* Numerology entry */}
+            <button
+              type="button"
+              onClick={handleNumerologyClick}
+              className="transition-colors font-sm text-base whitespace-nowrap text-gray-700 hover:text-[var(--primary-700)]"
+            >
+              Numerology
+            </button>
 
             {/* More dropdown */}
             <div className="relative" ref={moreMenuRef}>
@@ -396,6 +420,22 @@ export const Navbar: React.FC = () => {
                   </Link>
                 );
               })}
+
+              {/* Numerology entry (mobile hamburger) */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleNumerologyClick();
+                  setIsMobileNavOpen(false);
+                }}
+                className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
+                  pathname === '/numerology' || pathname?.startsWith('/numerology/')
+                    ? 'text-[var(--primary-700)] bg-[var(--primary-50)]'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Numerology
+              </button>
               {moreMenuItems.map((item) => {
                 const active = isActive(item.href);
                 return (
@@ -586,7 +626,29 @@ export const Navbar: React.FC = () => {
             >
               {mobileMoreMenuItems.map((item) => {
                 const Icon = item.icon;
-                const active = isActive(item.href);
+                const isNumerology = item.href === '/numerology';
+                const active = !isNumerology ? isActive(item.href) : pathname === '/numerology' || pathname?.startsWith('/numerology/');
+
+                if (isNumerology) {
+                  return (
+                    <button
+                      key="numerology"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        handleNumerologyClick();
+                        setIsMobileMoreOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-sm ${
+                        active ? 'text-[var(--primary-700)] bg-[var(--primary-50)]' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      {item.label}
+                    </button>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.href}
