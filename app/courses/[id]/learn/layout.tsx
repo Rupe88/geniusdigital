@@ -129,7 +129,8 @@ function LearnLayoutInner({
             </p>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <ul className="divide-y divide-gray-100">
+            {/* Extra bottom padding so last lesson is fully scrollable on mobile */}
+            <ul className="divide-y divide-gray-100 pb-24">
               {playlistLessons.map((lesson, index) => {
                 const isActive = currentLessonId === lesson.id;
                 const isCompleted = completedLessonIds.has(lesson.id);

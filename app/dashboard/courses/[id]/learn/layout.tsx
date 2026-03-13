@@ -136,7 +136,8 @@ function LearnLayoutInner({
             <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{lessonsByChapter.total} lessons</p>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="py-2">
+            {/* Extra bottom padding so last lesson is fully scrollable above mobile nav bars */}
+            <div className="py-2 pb-24">
               {chapters.map((ch) => {
                 const chLessons = lessonsByChapter.byChapter.get(ch.id) ?? [];
                 if (chLessons.length === 0) return null;
