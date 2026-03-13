@@ -10,6 +10,7 @@ import { User } from '@/lib/types/auth';
 import { PaginatedResponse } from '@/lib/types/api';
 import { formatDate } from '@/lib/utils/helpers';
 import { HiDownload } from 'react-icons/hi';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,7 +45,7 @@ export default function AdminUsersPage() {
       // Set empty array on error to prevent undefined errors
       setUsers([]);
       setPagination({ page: 1, limit: 10, total: 0, pages: 0 });
-      alert(`Failed to load users: ${Object(error).message || 'An error occurred' || 'Unknown error'}`);
+      showError(Object(error).message || 'Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -54,12 +55,14 @@ export default function AdminUsersPage() {
     try {
       if (isActive) {
         await adminApi.blockUser(userId);
+        showSuccess('User blocked successfully');
       } else {
         await adminApi.unblockUser(userId);
+        showSuccess('User unblocked successfully');
       }
       fetchUsers();
     } catch (error) {
-      alert(Object(error).message || 'An error occurred' || 'Operation failed');
+      showError(Object(error).message || 'Operation failed');
     }
   };
 
@@ -98,8 +101,9 @@ export default function AdminUsersPage() {
       a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+      showSuccess('Users exported successfully');
     } catch (error) {
-      alert(Object(error).message || 'Failed to export users');
+      showError(Object(error).message || 'Failed to export users');
     } finally {
       setExportLoading(false);
     }
@@ -126,9 +130,11 @@ export default function AdminUsersPage() {
       setNewPhone('');
       setNewRole('STUDENT');
       await fetchUsers();
-      alert('User created successfully. Share the email and password with the user so they can log in.');
+      showSuccess('User created successfully. Share the email and password with the user so they can log in.');
     } catch (error) {
-      setCreateError(Object(error).message || 'Failed to create user');
+      const msg = Object(error).message || 'Failed to create user';
+      setCreateError(msg);
+      showError(msg);
     } finally {
       setCreating(false);
     }
