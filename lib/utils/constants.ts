@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN: {
     USERS: '/admin/users',
+    CREATE_USER: '/admin/users',
     USER_BY_ID: (id: string) => `/admin/users/${id}`,
     BLOCK_USER: '/admin/users/block',
     UNBLOCK_USER: '/admin/users/unblock',

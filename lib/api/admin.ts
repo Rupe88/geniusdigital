@@ -134,6 +134,22 @@ export const getAllUsers = async (params?: {
   }
 };
 
+export const createUser = async (data: {
+  fullName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role?: 'STUDENT' | 'INSTRUCTOR';
+}): Promise<User> => {
+  try {
+    const response = await apiClient.post<ApiResponse<{ user: User }>>(API_ENDPOINTS.ADMIN.CREATE_USER, data);
+    const payload = handleApiResponse<{ user: User }>(response);
+    return payload.user;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 export const getUserById = async (id: string): Promise<User> => {
   try {
     const response = await apiClient.get<ApiResponse<{ user: User }>>(API_ENDPOINTS.ADMIN.USER_BY_ID(id));

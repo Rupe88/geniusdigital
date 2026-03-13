@@ -17,6 +17,13 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
   const [exportLoading, setExportLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newFullName, setNewFullName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRole, setNewRole] = useState<'STUDENT' | 'INSTRUCTOR'>('STUDENT');
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -98,34 +105,121 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!newFullName.trim() || !newEmail.trim() || !newPassword.trim()) {
+      setCreateError('Name, email and password are required.');
+      return;
+    }
+    try {
+      setCreateError(null);
+      setCreating(true);
+      await adminApi.createUser({
+        fullName: newFullName.trim(),
+        email: newEmail.trim(),
+        password: newPassword,
+        phone: newPhone.trim() || undefined,
+        role: newRole,
+      });
+      setNewFullName('');
+      setNewEmail('');
+      setNewPassword('');
+      setNewPhone('');
+      setNewRole('STUDENT');
+      await fetchUsers();
+      alert('User created successfully. Share the email and password with the user so they can log in.');
+    } catch (error) {
+      setCreateError(Object(error).message || 'Failed to create user');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <div>
-      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--foreground)]">User Management</h1>
-          <p className="text-[var(--muted-foreground)] mt-2">Manage all users</p>
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-[var(--foreground)]">User Management</h1>
+            <p className="text-[var(--muted-foreground)] mt-2">Manage all users and create login credentials for students.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Input
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPagination({ ...pagination, page: 1 });
+              }}
+              className="max-w-md"
+            />
+            <Button
+              variant="outline"
+              onClick={handleExportUsers}
+              disabled={exportLoading}
+              className="shrink-0"
+            >
+              <HiDownload className="w-4 h-4 mr-2" />
+              {exportLoading ? 'Exporting…' : 'Export Users'}
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPagination({ ...pagination, page: 1 });
-            }}
-            className="max-w-md"
-          />
-          <Button
-            variant="outline"
-            onClick={handleExportUsers}
-            disabled={exportLoading}
-            className="shrink-0"
-          >
-            <HiDownload className="w-4 h-4 mr-2" />
-            {exportLoading ? 'Exporting…' : 'Export Users'}
-          </Button>
-        </div>
+
+        <Card padding="md" className="space-y-3">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">Create User With Credentials</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Use this form to create a user and share email/password with them so they can log in directly without OTP.
+          </p>
+          {createError && (
+            <div className="rounded border border-[var(--error)] bg-red-50 px-3 py-2 text-sm text-[var(--error)]">
+              {createError}
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <Input
+              label="Full Name"
+              value={newFullName}
+              onChange={(e) => setNewFullName(e.target.value)}
+              placeholder="Student full name"
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="student@example.com"
+            />
+            <Input
+              label="Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Strong password"
+            />
+            <Input
+              label="Phone (optional)"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              placeholder="+9779XXXXXXXXX"
+            />
+            <div>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Role</label>
+              <select
+                className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as 'STUDENT' | 'INSTRUCTOR')}
+              >
+                <option value="STUDENT">Student</option>
+                <option value="INSTRUCTOR">Instructor</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button variant="primary" onClick={handleCreateUser} disabled={creating}>
+              {creating ? 'Creating…' : 'Create User'}
+            </Button>
+          </div>
+        </Card>
       </div>
 
       <Card padding="none">
