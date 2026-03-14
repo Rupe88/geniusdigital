@@ -102,6 +102,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
   const [editingLesson, setEditingLesson] = useState<Lesson | LocalLesson | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string>('');
   const [scrollToLessonId, setScrollToLessonId] = useState<string | null>(null);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
 
   // Form states
   const [chapterForm, setChapterForm] = useState<ChapterFormData>({
@@ -397,42 +398,40 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       };
     };
 
-    // Default quiz data if not present
-    let quizData: QuizData;
-
-    if (lesson.lessonType === 'QUIZ') {
-      // First preference: quiz already hydrated on the lesson object
-      if ('quiz' in lesson && lesson.quiz) {
-        quizData = buildQuizData(lesson.quiz);
-      } else if (courseId) {
-        // Admin: fetch full quiz (with correctAnswer) so previous questions/options/answers show when editing
-        try {
-          const apiQuiz = await quizApi.getQuizByLessonAdmin(lesson.id);
-          quizData = buildQuizData(apiQuiz);
-        } catch (error) {
-          console.error('Failed to load quiz for lesson', lesson.id, error);
-          quizData = buildQuizData(null);
-        }
-      } else {
-        quizData = buildQuizData(null);
-      }
-    } else {
-      quizData = buildQuizData(null);
+    const isQuiz = String(lesson.lessonType || '').toUpperCase() === 'QUIZ';
+    const lessonType = lesson.lessonType as 'VIDEO' | 'TEXT' | 'PDF' | 'QUIZ' | 'ASSIGNMENT';
+    let initialQuizData: QuizData = buildQuizData(null);
+    if (isQuiz && 'quiz' in lesson && lesson.quiz) {
+      initialQuizData = buildQuizData(lesson.quiz);
     }
 
     setLessonForm({
       title: lesson.title,
       description: lesson.description || '',
       content: lesson.content || '',
-      lessonType: lesson.lessonType as 'VIDEO' | 'TEXT' | 'PDF' | 'QUIZ' | 'ASSIGNMENT',
+      lessonType,
       videoUrl: lesson.videoUrl || '',
       isPreview: lesson.isPreview || false,
       isLocked: lesson.isLocked || false,
       videoFile: null,
       attachmentFile: null,
-      quizData,
+      quizData: initialQuizData,
     });
     setShowLessonModal(true);
+
+    if (isQuiz && lesson.id) {
+      setLoadingQuiz(true);
+      try {
+        const apiQuiz = await quizApi.getQuizByLessonAdmin(lesson.id);
+        setLessonForm((prev) => ({ ...prev, quizData: buildQuizData(apiQuiz) }));
+      } catch (error) {
+        console.error('Failed to load quiz for lesson', lesson.id, error);
+        showError('Failed to load quiz questions. You can still add or edit them below.');
+        setLessonForm((prev) => ({ ...prev, quizData: buildQuizData(null) }));
+      } finally {
+        setLoadingQuiz(false);
+      }
+    }
   };
 
   const handleSaveLesson = async () => {
@@ -941,7 +940,12 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       {/* Lesson Modal */}
       <Modal
         isOpen={showLessonModal}
-        onClose={() => !isUploading && setShowLessonModal(false)}
+        onClose={() => {
+          if (!isUploading) {
+            setLoadingQuiz(false);
+            setShowLessonModal(false);
+          }
+        }}
         title={editingLesson ? 'Edit Lesson' : 'Create Lesson'}
         size="lg"
       >
@@ -1018,6 +1022,12 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
           {lessonForm.lessonType === 'QUIZ' && (
             <div className="space-y-6 pt-4 border-t border-gray-200">
+              {loadingQuiz ? (
+                <div className="flex items-center justify-center py-12 text-[var(--muted-foreground)]">
+                  <span className="animate-pulse">Loading quiz questions…</span>
+                </div>
+              ) : (
+                <>
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Time Limit (minutes)"
@@ -1145,6 +1155,8 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                   );
                 })}
               </div>
+                </>
+              )}
             </div>
           )}
 
