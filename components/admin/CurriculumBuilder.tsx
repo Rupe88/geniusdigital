@@ -123,6 +123,8 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
     attachmentFile: null,
     quizData: {
       title: '',
+      timeLimit: undefined as number | undefined,
+      passingScore: 70,
       questions: [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
     },
   });
@@ -297,6 +299,8 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       attachmentFile: null,
       quizData: {
         title: '',
+        timeLimit: undefined,
+        passingScore: 70,
         questions: [{ question: '', questionType: 'multiple_choice', options: ['', '', '', ''], correctAnswer: '', points: 1 }],
       },
     });
@@ -309,9 +313,29 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
     // Helper to normalize quiz from any source (Lesson.quiz or API) into QuizData shape
     const buildQuizData = (q: any | null | undefined): QuizData => {
+      const normalizeCorrectAnswer = (val: any): string => {
+        if (val == null) return '';
+        if (typeof val === 'string') {
+          const s = val.trim();
+          if (s.startsWith('[')) {
+            try {
+              const arr = JSON.parse(s);
+              return Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : '';
+            } catch {
+              return s;
+            }
+          }
+          return s;
+        }
+        if (Array.isArray(val) && val.length > 0) return String(val[0]);
+        return String(val);
+      };
+
       if (!q) {
         return {
           title: '',
+          timeLimit: undefined,
+          passingScore: 70,
           questions: [
             {
               question: '',
@@ -327,8 +351,8 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       return {
         title: q.title || '',
         description: q.description || '',
-        timeLimit: q.timeLimit || 0,
-        passingScore: q.passingScore || 70,
+        timeLimit: q.timeLimit ?? undefined,
+        passingScore: q.passingScore ?? 70,
         questions:
           q.questions?.map((qq: any) => {
             const qt = qq.questionType || 'multiple_choice';
@@ -339,7 +363,13 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
               options = Array.isArray(qq.options)
                 ? qq.options
                 : typeof qq.options === 'string'
-                ? JSON.parse(qq.options || '[]')
+                ? (() => {
+                    try {
+                      return JSON.parse(qq.options || '[]');
+                    } catch {
+                      return ['', '', '', ''];
+                    }
+                  })()
                 : ['', '', '', ''];
             }
 
@@ -348,11 +378,11 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
             }
 
             return {
-              question: qq.question,
+              question: qq.question ?? '',
               questionType: qt as QuizQuestionType,
               options,
-              correctAnswer: qq.correctAnswer || '',
-              points: qq.points || 1,
+              correctAnswer: normalizeCorrectAnswer(qq.correctAnswer),
+              points: qq.points ?? 1,
             };
           }) ??
           [
@@ -375,9 +405,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       if ('quiz' in lesson && lesson.quiz) {
         quizData = buildQuizData(lesson.quiz);
       } else if (courseId) {
-        // Fallback: fetch quiz by lesson id from API so previous questions/answers show up when editing
+        // Admin: fetch full quiz (with correctAnswer) so previous questions/options/answers show when editing
         try {
-          const apiQuiz = await quizApi.getQuizByLesson(lesson.id);
+          const apiQuiz = await quizApi.getQuizByLessonAdmin(lesson.id);
           quizData = buildQuizData(apiQuiz);
         } catch (error) {
           console.error('Failed to load quiz for lesson', lesson.id, error);
@@ -988,6 +1018,43 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
           {lessonForm.lessonType === 'QUIZ' && (
             <div className="space-y-6 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Time Limit (minutes)"
+                  type="number"
+                  min="0"
+                  value={lessonForm.quizData.timeLimit ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLessonForm((prev) => ({
+                      ...prev,
+                      quizData: {
+                        ...prev.quizData,
+                        timeLimit: v === '' ? undefined : parseInt(v, 10) || undefined,
+                      },
+                    }));
+                  }}
+                  placeholder="Optional – no limit if blank"
+                  helperText="Quiz auto-submits when time runs out (counts as failed)."
+                />
+                <Input
+                  label="Passing Score (%)"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={lessonForm.quizData.passingScore ?? 70}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLessonForm((prev) => ({
+                      ...prev,
+                      quizData: {
+                        ...prev.quizData,
+                        passingScore: v === '' ? 70 : parseInt(v, 10) || 70,
+                      },
+                    }));
+                  }}
+                />
+              </div>
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-900">Quiz Questions</h3>
                 <Button type="button" variant="outline" size="sm" onClick={addQuizQuestion}>

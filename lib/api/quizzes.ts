@@ -32,6 +32,22 @@ export const getQuizByLesson = async (lessonId: string): Promise<Quiz> => {
   }
 };
 
+/** Admin: get full quiz by lesson (includes correctAnswer for editing). Use when editing a quiz lesson in curriculum. */
+export const getQuizByLessonAdmin = async (lessonId: string): Promise<Quiz> => {
+  try {
+    const response = await apiClient.get<ApiResponse<Quiz>>(
+      `${API_ENDPOINTS.QUIZZES.LIST}/admin/lesson/${lessonId}`
+    );
+    const responseData = response.data;
+    if (responseData.success && responseData.data) {
+      return responseData.data;
+    }
+    return handleApiResponse<Quiz>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 export const createQuiz = async (data: CreateQuizData): Promise<Quiz> => {
   try {
     const response = await apiClient.post<ApiResponse<Quiz>>(API_ENDPOINTS.QUIZZES.LIST, data);
