@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Quiz, QuizQuestion } from '@/lib/types/course';
@@ -16,14 +16,28 @@ interface QuizPlayerProps {
 const QUESTIONS_SAFE = (q: Quiz | undefined | null): QuizQuestion[] =>
     Array.isArray(q?.questions) ? q.questions : [];
 
+/** Format seconds as MM:SS */
+function formatTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = Math.max(0, seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<QuizResult | null>(null);
     const [showExplanation, setShowExplanation] = useState(false);
+    const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
+    const [timeExpired, setTimeExpired] = useState(false);
+
+    const selectedAnswersRef = useRef(selectedAnswers);
+    selectedAnswersRef.current = selectedAnswers;
 
     const questions = QUESTIONS_SAFE(quiz);
+    const timeLimitMinutes = typeof quiz.timeLimit === 'number' && quiz.timeLimit > 0 ? quiz.timeLimit : 0;
+    const totalSeconds = timeLimitMinutes * 60;
     const currentQuestion = questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
@@ -100,7 +114,46 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
         setSelectedAnswers({});
         setCurrentQuestionIndex(0);
         setShowExplanation(false);
+        setTimeExpired(false);
+        if (totalSeconds > 0) setSecondsRemaining(totalSeconds);
     };
+
+    // Initialize timer when quiz has a time limit
+    useEffect(() => {
+        if (totalSeconds > 0 && result === null && secondsRemaining === null) {
+            setSecondsRemaining(totalSeconds);
+        }
+    }, [totalSeconds, result, secondsRemaining]);
+
+    // Countdown: when it hits 0, auto-submit and show fail (time's up)
+    useEffect(() => {
+        if (totalSeconds <= 0 || result !== null || secondsRemaining === null) return;
+
+        const id = setInterval(() => {
+            setSecondsRemaining((prev) => {
+                if (prev === null || prev <= 0) {
+                    clearInterval(id);
+                    return 0;
+                }
+                if (prev === 1) {
+                    clearInterval(id);
+                    setTimeExpired(true);
+                    setSubmitting(true);
+                    submitQuiz(quiz.id, selectedAnswersRef.current)
+                        .then((quizResult) => {
+                            setResult(quizResult);
+                            showError('Time\'s up! Your answers were submitted automatically.');
+                            if (onComplete) onComplete(quizResult);
+                        })
+                        .catch((err) => showError(Object(err).message || 'Failed to submit quiz'))
+                        .finally(() => setSubmitting(false));
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(id);
+    }, [totalSeconds, result, quiz.id, onComplete]);
 
     // No questions: show empty state instead of crashing
     if (!questions.length) {
@@ -120,8 +173,8 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
         const displayPercentage =
             displayTotal > 0 ? (displayCorrect / displayTotal) * 100 : result.percentage;
         const allCorrect = displayTotal > 0 && displayCorrect === displayTotal;
-        // Treat quiz as passed when either backend says so OR all answers are correct
-        const effectivePassed = result.passed || allCorrect;
+        // When time expired, always show fail; otherwise treat passed when backend says so or all correct
+        const effectivePassed = timeExpired ? false : (result.passed || allCorrect);
 
         return (
             <Card padding="lg" className="max-w-4xl mx-auto border-2 border-[var(--border)] overflow-hidden">
@@ -134,7 +187,11 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                         )}
                     </div>
                     <h2 className="text-4xl font-black text-gray-900 mb-2">
-                        {effectivePassed ? 'Excellent Work!' : 'Keep Practicing!'}
+                        {timeExpired
+                            ? "Time's up – You didn't pass"
+                            : effectivePassed
+                                ? 'Excellent Work!'
+                                : 'Keep Practicing!'}
                     </h2>
                     <p className="text-lg font-bold text-gray-600">
                         You answered{' '}
@@ -258,13 +315,23 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     return (
         <div className="max-w-3xl mx-auto space-y-8">
             {/* Header / Progress */}
-            <div className="bg-white p-6 rounded-none border border-gray-200 shadow-sm flex items-center justify-between">
+            <div className="bg-white p-6 rounded-none border border-gray-200 shadow-sm flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h2 className="text-2xl font-black text-gray-900 tracking-tight">{quiz.title}</h2>
                     <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
                         Question {currentQuestionIndex + 1} of {questions.length}
                     </p>
                 </div>
+                {totalSeconds > 0 && secondsRemaining !== null && (
+                    <div
+                        className={`text-lg font-black tabular-nums ${
+                            secondsRemaining < 60 ? 'text-red-600' : 'text-gray-700'
+                        }`}
+                        aria-live="polite"
+                    >
+                        Time left: {formatTime(secondsRemaining)}
+                    </div>
+                )}
                 {/* Quiz progress bar (visual indicator only) */}
                 <div className="w-36 md:w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div

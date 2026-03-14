@@ -146,6 +146,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
               value={timeLimit}
               onChange={(e) => setTimeLimit(e.target.value)}
               placeholder="Optional"
+              helperText="Optional – leave blank for no time limit. When set, quiz auto-submits at 0 and counts as failed."
             />
             <Input
               label="Passing Score (%)"
