@@ -25,7 +25,7 @@ const CarouselVideo: React.FC<{
       ref={videoRef}
       src={src}
       poster={poster}
-      className="absolute inset-0 w-full h-full object-cover"
+      className="hero-slide-video absolute inset-0 w-full h-full object-cover"
       muted
       loop
       playsInline
@@ -113,15 +113,15 @@ export const HeroCarousel: React.FC = () => {
 
   return (
     <div
-      className="hero-carousel-wrapper"
+      className="hero-carousel-wrapper mt-0 pt-0"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Constrained container to match Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Full-bleed on mobile, no top gap; constrained on larger screens. No border/shadow. */}
+      <div className="hero-carousel-outer-wrap max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pt-0 pb-3 sm:py-6">
         <div className="hero-carousel-outer">
           <div className="hero-carousel-wrap">
-          <div className="hero-carousel-container shadow-2xl border border-gray-100">
+          <div className="hero-carousel-container">
             {/* Slides wrapper with smooth transition */}
             <div
               ref={slideRef}
@@ -219,6 +219,8 @@ export const HeroCarousel: React.FC = () => {
       <style jsx>{`
         .hero-carousel-wrapper {
           width: 100%;
+          margin-top: 0;
+          padding-top: 0;
           background: transparent;
         }
 
@@ -237,7 +239,8 @@ export const HeroCarousel: React.FC = () => {
         .hero-carousel-container {
           position: relative;
           width: 100%;
-          height: 280px;
+          /* Mobile: taller so full image/video fits with object-contain */
+          height: min(420px, 60vh);
           overflow: hidden;
         }
 
@@ -283,6 +286,15 @@ export const HeroCarousel: React.FC = () => {
         :global(.hero-slide-image) {
           object-fit: cover;
           object-position: center;
+        }
+
+        /* Mobile: show full image/video without cropping */
+        @media (max-width: 639px) {
+          :global(.hero-slide-image),
+          :global(.hero-slide-video) {
+            object-fit: contain;
+            object-position: center;
+          }
         }
 
         .hero-slide-overlay {
@@ -398,6 +410,26 @@ export const HeroCarousel: React.FC = () => {
           height: 4px;
           background: rgba(255, 255, 255, 0.2);
           z-index: 20;
+        }
+
+        @media (max-width: 639px) {
+          .hero-pagination {
+            bottom: 12px;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 14px;
+          }
+          .hero-pagination-dot {
+            width: 6px;
+            height: 6px;
+          }
+          .hero-pagination-dot-active {
+            width: 18px;
+            border-radius: 6px;
+          }
+          .hero-progress-bar {
+            height: 3px;
+          }
         }
 
         .hero-progress-fill {

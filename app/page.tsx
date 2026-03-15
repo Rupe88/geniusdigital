@@ -358,8 +358,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Carousel Section - Full Width */}
-      <section className="relative w-full">
+      {/* Hero Carousel Section - Full Width, no gap under navbar on mobile */}
+      <section className="relative w-full pt-0 mt-0">
         <HeroCarousel />
       </section>
 

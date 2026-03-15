@@ -19,7 +19,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     <>
       <PromotionalPopup />
       <Navbar />
-      <main className="flex-grow pb-20 lg:pb-0">{children}</main>
+      <main className="flex-grow pt-0 pb-20 lg:pb-0">{children}</main>
       <Footer />
     </>
   );
