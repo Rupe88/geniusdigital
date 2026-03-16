@@ -7,6 +7,7 @@ import { getGalleryItems } from '@/lib/api/gallery';
 import type { GalleryItem } from '@/lib/api/gallery';
 import { Modal } from '@/components/ui/Modal';
 import { getYouTubeThumbnailUrl } from '@/lib/utils/helpers';
+//add
 
 const ITEMS_PER_ROW = 7;
 const HOMEPAGE_LIMIT = 21;
