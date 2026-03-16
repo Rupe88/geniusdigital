@@ -9,6 +9,7 @@ import { useCart } from '@/lib/context/CartContext';
 import { ROUTES } from '@/lib/utils/constants';
 import { generateBreadcrumbs, shouldShowBreadcrumbs } from '@/lib/utils/breadcrumbs';
 import { HiUser, HiLogout, HiCog, HiChevronDown, HiHome, HiAcademicCap, HiCalendar, HiPhotograph, HiCash, HiDotsHorizontal, HiShoppingCart, HiMenu, HiX } from 'react-icons/hi';
+import { getMyAffiliate } from '@/lib/api/affiliate';
 
 export const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -16,6 +17,7 @@ export const Navbar: React.FC = () => {
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [affiliateApproved, setAffiliateApproved] = useState<boolean | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
@@ -90,6 +92,27 @@ export const Navbar: React.FC = () => {
     setIsMobileMoreOpen(false);
     setIsMobileNavOpen(false);
   }, [pathname]);
+
+  // Determine if current user is an approved affiliate (for showing My Referrals entry)
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isAuthenticated) {
+        setAffiliateApproved(false);
+        return;
+      }
+      try {
+        const me = await getMyAffiliate();
+        if (!cancelled) setAffiliateApproved(me.status === 'APPROVED');
+      } catch {
+        if (!cancelled) setAffiliateApproved(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   // Prevent body scroll when mobile nav is open
   useEffect(() => {
@@ -307,13 +330,15 @@ export const Navbar: React.FC = () => {
                           <HiCog className="inline mr-2" />
                           Dashboard
                         </Link>
-                        <Link
-                          href="/dashboard/referrals"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          💰 My Referrals
-                        </Link>
+                        {affiliateApproved && (
+                          <Link
+                            href="/dashboard/referrals"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            💰 My Referrals
+                          </Link>
+                        )}
                       </>
                     )}
                     <button
