@@ -41,12 +41,9 @@ export const Navbar: React.FC = () => {
   ];
 
   const handleNumerologyClick = () => {
-    const target = '/numerology';
+    const target = '/numerology/basic';
     if (!isAuthenticated) {
-      const redirectPath =
-        typeof window !== 'undefined'
-          ? `${window.location.pathname}${window.location.search}`
-          : target;
+      const redirectPath = target;
       router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectPath)}`);
       return;
     }
@@ -113,7 +110,7 @@ export const Navbar: React.FC = () => {
 
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
-    { label: 'Numerology', href: '/numerology', icon: HiAcademicCap },
+    { label: 'Numerology', href: '/numerology/basic', icon: HiAcademicCap },
     { label: 'Become A Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     {
       label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',

@@ -145,10 +145,12 @@ export const NUMBER_DETAILS: Record<number, NumberDetail> = {
 };
 
 export function getNumberDetail(n: number): NumberDetail | null {
-  const single = n > 9 ? (n % 9 === 0 ? 9 : n % 9) : n;
-  if (single >= 1 && single <= 9) {
-    return NUMBER_DETAILS[single];
-  }
-  return null;
+  // Always reduce to a 1–9 digit so any valid numerology result
+  // (Mulank, Bhagyank, name numbers, or their sums) maps to a report.
+  if (!Number.isFinite(n)) return null;
+  const abs = Math.abs(Math.trunc(n));
+  if (abs === 0) return null;
+  const single = ((abs - 1) % 9) + 1; // 1..9 cycle
+  return NUMBER_DETAILS[single] ?? null;
 }
 

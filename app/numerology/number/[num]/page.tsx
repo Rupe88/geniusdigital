@@ -8,15 +8,18 @@ import { getNumberDetail, type NumberDetailSource } from '@/lib/numerology/const
 export default function NumerologyNumberDetailPage({
   params,
 }: {
-  params: { num: string };
+  // In app router client components, params is a Promise and must be unwrapped with React.use
+  params: Promise<{ num: string }>;
 }) {
+  const resolvedParams = React.use(params);
+
   const search = useSearchParams();
   const source = (search.get('source') as NumberDetailSource | null) ?? null;
 
   const num = useMemo(() => {
-    const n = parseInt(params.num, 10);
+    const n = parseInt(resolvedParams.num, 10);
     return Number.isNaN(n) ? null : n;
-  }, [params.num]);
+  }, [resolvedParams.num]);
 
   const detail = useMemo(() => (num != null ? getNumberDetail(num) : null), [num]);
 
