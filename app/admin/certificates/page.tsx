@@ -212,7 +212,10 @@ export default function AdminCertificatesPage() {
                       className={`px-3 py-2 cursor-pointer hover:bg-[var(--muted)] ${
                         selectedUserId === u.id ? 'bg-[var(--muted)] font-semibold' : ''
                       }`}
-                      onClick={() => setSelectedUserId(u.id)}
+                      onClick={() => {
+                        setSelectedUserId(u.id);
+                        setUserSearch(u.fullName || u.email || '');
+                      }}
                     >
                       <div>{u.fullName || u.email}</div>
                       <div className="text-[11px] text-[var(--muted-foreground)]">
@@ -245,7 +248,10 @@ export default function AdminCertificatesPage() {
                       className={`px-3 py-2 cursor-pointer hover:bg-[var(--muted)] ${
                         selectedCourseId === c.id ? 'bg-[var(--muted)] font-semibold' : ''
                       }`}
-                      onClick={() => setSelectedCourseId(c.id)}
+                      onClick={() => {
+                        setSelectedCourseId(c.id);
+                        setCourseSearch(c.title || '');
+                      }}
                     >
                       <div>{c.title}</div>
                     </li>
