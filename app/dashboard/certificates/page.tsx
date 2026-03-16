@@ -65,7 +65,8 @@ export default function CertificatesPage() {
           {certificates.map((cert) => (
             <Card key={cert.id} padding="none" className="overflow-hidden flex flex-col">
               <div className="relative w-full h-40 bg-[var(--muted)] flex items-center justify-center">
-                {cert.course?.thumbnail ? (
+                {cert.course?.thumbnail &&
+                /\.(png|jpe?g|webp|gif)$/i.test(cert.course.thumbnail) ? (
                   <StorageImage
                     src={cert.course.thumbnail}
                     alt={cert.course.title}
