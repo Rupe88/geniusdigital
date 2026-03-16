@@ -133,7 +133,7 @@ export const Navbar: React.FC = () => {
 
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
-    { label: 'Numerology', href: '/numerology/basic', icon: HiAcademicCap },
+    { label: 'Numerology Calculator', href: '/numerology/basic', icon: HiAcademicCap },
     { label: 'Become A Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     {
       label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',
@@ -180,13 +180,13 @@ export const Navbar: React.FC = () => {
               );
             })}
 
-            {/* Numerology entry */}
+            {/* Numerology Calculator entry */}
             <button
               type="button"
               onClick={handleNumerologyClick}
               className="transition-colors font-sm text-base whitespace-nowrap text-gray-700 hover:text-[var(--primary-700)]"
             >
-              Numerology
+              Numerology Calculator
             </button>
 
             {/* More dropdown */}
@@ -443,7 +443,7 @@ export const Navbar: React.FC = () => {
                 );
               })}
 
-              {/* Numerology entry (mobile hamburger) */}
+              {/* Numerology Calculator entry (mobile hamburger) */}
               <button
                 type="button"
                 onClick={() => {
@@ -456,7 +456,7 @@ export const Navbar: React.FC = () => {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                Numerology
+                Numerology Calculator
               </button>
               {moreMenuItems.map((item) => {
                 const active = isActive(item.href);
