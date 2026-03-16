@@ -11,6 +11,8 @@ export interface AdminQuizAttempt {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  adminNotes?: string | null;
+  adminVisible?: boolean;
   user?: {
     id: string;
     fullName: string | null;
@@ -19,6 +21,7 @@ export interface AdminQuizAttempt {
   quiz?: {
     id: string;
     title: string;
+    isConsultation?: boolean;
     lesson?: {
       id: string;
       title: string;

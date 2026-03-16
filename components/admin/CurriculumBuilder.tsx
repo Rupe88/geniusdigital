@@ -337,6 +337,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           title: '',
           timeLimit: undefined,
           passingScore: 70,
+          isConsultation: false,
           questions: [
             {
               question: '',
@@ -354,6 +355,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
         description: q.description || '',
         timeLimit: q.timeLimit ?? undefined,
         passingScore: q.passingScore ?? 70,
+        isConsultation: q.isConsultation ?? false,
         questions:
           q.questions?.map((qq: any) => {
             const qt = qq.questionType || 'multiple_choice';
@@ -1064,6 +1066,24 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                     }));
                   }}
                 />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="inline-flex items-center gap-2 text-sm text-[var(--foreground)] font-medium">
+                  <input
+                    type="checkbox"
+                    checked={!!lessonForm.quizData.isConsultation}
+                    onChange={(e) =>
+                      setLessonForm((prev) => ({
+                        ...prev,
+                        quizData: {
+                          ...prev.quizData,
+                          isConsultation: e.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  Treat this as a consultation quiz (admin will review answers and give feedback, no pass/fail).
+                </label>
               </div>
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-900">Quiz Questions</h3>

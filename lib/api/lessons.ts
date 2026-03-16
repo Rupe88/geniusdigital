@@ -47,6 +47,9 @@ export interface QuizData {
   description?: string;
   timeLimit?: number;
   passingScore?: number;
+   // When true, quiz is used as a consultation form where admin reviews answers
+   // and provides feedback instead of pass/fail scoring.
+  isConsultation?: boolean;
   questions: QuizQuestionData[];
 }
 

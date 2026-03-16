@@ -198,6 +198,7 @@ export interface Quiz {
   description?: string;
   timeLimit?: number;
   passingScore: number;
+  isConsultation?: boolean;
   questions: QuizQuestion[];
   createdAt: string;
   updatedAt: string;

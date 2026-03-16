@@ -18,6 +18,7 @@ import {
   HiVideoCamera,
   HiLogout,
   HiCalendar,
+  HiDocumentText,
 } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
@@ -25,6 +26,7 @@ const menuItems = [
   { href: ROUTES.DASHBOARD, label: 'Overview', icon: HiHome },
   { href: `${ROUTES.DASHBOARD}/my-courses`, label: 'My Courses', icon: HiBookOpen },
   { href: `${ROUTES.DASHBOARD}/progress`, label: 'Progress', icon: HiChartBar },
+  { href: `${ROUTES.DASHBOARD}/quiz-reports`, label: 'Quiz Reports', icon: HiDocumentText },
   { href: `${ROUTES.DASHBOARD}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
   { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
   { href: `${ROUTES.DASHBOARD}/payments`, label: 'Payments', icon: HiCreditCard },

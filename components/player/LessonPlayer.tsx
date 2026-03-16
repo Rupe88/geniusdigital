@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/Button';
 import { getVideoEmbedUrl, getDocumentOpenUrl, isGoogleClassroomUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { getQuizByLesson } from '@/lib/api/quizzes';
+import Link from 'next/link';
+import { ROUTES } from '@/lib/utils/constants';
+import { getMyAttemptsForQuiz, type UserQuizAttempt } from '@/lib/api/userQuizAttempts';
 
 interface LessonPlayerProps {
     lesson: Lesson;
@@ -26,6 +29,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
   const [quizData, setQuizData] = useState<Quiz | null>(lesson.quiz ?? null);
   const [quizLoading, setQuizLoading] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
+  const [consultationReply, setConsultationReply] = useState<UserQuizAttempt | null>(null);
 
     const retryVideo = () => {
         setSecureVideoError(null);
@@ -70,6 +74,36 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
       cancelled = true;
     };
   }, [lesson.id, lesson.lessonType]);
+
+  // For consultation quizzes: fetch latest visible admin reply (if any)
+  useEffect(() => {
+    if (lesson.lessonType !== 'QUIZ') return;
+    const q = quizData || lesson.quiz;
+    const isConsultation = !!(q as any)?.isConsultation;
+    const quizId = (q as any)?.id as string | undefined;
+    if (!isConsultation || !quizId) {
+      setConsultationReply(null);
+      return;
+    }
+    let cancelled = false;
+    setConsultationReply(null);
+    getMyAttemptsForQuiz(quizId)
+      .then((attempts) => {
+        if (cancelled) return;
+        const latest =
+          (attempts || []).find(
+            (a) => a.adminVisible && (a.adminNotes || '').trim().length > 0
+          ) || null;
+        setConsultationReply(latest);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setConsultationReply(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lesson.lessonType, lesson.quiz, quizData]);
 
     useEffect(() => {
         if (lesson.lessonType !== 'VIDEO' || !lesson.videoUrl) return;
@@ -351,12 +385,41 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 }
 
                 return (
-                    <QuizPlayer
-                        quiz={effectiveQuiz as any}
-                        onComplete={(result) => {
-                            if (result.passed && onComplete) onComplete();
-                        }}
-                    />
+                    <div className="space-y-4">
+                        {(effectiveQuiz as any)?.isConsultation && (
+                            <div className="border border-[var(--border)] bg-[var(--muted)]/30 p-4 rounded-md">
+                                <div className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-1">
+                                    Consultation quiz
+                                </div>
+                                {consultationReply?.adminVisible && consultationReply.adminNotes ? (
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-semibold text-[var(--foreground)]">Admin reply</div>
+                                        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
+                                            {consultationReply.adminNotes}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-[var(--muted-foreground)]">
+                                        After you submit, an admin will review your answers and reply. You’ll see the reply in{' '}
+                                        <Link
+                                            href={`${ROUTES.DASHBOARD}/quiz-reports`}
+                                            className="font-semibold text-[var(--primary-700)] hover:underline"
+                                        >
+                                            Quiz Reports
+                                        </Link>
+                                        .
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <QuizPlayer
+                            quiz={effectiveQuiz as any}
+                            onComplete={(result) => {
+                                if (result.passed && onComplete) onComplete();
+                            }}
+                        />
+                    </div>
                 );
             }
 

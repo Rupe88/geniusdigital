@@ -5,6 +5,9 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { getAdminQuizAttempts, AdminQuizAttempt } from '@/lib/api/quizAttempts';
+import { updateQuizAttemptFeedback } from '@/lib/api/quizFeedback';
+import { Textarea } from '@/components/ui/Textarea';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface Filters {
   search: string;
@@ -18,6 +21,7 @@ export default function AdminQuizAttemptsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchAttempts = async (pageNumber = 1) => {
     try {
@@ -107,10 +111,19 @@ export default function AdminQuizAttemptsPage() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[1100px]">
             <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)]">
               <tr>
-                {['Student', 'Email', 'Course', 'Quiz', 'Score', 'Result', 'Completed At'].map(
+                {[
+                  'Student',
+                  'Email',
+                  'Course',
+                  'Quiz',
+                  'Score',
+                  'Result',
+                  'Completed At',
+                  'Consultation Feedback',
+                ].map(
                   (h) => (
                     <th
                       key={h}
@@ -144,7 +157,7 @@ export default function AdminQuizAttemptsPage() {
                 </tr>
               ) : (
                 filteredAttempts.map((a) => (
-                  <tr key={a.id} className="hover:bg-[var(--muted)]/50 transition-colors">
+                    <tr key={a.id} className="hover:bg-[var(--muted)]/50 transition-colors align-top">
                     <td className="px-3 py-3 text-sm font-medium text-[var(--foreground)] whitespace-nowrap">
                       {a.user?.fullName || 'Unknown'}
                     </td>
@@ -175,6 +188,72 @@ export default function AdminQuizAttemptsPage() {
                       {a.completedAt
                         ? new Date(a.completedAt).toLocaleString()
                         : '—'}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-[var(--foreground)] min-w-[260px]">
+                      {a.quiz?.isConsultation ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            label="Admin notes"
+                            value={a.adminNotes ?? ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAttempts((prev) =>
+                                prev.map((att) =>
+                                  att.id === a.id ? { ...att, adminNotes: val } : att
+                                )
+                              );
+                            }}
+                            placeholder="Write personalized feedback for this attempt..."
+                            rows={3}
+                          />
+                          <label className="inline-flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                            <input
+                              type="checkbox"
+                              checked={!!a.adminVisible}
+                              onChange={(e) => {
+                                const val = e.target.checked;
+                                setAttempts((prev) =>
+                                  prev.map((att) =>
+                                    att.id === a.id ? { ...att, adminVisible: val } : att
+                                  )
+                                );
+                              }}
+                            />
+                            Visible to student in dashboard
+                          </label>
+                          <div className="flex justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={savingId === a.id}
+                              onClick={async () => {
+                                try {
+                                  setSavingId(a.id);
+                                  await updateQuizAttemptFeedback(a.id, {
+                                    adminNotes: a.adminNotes ?? '',
+                                    adminVisible: !!a.adminVisible,
+                                  });
+                                  showSuccess('Feedback saved.');
+                                } catch (err) {
+                                  showError(
+                                    err instanceof Error
+                                      ? err.message
+                                      : 'Failed to save feedback'
+                                  );
+                                } finally {
+                                  setSavingId(null);
+                                }
+                              }}
+                            >
+                              {savingId === a.id ? 'Saving…' : 'Save'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[var(--muted-foreground)]">
+                          Not a consultation quiz.
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))
