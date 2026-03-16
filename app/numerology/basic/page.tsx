@@ -146,6 +146,17 @@ export default function NumerologyBasicPage() {
     router.push(`/numerology/number/${num}?source=${encodeURIComponent(source)}`);
   };
 
+  const handleViewDobReport = () => {
+    if (!hasValidDob) return;
+    // Open a detailed report page so users see full details.
+    // Prefer Bhagyank as the primary life-path style number.
+    if (bhagyankResult) {
+      goDetail(bhagyankResult.final, 'bhagyank');
+    } else if (mulankResult) {
+      goDetail(mulankResult.final, 'mulank');
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="space-y-6">
@@ -284,11 +295,25 @@ export default function NumerologyBasicPage() {
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-base font-bold text-slate-900">Results</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Mulank & Bhagyank appear when DOB is valid.
-          </p>
+        <div className="p-4 border-b border-slate-200 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Results</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Mulank & Bhagyank appear when DOB is valid.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleViewDobReport}
+            disabled={!hasValidDob}
+            className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+              hasValidDob
+                ? 'bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)]'
+                : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+            }`}
+          >
+            View Report
+          </button>
         </div>
 
         {hasValidDob ? (
@@ -329,7 +354,7 @@ export default function NumerologyBasicPage() {
           )
         ) : (
           <div className="p-6 text-sm text-slate-500">
-            Enter a valid DOB (AD or BS) to see Mulank and Bhagyank.
+            Enter a valid DOB (AD or BS), then click <span className="font-semibold">View Report</span>.
           </div>
         )}
       </div>
