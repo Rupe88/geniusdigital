@@ -93,14 +93,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  const menuItems = React.useMemo(() => {
-    if (!affiliateApproved) return baseMenuItems;
-    return [
-      ...baseMenuItems.slice(0, 5),
-      { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
-      ...baseMenuItems.slice(5),
-    ];
-  }, [affiliateApproved]);
+  const menuItems = affiliateApproved
+    ? [
+        ...baseMenuItems.slice(0, 5),
+        { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
+        ...baseMenuItems.slice(5),
+      ]
+    : baseMenuItems;
 
   const navContent = (
     <nav className="p-4 flex-1 overflow-y-auto">
