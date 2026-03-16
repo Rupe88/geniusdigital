@@ -1,29 +1,26 @@
 import { apiClient, handleApiResponse, handleApiError } from './axios';
-import { API_ENDPOINTS } from '@/lib/utils/constants';
 import { ApiResponse } from '@/lib/types/api';
 
+// Backend Prisma model: Certificate with related user & course.
 export interface Certificate {
   id: string;
   userId: string;
   courseId: string;
-  certificateNumber: string;
+  certificateId: string;
+  certificateUrl: string;
   issuedAt: string;
-  downloadUrl: string;
-  createdAt: string;
-  updatedAt: string;
   user?: {
     fullName: string;
     email: string;
   };
   course?: {
+    id: string;
     title: string;
-    instructor: {
-      name: string;
-    };
+    thumbnail?: string | null;
   };
 }
 
-export interface CreateCertificateRequest {
+export interface IssueCertificateRequest {
   userId: string;
   courseId: string;
 }
@@ -33,7 +30,7 @@ export interface CreateCertificateRequest {
  */
 export const getAllCertificates = async (): Promise<Certificate[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<Certificate[]>>(API_ENDPOINTS.CERTIFICATES.LIST);
+    const response = await apiClient.get<ApiResponse<Certificate[]>>('/certificates/admin');
     return handleApiResponse<Certificate[]>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -45,20 +42,8 @@ export const getAllCertificates = async (): Promise<Certificate[]> => {
  */
 export const getUserCertificates = async (): Promise<Certificate[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<Certificate[]>>(`${API_ENDPOINTS.CERTIFICATES.LIST}/user`);
+    const response = await apiClient.get<ApiResponse<Certificate[]>>('/certificates');
     return handleApiResponse<Certificate[]>(response);
-  } catch (error) {
-    throw new Error(handleApiError(error));
-  }
-};
-
-/**
- * Get certificate by ID
- */
-export const getCertificateById = async (id: string): Promise<Certificate> => {
-  try {
-    const response = await apiClient.get<ApiResponse<Certificate>>(API_ENDPOINTS.CERTIFICATES.BY_ID(id));
-    return handleApiResponse<Certificate>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }
@@ -67,9 +52,9 @@ export const getCertificateById = async (id: string): Promise<Certificate> => {
 /**
  * Issue certificate (admin only)
  */
-export const issueCertificate = async (data: CreateCertificateRequest): Promise<Certificate> => {
+export const issueCertificate = async (data: IssueCertificateRequest): Promise<Certificate> => {
   try {
-    const response = await apiClient.post<ApiResponse<Certificate>>(API_ENDPOINTS.CERTIFICATES.LIST, data);
+    const response = await apiClient.post<ApiResponse<Certificate>>('/certificates/admin/issue', data);
     return handleApiResponse<Certificate>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -77,14 +62,18 @@ export const issueCertificate = async (data: CreateCertificateRequest): Promise<
 };
 
 /**
- * Download certificate
+ * Upload a signed certificate file for a user & course (admin only).
+ * Expects FormData with:
+ * - file: File
+ * - userId: string
+ * - courseId: string
  */
-export const downloadCertificate = async (id: string): Promise<Blob> => {
+export const uploadCertificateFile = async (formData: FormData): Promise<Certificate> => {
   try {
-    const response = await apiClient.get(`${API_ENDPOINTS.CERTIFICATES.BY_ID(id)}/download`, {
-      responseType: 'blob',
+    const response = await apiClient.post<ApiResponse<Certificate>>('/certificates/admin/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data;
+    return handleApiResponse<Certificate>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }
@@ -95,7 +84,7 @@ export const downloadCertificate = async (id: string): Promise<Blob> => {
  */
 export const deleteCertificate = async (id: string): Promise<void> => {
   try {
-    const response = await apiClient.delete<ApiResponse<void>>(API_ENDPOINTS.CERTIFICATES.BY_ID(id));
+    const response = await apiClient.delete<ApiResponse<void>>(`/certificates/${id}`);
     handleApiResponse<void>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -106,8 +95,7 @@ export const deleteCertificate = async (id: string): Promise<void> => {
 export const certificatesApi = {
   getAll: getAllCertificates,
   getUserCertificates,
-  getById: getCertificateById,
   issue: issueCertificate,
-  download: downloadCertificate,
+  upload: uploadCertificateFile,
   delete: deleteCertificate,
 };

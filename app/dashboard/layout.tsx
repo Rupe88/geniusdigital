@@ -29,6 +29,7 @@ const baseMenuItems = [
   { href: `${ROUTES.DASHBOARD}/progress`, label: 'Progress', icon: HiChartBar },
   { href: `${ROUTES.DASHBOARD}/quiz-reports`, label: 'Quiz Reports', icon: HiDocumentText },
   { href: `${ROUTES.DASHBOARD}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
+  { href: `${ROUTES.DASHBOARD}/certificates`, label: 'Certificates', icon: HiDocumentText },
   { href: `${ROUTES.DASHBOARD}/payments`, label: 'Payments', icon: HiCreditCard },
   { href: `${ROUTES.DASHBOARD}/installments`, label: 'Installments', icon: HiCalendar },
   { href: `${ROUTES.DASHBOARD}/settings`, label: 'Settings', icon: HiCog },
