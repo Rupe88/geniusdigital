@@ -21,14 +21,14 @@ import {
   HiDocumentText,
 } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
+import { getMyAffiliate } from '@/lib/api/affiliate';
 
-const menuItems = [
+const baseMenuItems = [
   { href: ROUTES.DASHBOARD, label: 'Overview', icon: HiHome },
   { href: `${ROUTES.DASHBOARD}/my-courses`, label: 'My Courses', icon: HiBookOpen },
   { href: `${ROUTES.DASHBOARD}/progress`, label: 'Progress', icon: HiChartBar },
   { href: `${ROUTES.DASHBOARD}/quiz-reports`, label: 'Quiz Reports', icon: HiDocumentText },
   { href: `${ROUTES.DASHBOARD}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
-  { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
   { href: `${ROUTES.DASHBOARD}/payments`, label: 'Payments', icon: HiCreditCard },
   { href: `${ROUTES.DASHBOARD}/installments`, label: 'Installments', icon: HiCalendar },
   { href: `${ROUTES.DASHBOARD}/settings`, label: 'Settings', icon: HiCog },
@@ -39,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isAuthenticated, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [affiliateApproved, setAffiliateApproved] = useState<boolean | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -58,6 +59,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setSidebarOpen(false);
   }, [pathname]);
 
+  // Determine if current user is an approved affiliate
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isAuthenticated) {
+        setAffiliateApproved(false);
+        return;
+      }
+      try {
+        const me = await getMyAffiliate();
+        if (!cancelled) setAffiliateApproved(me.status === 'APPROVED');
+      } catch {
+        if (!cancelled) setAffiliateApproved(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--muted)]">
@@ -70,6 +92,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (typeof window !== 'undefined') window.location.href = ROUTES.LOGIN;
     return null;
   }
+
+  const menuItems = React.useMemo(() => {
+    if (!affiliateApproved) return baseMenuItems;
+    return [
+      ...baseMenuItems.slice(0, 5),
+      { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
+      ...baseMenuItems.slice(5),
+    ];
+  }, [affiliateApproved]);
 
   const navContent = (
     <nav className="p-4 flex-1 overflow-y-auto">
