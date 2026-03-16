@@ -4,15 +4,16 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { getAllAffiliateApplications, type AffiliateApplication } from '@/lib/api/affiliateApplications';
+import { getAllAffiliateApplications, updateAffiliateApplicationStatus, type AffiliateApplication } from '@/lib/api/affiliateApplications';
 import { formatDate } from '@/lib/utils/helpers';
-import { showError } from '@/lib/utils/toast';
+import { showError, showSuccess } from '@/lib/utils/toast';
 import { HiArrowLeft, HiDocumentText, HiSearch, HiFilter } from 'react-icons/hi';
 
 export default function AdminAffiliateApplicationsPage() {
   const [applications, setApplications] = useState<AffiliateApplication[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 });
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -42,6 +43,22 @@ export default function AdminAffiliateApplicationsPage() {
       setLoading(false);
     }
   }, [pagination.page, pagination.limit, searchQuery]);
+
+  const updateStatus = useCallback(
+    async (id: string, status: 'APPROVED' | 'REJECTED') => {
+      try {
+        setUpdatingId(id);
+        const updated = await updateAffiliateApplicationStatus(id, status);
+        setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+        showSuccess(`Application ${status === 'APPROVED' ? 'approved' : 'rejected'} successfully`);
+      } catch (err) {
+        showError(err instanceof Error ? err.message : 'Failed to update status');
+      } finally {
+        setUpdatingId(null);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     fetchApplications();
@@ -112,12 +129,14 @@ export default function AdminAffiliateApplicationsPage() {
           </p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px]">
+          <table className="w-full min-w-[1350px]">
             <thead className="bg-[var(--muted)]/80 border-b border-[var(--border)] sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Name</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Email</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Phone</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Actions</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Date of birth</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">Country</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider whitespace-nowrap">City</th>
@@ -134,7 +153,7 @@ export default function AdminAffiliateApplicationsPage() {
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 13 }).map((_, j) => (
+                    {Array.from({ length: 15 }).map((_, j) => (
                       <td key={j} className="px-4 py-4"><div className="h-4 bg-[var(--muted)] rounded w-20" /></td>
                     ))}
                   </tr>
@@ -145,6 +164,39 @@ export default function AdminAffiliateApplicationsPage() {
                     <td className="px-4 py-4 font-medium text-[var(--foreground)] whitespace-nowrap">{app.fullName}</td>
                     <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.email}</td>
                     <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.phone || '—'}</td>
+                    <td className="px-4 py-4 text-sm whitespace-nowrap">
+                      {app.status === 'APPROVED' ? (
+                        <span className="text-green-700 font-semibold">APPROVED</span>
+                      ) : app.status === 'REJECTED' ? (
+                        <span className="text-red-700 font-semibold">REJECTED</span>
+                      ) : (
+                        <span className="text-[var(--muted-foreground)] font-semibold">PENDING</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-sm whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => updateStatus(app.id, 'APPROVED')}
+                          disabled={updatingId === app.id || app.status === 'APPROVED' || !app.userId}
+                        >
+                          {updatingId === app.id ? 'Saving…' : 'Approve'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateStatus(app.id, 'REJECTED')}
+                          disabled={updatingId === app.id || app.status === 'REJECTED'}
+                        >
+                          Reject
+                        </Button>
+                        {!app.userId && (
+                          <span className="text-xs text-[var(--muted-foreground)]">
+                            No user linked
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-4 text-sm text-[var(--muted-foreground)] whitespace-nowrap">{app.dateOfBirth || '—'}</td>
                     <td className="px-4 py-4 text-sm text-[var(--muted-foreground)]">{app.country || '—'}</td>
                     <td className="px-4 py-4 text-sm text-[var(--muted-foreground)]">{app.city || '—'}</td>
@@ -165,7 +217,7 @@ export default function AdminAffiliateApplicationsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={13} className="px-5 py-16 text-center">
+                  <td colSpan={15} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-[var(--muted-foreground)]">
                       <HiDocumentText className="h-14 w-14 opacity-60" />
                       <p className="font-medium text-[var(--foreground)]">No applications yet</p>

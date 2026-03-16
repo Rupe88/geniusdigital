@@ -20,6 +20,7 @@ export interface AffiliateApplicationPayload {
 
 export interface AffiliateApplication {
   id: string;
+  userId?: string | null;
   fullName: string;
   email: string;
   phone: string;
@@ -32,6 +33,9 @@ export interface AffiliateApplication {
   occultKnowledge: string | null;
   occultOther: string | null;
   whyJoin: string | null;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewedAt?: string | null;
+  reviewedById?: string | null;
   createdAt: string;
 }
 
@@ -67,6 +71,7 @@ export async function getAllAffiliateApplications(params?: {
   limit?: number;
   search?: string;
   q?: string;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }): Promise<PaginatedResponse<AffiliateApplication>> {
   const response = await apiClient.get<ApiResponse<AffiliateApplication[]>>(
     API_ENDPOINTS.AFFILIATE_APPLICATIONS,
@@ -85,4 +90,20 @@ export async function getAllAffiliateApplications(params?: {
     };
   }
   throw new Error(data.message || 'Failed to fetch applications');
+}
+
+export async function updateAffiliateApplicationStatus(
+  id: string,
+  status: 'APPROVED' | 'REJECTED'
+): Promise<AffiliateApplication> {
+  try {
+    const response = await apiClient.patch<ApiResponse<AffiliateApplication>>(
+      `${API_ENDPOINTS.AFFILIATE_APPLICATIONS}/${id}/status`,
+      { status }
+    );
+    if (response.data.success && response.data.data) return response.data.data;
+    throw new Error(response.data.message || 'Failed to update application status');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
 }

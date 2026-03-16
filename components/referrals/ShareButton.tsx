@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/utils/constants';
+import { getMyAffiliate } from '@/lib/api/affiliate';
 
 interface ShareButtonProps {
   courseId: string;
@@ -35,10 +36,31 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   const [sharingData, setSharingData] = useState<SharingLinks | null>(null);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [affiliateApproved, setAffiliateApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isAuthenticated) {
+        setAffiliateApproved(false);
+        return;
+      }
+      try {
+        const me = await getMyAffiliate();
+        if (!cancelled) setAffiliateApproved(me.status === 'APPROVED');
+      } catch {
+        if (!cancelled) setAffiliateApproved(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   // Lock background scroll when modal is open so UI feels like a true dialog
   useEffect(() => {
@@ -59,6 +81,12 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
           ? `${window.location.pathname}${window.location.search}`
           : `/courses/${courseId}`;
       router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectPath)}`);
+      return;
+    }
+
+    if (!affiliateApproved) {
+      toast.error('Affiliate approval required. Please apply first.');
+      router.push('/affiliate');
       return;
     }
 
@@ -122,11 +150,12 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   return (
     <>
       {/* Share Button */}
-      <button
-        onClick={handleShare}
-        disabled={loading}
-        className={getButtonClasses()}
-      >
+      {affiliateApproved ? (
+        <button
+          onClick={handleShare}
+          disabled={loading}
+          className={getButtonClasses()}
+        >
         {loading ? (
           <div className="flex items-center">
             <div className="animate-spin rounded-none h-4 w-4 border-b-2 border-current mr-2"></div>
@@ -138,7 +167,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             Share & Earn 10%
           </>
         )}
-      </button>
+        </button>
+      ) : null}
 
       {/* Share Modal - rendered via Portal into document.body so it is always on top of course content (Play Preview, tabs, etc.) */}
       {mounted && showModal && typeof document !== 'undefined' && createPortal(
