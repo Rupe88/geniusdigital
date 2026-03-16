@@ -90,6 +90,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/referrals`, label: 'Referrals', icon: HiShare },
       { href: `${ROUTES.ADMIN}/audit-logs`, label: 'Audit Logs', icon: HiShieldCheck },
       { href: `${ROUTES.ADMIN}/quiz-attempts`, label: 'Quiz Attempts', icon: HiDocumentText },
+      { href: `${ROUTES.ADMIN}/certificates`, label: 'Certificates', icon: HiDocumentText },
     ],
   },
   { label: 'Account', icon: HiShieldCheck, items: [{ href: `${ROUTES.ADMIN}/account`, label: 'Account Settings', icon: HiShieldCheck }] },

@@ -30,7 +30,7 @@ export interface IssueCertificateRequest {
  */
 export const getAllCertificates = async (): Promise<Certificate[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<Certificate[]>>('/certificates/admin');
+    const response = await apiClient.get<ApiResponse<Certificate[]>>('/certificate/admin');
     return handleApiResponse<Certificate[]>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -42,7 +42,7 @@ export const getAllCertificates = async (): Promise<Certificate[]> => {
  */
 export const getUserCertificates = async (): Promise<Certificate[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<Certificate[]>>('/certificates');
+    const response = await apiClient.get<ApiResponse<Certificate[]>>('/certificate');
     return handleApiResponse<Certificate[]>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -54,7 +54,7 @@ export const getUserCertificates = async (): Promise<Certificate[]> => {
  */
 export const issueCertificate = async (data: IssueCertificateRequest): Promise<Certificate> => {
   try {
-    const response = await apiClient.post<ApiResponse<Certificate>>('/certificates/admin/issue', data);
+    const response = await apiClient.post<ApiResponse<Certificate>>('/certificate/admin/issue', data);
     return handleApiResponse<Certificate>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -70,7 +70,7 @@ export const issueCertificate = async (data: IssueCertificateRequest): Promise<C
  */
 export const uploadCertificateFile = async (formData: FormData): Promise<Certificate> => {
   try {
-    const response = await apiClient.post<ApiResponse<Certificate>>('/certificates/admin/upload', formData, {
+    const response = await apiClient.post<ApiResponse<Certificate>>('/certificate/admin/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return handleApiResponse<Certificate>(response);
@@ -84,7 +84,7 @@ export const uploadCertificateFile = async (formData: FormData): Promise<Certifi
  */
 export const deleteCertificate = async (id: string): Promise<void> => {
   try {
-    const response = await apiClient.delete<ApiResponse<void>>(`/certificates/${id}`);
+    const response = await apiClient.delete<ApiResponse<void>>(`/certificate/${id}`);
     handleApiResponse<void>(response);
   } catch (error) {
     throw new Error(handleApiError(error));

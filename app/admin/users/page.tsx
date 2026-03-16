@@ -16,6 +16,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
   const [exportLoading, setExportLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -28,7 +29,16 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [pagination.page, search]);
+  }, [pagination.page, debouncedSearch]);
+
+  // Debounce search term so we don't hammer the API on every keystroke
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    }, 400);
+    return () => clearTimeout(id);
+  }, [search]);
 
   const fetchUsers = async () => {
     try {
@@ -36,7 +46,7 @@ export default function AdminUsersPage() {
       const data: PaginatedResponse<User> = await adminApi.getAllUsers({
         page: pagination.page,
         limit: pagination.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
       });
       setUsers(data?.data || []);
       setPagination(data?.pagination || { page: 1, limit: 10, total: 0, pages: 0 });
@@ -155,7 +165,6 @@ export default function AdminUsersPage() {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPagination({ ...pagination, page: 1 });
               }}
               className="max-w-md"
             />
