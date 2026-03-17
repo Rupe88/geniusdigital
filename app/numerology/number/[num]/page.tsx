@@ -72,6 +72,192 @@ export default function NumerologyNumberDetailPage({
         </div>
       </Card>
 
+      {/* More details (DOCX) */}
+      <Card padding="lg">
+        <div className="space-y-4 text-sm text-slate-700">
+          {detail.coreKarakTatva?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">🔱 Karak Tatva (Core)</div>
+              <ul className="space-y-1">
+                {detail.coreKarakTatva.map((line, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="mt-1">•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {detail.lifeImpactArea?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">🔹 Life Impact Area</div>
+              <ul className="space-y-1">
+                {detail.lifeImpactArea.map((line, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="mt-1">•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {detail.favourableColours?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">🎨 Favourable Colour</div>
+              <div className="flex flex-wrap gap-2">
+                {detail.favourableColours.map((c) => (
+                  <span key={c} className="px-2 py-1 rounded bg-slate-100 text-slate-700">
+                    {c}
+                  </span>
+                ))}
+              </div>
+              {detail.avoidColours?.length ? (
+                <div className="mt-2">
+                  <div className="font-bold text-slate-800 mb-1">❌ Avoid</div>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.avoidColours.map((c) => (
+                      <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {detail.favourableDays?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">📅 Favourable Day</div>
+              <div className="flex flex-wrap gap-2">
+                {detail.favourableDays.map((d) => (
+                  <span key={d} className="px-2 py-1 rounded bg-slate-100 text-slate-700">
+                    {d}
+                  </span>
+                ))}
+              </div>
+              {detail.dayUse?.length ? (
+                <div className="mt-2">
+                  <div className="font-bold text-slate-800 mb-1">👉 Day use</div>
+                  <ul className="space-y-1">
+                    {detail.dayUse.map((line, idx) => (
+                      <li key={idx} className="flex gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {detail.primaryCrystalOrGemstone?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">💎 Crystal / Gemstone</div>
+              <div className="font-bold text-slate-800">✅ Primary</div>
+              <ul className="space-y-1 mt-1">
+                {detail.primaryCrystalOrGemstone.map((line, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="mt-1">•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+              {detail.alternativeCrystals?.length ? (
+                <div className="mt-3">
+                  <div className="font-bold text-slate-800">🔹 Alternative</div>
+                  <ul className="space-y-1 mt-1">
+                    {detail.alternativeCrystals.map((line, idx) => (
+                      <li key={idx} className="flex gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {detail.benefits?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">💎 Benefits</div>
+              <ul className="space-y-1">
+                {detail.benefits.map((line, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="mt-1">•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {detail.moneyFlow?.length || detail.workStyle?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">💼 Money & Work Style</div>
+              {detail.moneyFlow?.length ? (
+                <div className="mb-3">
+                  <div className="font-bold text-slate-800">💰 Money Flow</div>
+                  <ul className="space-y-1 mt-1">
+                    {detail.moneyFlow.map((line, idx) => (
+                      <li key={idx} className="flex gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {detail.workStyle?.length ? (
+                <div>
+                  <div className="font-bold text-slate-800">🏢 Work Style</div>
+                  <ul className="space-y-1 mt-1">
+                    {detail.workStyle.map((line, idx) => (
+                      <li key={idx} className="flex gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {detail.commonProblems?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">⚠️ Common Problems</div>
+              <ul className="space-y-1">
+                {detail.commonProblems.map((line, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="mt-1">•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {detail.behavioralRemedy?.length ? (
+            <div>
+              <div className="text-base font-bold text-gray-900 mb-2">💼 Behavioral Remedy</div>
+              <ul className="space-y-1">
+                {detail.behavioralRemedy.map((line, idx) => (
+                  <li key={idx} className="flex gap-2">
+                    <span className="mt-1">•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      </Card>
+
       <Card padding="lg">
         <div className="text-base font-bold text-gray-900 mb-3">Description</div>
         <ul className="space-y-2 text-sm text-slate-700">

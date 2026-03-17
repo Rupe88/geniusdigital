@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ResultBadges } from '@/components/numerology/ResultBadges';
 import { CalculatingView } from '@/components/numerology/CalculatingView';
+import { pdf } from '@react-pdf/renderer';
+import { NumerologyReportPdf } from '@/components/numerology/NumerologyReportPdf';
 import { calculatePythagorean } from '@/lib/numerology/lib/pythagorean';
 import { calculateChaldean } from '@/lib/numerology/lib/chaldean';
 import { calculateMulank } from '@/lib/numerology/lib/mulank';
@@ -84,6 +86,7 @@ export default function NumerologyBasicPage() {
 
   const [displayedKey, setDisplayedKey] = useState<string | null>(null);
   const isCalculating = hasAnyResult && resultKey !== displayedKey;
+  const [downloadingReport, setDownloadingReport] = useState(false);
 
   useEffect(() => {
     if (!hasAnyResult) {
@@ -155,6 +158,50 @@ export default function NumerologyBasicPage() {
       goDetail(bhagyankResult.final, 'bhagyank');
     } else if (mulankResult) {
       goDetail(mulankResult.final, 'mulank');
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    try {
+      setDownloadingReport(true);
+      const blocks: Array<{ heading: string; detail: any }> = [];
+
+      if (hasValidDob && mulankDetail && bhagyankDetail) {
+        blocks.push({ heading: `Mulank (${mulankResult?.final ?? ''})`, detail: mulankDetail });
+        blocks.push({ heading: `Bhagyank (${bhagyankResult?.final ?? ''})`, detail: bhagyankDetail });
+      } else if (!hasValidDob && nameDetail) {
+        blocks.push({ heading: `Name Result (${nameResult?.final ?? ''})`, detail: nameDetail });
+      } else {
+        return;
+      }
+
+      const doc = (
+        <NumerologyReportPdf
+          title="Numerology Report"
+          inputs={{
+            nameOrNumber,
+            calendarType,
+            day,
+            month,
+            year,
+          }}
+          blocks={blocks}
+        />
+      );
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'numerology_report.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to download report:', e);
+      alert('Failed to download report. Please try again.');
+    } finally {
+      setDownloadingReport(false);
     }
   };
 
@@ -300,36 +347,9 @@ export default function NumerologyBasicPage() {
                   onPressSum={(num) => goDetail(num, showPythagorean ? 'pythagorean' : 'chaldean')}
                 />
 
-                {nameDetail ? (
-                  <div className="pt-4 text-left space-y-3">
-                    <div className="grid gap-2 text-sm text-slate-700">
-                      <div>
-                        <span className="font-bold">Ruling Planet:</span> {nameDetail.rulingPlanet}
-                      </div>
-                      <div>
-                        <span className="font-bold">Good:</span> {nameDetail.good}
-                      </div>
-                      <div>
-                        <span className="font-bold">Bad:</span> {nameDetail.bad}
-                      </div>
-                      <div>
-                        <span className="font-bold">Famous Personalities:</span>{' '}
-                        {nameDetail.famousPersonalities}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
-                      <ul className="space-y-2 text-sm text-slate-700">
-                        {nameDetail.description.map((line, idx) => (
-                          <li key={idx} className="flex gap-2">
-                            <span className="mt-1">•</span>
-                            <span>{line}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ) : null}
+                <p className="text-sm text-slate-500">
+                  Full report is available on the right side.
+                </p>
               </div>
             )}
           </div>
@@ -344,6 +364,20 @@ export default function NumerologyBasicPage() {
               Mulank & Bhagyank appear when DOB is valid.
             </p>
           </div>
+          {(hasValidDob || (!!nameResult && !!nameDetail)) && (
+            <button
+              type="button"
+              onClick={handleDownloadReport}
+              disabled={downloadingReport}
+              className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                downloadingReport
+                  ? 'bg-slate-200 text-slate-500 cursor-wait'
+                  : 'bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)]'
+              }`}
+            >
+              {downloadingReport ? 'Downloading…' : 'Download Report'}
+            </button>
+          )}
         </div>
 
         {hasValidDob ? (
@@ -366,6 +400,7 @@ export default function NumerologyBasicPage() {
 
                   {mulankDetail ? (
                     <div className="pt-4 text-left space-y-3">
+                      {/* Summary (same as previous default order) */}
                       <div className="grid gap-2 text-sm text-slate-700">
                         <div>
                           <span className="font-bold">Ruling Planet:</span> {mulankDetail.rulingPlanet}
@@ -381,17 +416,202 @@ export default function NumerologyBasicPage() {
                           {mulankDetail.famousPersonalities}
                         </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
-                        <ul className="space-y-2 text-sm text-slate-700">
-                          {mulankDetail.description.map((line, idx) => (
-                            <li key={idx} className="flex gap-2">
-                              <span className="mt-1">•</span>
-                              <span>{line}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+
+                      {/* Collapsible more details (keeps page clean by default) */}
+                      <details className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+                        <summary className="cursor-pointer select-none text-sm font-semibold text-slate-800">
+                          More Details
+                        </summary>
+                        <div className="mt-3 space-y-3">
+                          {mulankDetail.coreKarakTatva?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">🔱 Karak Tatva (Core)</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {mulankDetail.coreKarakTatva.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {mulankDetail.lifeImpactArea?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">🔹 Life Impact Area</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {mulankDetail.lifeImpactArea.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {(mulankDetail.favourableColours?.length || mulankDetail.avoidColours?.length) ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">🎨 Favourable Colour</div>
+                              {mulankDetail.favourableColours?.length ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {mulankDetail.favourableColours.map((c) => (
+                                    <span key={c} className="px-2 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                                      {c}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {mulankDetail.avoidColours?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">❌ Avoid</div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {mulankDetail.avoidColours.map((c) => (
+                                      <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700 text-xs border border-rose-100">
+                                        {c}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {(mulankDetail.favourableDays?.length || mulankDetail.dayUse?.length) ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">📅 Favourable Day</div>
+                              {mulankDetail.favourableDays?.length ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {mulankDetail.favourableDays.map((d) => (
+                                    <span key={d} className="px-2 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                                      {d}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {mulankDetail.dayUse?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">👉 Day use</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {mulankDetail.dayUse.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {mulankDetail.primaryCrystalOrGemstone?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💎 Crystal / Gemstone</div>
+                              <div className="text-xs font-bold text-slate-800">✅ Primary</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {mulankDetail.primaryCrystalOrGemstone.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {mulankDetail.alternativeCrystals?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800 mt-2">🔹 Alternative</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {mulankDetail.alternativeCrystals.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {mulankDetail.benefits?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💎 Benefits</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {mulankDetail.benefits.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {(mulankDetail.moneyFlow?.length || mulankDetail.workStyle?.length) ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💼 Money & Work Style</div>
+                              {mulankDetail.moneyFlow?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800">💰 Money Flow</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {mulankDetail.moneyFlow.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                              {mulankDetail.workStyle?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800">🏢 Work Style</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {mulankDetail.workStyle.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {mulankDetail.commonProblems?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">⚠️ Common Problems</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {mulankDetail.commonProblems.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {mulankDetail.behavioralRemedy?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💼 Behavioral Remedy</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {mulankDetail.behavioralRemedy.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          <div>
+                            <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                            <ul className="space-y-2 text-sm text-slate-700">
+                              {mulankDetail.description.map((line, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="mt-1">•</span>
+                                  <span>{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </details>
                     </div>
                   ) : null}
                 </div>
@@ -412,6 +632,7 @@ export default function NumerologyBasicPage() {
 
                   {bhagyankDetail ? (
                     <div className="pt-4 text-left space-y-3">
+                      {/* Summary (same as previous default order) */}
                       <div className="grid gap-2 text-sm text-slate-700">
                         <div>
                           <span className="font-bold">Ruling Planet:</span> {bhagyankDetail.rulingPlanet}
@@ -427,17 +648,201 @@ export default function NumerologyBasicPage() {
                           {bhagyankDetail.famousPersonalities}
                         </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
-                        <ul className="space-y-2 text-sm text-slate-700">
-                          {bhagyankDetail.description.map((line, idx) => (
-                            <li key={idx} className="flex gap-2">
-                              <span className="mt-1">•</span>
-                              <span>{line}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+
+                      <details className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+                        <summary className="cursor-pointer select-none text-sm font-semibold text-slate-800">
+                          More Details
+                        </summary>
+                        <div className="mt-3 space-y-3">
+                          {bhagyankDetail.coreKarakTatva?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">🔱 Karak Tatva (Core)</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {bhagyankDetail.coreKarakTatva.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {bhagyankDetail.lifeImpactArea?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">🔹 Life Impact Area</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {bhagyankDetail.lifeImpactArea.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {(bhagyankDetail.favourableColours?.length || bhagyankDetail.avoidColours?.length) ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">🎨 Favourable Colour</div>
+                              {bhagyankDetail.favourableColours?.length ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {bhagyankDetail.favourableColours.map((c) => (
+                                    <span key={c} className="px-2 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                                      {c}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {bhagyankDetail.avoidColours?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">❌ Avoid</div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {bhagyankDetail.avoidColours.map((c) => (
+                                      <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700 text-xs border border-rose-100">
+                                        {c}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {(bhagyankDetail.favourableDays?.length || bhagyankDetail.dayUse?.length) ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">📅 Favourable Day</div>
+                              {bhagyankDetail.favourableDays?.length ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {bhagyankDetail.favourableDays.map((d) => (
+                                    <span key={d} className="px-2 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                                      {d}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {bhagyankDetail.dayUse?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">👉 Day use</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {bhagyankDetail.dayUse.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {bhagyankDetail.primaryCrystalOrGemstone?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💎 Crystal / Gemstone</div>
+                              <div className="text-xs font-bold text-slate-800">✅ Primary</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {bhagyankDetail.primaryCrystalOrGemstone.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {bhagyankDetail.alternativeCrystals?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800 mt-2">🔹 Alternative</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {bhagyankDetail.alternativeCrystals.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {bhagyankDetail.benefits?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💎 Benefits</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {bhagyankDetail.benefits.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {(bhagyankDetail.moneyFlow?.length || bhagyankDetail.workStyle?.length) ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💼 Money & Work Style</div>
+                              {bhagyankDetail.moneyFlow?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800">💰 Money Flow</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {bhagyankDetail.moneyFlow.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                              {bhagyankDetail.workStyle?.length ? (
+                                <div>
+                                  <div className="text-xs font-bold text-slate-800">🏢 Work Style</div>
+                                  <ul className="space-y-1 text-sm text-slate-700">
+                                    {bhagyankDetail.workStyle.map((line, idx) => (
+                                      <li key={idx} className="flex gap-2">
+                                        <span className="mt-1">•</span>
+                                        <span>{line}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {bhagyankDetail.commonProblems?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">⚠️ Common Problems</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {bhagyankDetail.commonProblems.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          {bhagyankDetail.behavioralRemedy?.length ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-bold text-slate-900">💼 Behavioral Remedy</div>
+                              <ul className="space-y-1 text-sm text-slate-700">
+                                {bhagyankDetail.behavioralRemedy.map((line, idx) => (
+                                  <li key={idx} className="flex gap-2">
+                                    <span className="mt-1">•</span>
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                          <div>
+                            <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                            <ul className="space-y-2 text-sm text-slate-700">
+                              {bhagyankDetail.description.map((line, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="mt-1">•</span>
+                                  <span>{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </details>
                     </div>
                   ) : null}
                 </div>
@@ -495,17 +900,200 @@ export default function NumerologyBasicPage() {
                     <span className="font-bold">Famous Personalities:</span> {nameDetail.famousPersonalities}
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
-                  <ul className="space-y-2 text-sm text-slate-700">
-                    {nameDetail.description.map((line, idx) => (
-                      <li key={idx} className="flex gap-2">
-                        <span className="mt-1">•</span>
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <details className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
+                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-800">
+                    More Details
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    {nameDetail.coreKarakTatva?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">🔱 Karak Tatva (Core)</div>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {nameDetail.coreKarakTatva.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {nameDetail.lifeImpactArea?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">🔹 Life Impact Area</div>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {nameDetail.lifeImpactArea.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {(nameDetail.favourableColours?.length || nameDetail.avoidColours?.length) ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">🎨 Favourable Colour</div>
+                        {nameDetail.favourableColours?.length ? (
+                          <div className="flex flex-wrap gap-2">
+                            {nameDetail.favourableColours.map((c) => (
+                              <span key={c} className="px-2 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {nameDetail.avoidColours?.length ? (
+                          <div>
+                            <div className="text-xs font-bold text-slate-800 mb-1">❌ Avoid</div>
+                            <div className="flex flex-wrap gap-2">
+                              {nameDetail.avoidColours.map((c) => (
+                                <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700 text-xs border border-rose-100">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {(nameDetail.favourableDays?.length || nameDetail.dayUse?.length) ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">📅 Favourable Day</div>
+                        {nameDetail.favourableDays?.length ? (
+                          <div className="flex flex-wrap gap-2">
+                            {nameDetail.favourableDays.map((d) => (
+                              <span key={d} className="px-2 py-1 rounded bg-white text-slate-700 text-xs border border-slate-200">
+                                {d}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {nameDetail.dayUse?.length ? (
+                          <div>
+                            <div className="text-xs font-bold text-slate-800 mb-1">👉 Day use</div>
+                            <ul className="space-y-1 text-sm text-slate-700">
+                              {nameDetail.dayUse.map((line, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="mt-1">•</span>
+                                  <span>{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {nameDetail.primaryCrystalOrGemstone?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">💎 Crystal / Gemstone</div>
+                        <div className="text-xs font-bold text-slate-800">✅ Primary</div>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {nameDetail.primaryCrystalOrGemstone.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {nameDetail.alternativeCrystals?.length ? (
+                          <div>
+                            <div className="text-xs font-bold text-slate-800 mt-2">🔹 Alternative</div>
+                            <ul className="space-y-1 text-sm text-slate-700">
+                              {nameDetail.alternativeCrystals.map((line, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="mt-1">•</span>
+                                  <span>{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {nameDetail.benefits?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">💎 Benefits</div>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {nameDetail.benefits.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {(nameDetail.moneyFlow?.length || nameDetail.workStyle?.length) ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">💼 Money & Work Style</div>
+                        {nameDetail.moneyFlow?.length ? (
+                          <div>
+                            <div className="text-xs font-bold text-slate-800">💰 Money Flow</div>
+                            <ul className="space-y-1 text-sm text-slate-700">
+                              {nameDetail.moneyFlow.map((line, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="mt-1">•</span>
+                                  <span>{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                        {nameDetail.workStyle?.length ? (
+                          <div>
+                            <div className="text-xs font-bold text-slate-800">🏢 Work Style</div>
+                            <ul className="space-y-1 text-sm text-slate-700">
+                              {nameDetail.workStyle.map((line, idx) => (
+                                <li key={idx} className="flex gap-2">
+                                  <span className="mt-1">•</span>
+                                  <span>{line}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {nameDetail.commonProblems?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">⚠️ Common Problems</div>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {nameDetail.commonProblems.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {nameDetail.behavioralRemedy?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-sm font-bold text-slate-900">💼 Behavioral Remedy</div>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          {nameDetail.behavioralRemedy.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <div>
+                      <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        {nameDetail.description.map((line, idx) => (
+                          <li key={idx} className="flex gap-2">
+                            <span className="mt-1">•</span>
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
           )
