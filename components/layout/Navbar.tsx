@@ -198,7 +198,9 @@ export const Navbar: React.FC = () => {
                 <HiChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
               </button>
 
-              <div className="absolute left-0 mt-2 w-44 bg-white rounded-none shadow-lg py-1 z-50 border border-gray-200 hidden group-hover:block">
+              {/* Keep menu open while moving mouse (no hover gap) */}
+              <div className="absolute left-0 top-full w-44 pt-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+                <div className="bg-white rounded-none shadow-lg py-1 border border-gray-200">
                 <button
                   type="button"
                   onClick={handleNumerologyClick}
@@ -212,6 +214,7 @@ export const Navbar: React.FC = () => {
                 >
                   Vaastu
                 </Link>
+                </div>
               </div>
             </div>
 

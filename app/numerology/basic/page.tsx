@@ -166,6 +166,7 @@ export default function NumerologyBasicPage() {
     () => (bhagyankResult ? getNumberDetail(bhagyankResult.final) : null),
     [bhagyankResult]
   );
+  const nameDetail = useMemo(() => (nameResult ? getNumberDetail(nameResult.final) : null), [nameResult]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -298,6 +299,37 @@ export default function NumerologyBasicPage() {
                   onPressFinal={(num) => goDetail(num, showPythagorean ? 'pythagorean' : 'chaldean')}
                   onPressSum={(num) => goDetail(num, showPythagorean ? 'pythagorean' : 'chaldean')}
                 />
+
+                {nameDetail ? (
+                  <div className="pt-4 text-left space-y-3">
+                    <div className="grid gap-2 text-sm text-slate-700">
+                      <div>
+                        <span className="font-bold">Ruling Planet:</span> {nameDetail.rulingPlanet}
+                      </div>
+                      <div>
+                        <span className="font-bold">Good:</span> {nameDetail.good}
+                      </div>
+                      <div>
+                        <span className="font-bold">Bad:</span> {nameDetail.bad}
+                      </div>
+                      <div>
+                        <span className="font-bold">Famous Personalities:</span>{' '}
+                        {nameDetail.famousPersonalities}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        {nameDetail.description.map((line, idx) => (
+                          <li key={idx} className="flex gap-2">
+                            <span className="mt-1">•</span>
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -312,18 +344,6 @@ export default function NumerologyBasicPage() {
               Mulank & Bhagyank appear when DOB is valid.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleViewDobReport}
-            disabled={!hasValidDob}
-            className={`shrink-0 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-              hasValidDob
-                ? 'bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)]'
-                : 'bg-slate-200 text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            View Report
-          </button>
         </div>
 
         {hasValidDob ? (
@@ -424,9 +444,74 @@ export default function NumerologyBasicPage() {
               )}
             </div>
           )
+        ) : nameResult && nameDetail ? (
+          isCalculating ? (
+            <CalculatingView message="Calculating your number..." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {/* Final */}
+              <div className="p-6 text-center space-y-3">
+                <div className="text-slate-600 font-bold text-sm tracking-wide uppercase">Final</div>
+                <div className="text-[var(--primary-700)] font-extrabold text-2xl">
+                  {getPlanetName(nameResult.final)}
+                </div>
+                <ResultBadges
+                  firstTwoDigitSum={nameResult.firstTwoDigitSum}
+                  final={nameResult.final}
+                  size="large"
+                  onPressFinal={(num) => goDetail(num, showPythagorean ? 'pythagorean' : 'chaldean')}
+                />
+              </div>
+
+              {/* Sum (show only if we have it) */}
+              {nameResult.firstTwoDigitSum ? (
+                <div className="p-6 text-center space-y-3">
+                  <div className="text-slate-600 font-bold text-sm tracking-wide uppercase">Sum</div>
+                  <div className="text-[var(--primary-700)] font-extrabold text-2xl">
+                    {getPlanetName(nameResult.firstTwoDigitSum)}
+                  </div>
+                  <ResultBadges
+                    firstTwoDigitSum={null}
+                    final={nameResult.firstTwoDigitSum}
+                    size="large"
+                    onPressFinal={(num) => goDetail(num, showPythagorean ? 'pythagorean' : 'chaldean')}
+                  />
+                </div>
+              ) : null}
+
+              {/* Report */}
+              <div className="p-6 text-left space-y-3">
+                <div className="grid gap-2 text-sm text-slate-700">
+                  <div>
+                    <span className="font-bold">Ruling Planet:</span> {nameDetail.rulingPlanet}
+                  </div>
+                  <div>
+                    <span className="font-bold">Good:</span> {nameDetail.good}
+                  </div>
+                  <div>
+                    <span className="font-bold">Bad:</span> {nameDetail.bad}
+                  </div>
+                  <div>
+                    <span className="font-bold">Famous Personalities:</span> {nameDetail.famousPersonalities}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    {nameDetail.description.map((line, idx) => (
+                      <li key={idx} className="flex gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )
         ) : (
           <div className="p-6 text-sm text-slate-500">
-            Enter a valid DOB (AD or BS), then click <span className="font-semibold">View Report</span>.
+            Enter a valid DOB (AD or BS) or a name/number to see results here.
           </div>
         )}
       </div>
