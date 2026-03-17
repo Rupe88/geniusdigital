@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { formatDate } from '@/lib/utils/helpers';
 import { getApiBaseUrl } from '@/lib/api/axios';
+import { useCertificateDownloadStore } from '@/lib/store/useCertificateDownloadStore';
 
 export default function CertificateDetailPage({
   params: paramsPromise,
@@ -23,7 +24,16 @@ export default function CertificateDetailPage({
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
+
+  const {
+    generatingCourseId,
+    generatingProgress,
+    startGenerating,
+    finishGenerating,
+    clearGenerating,
+    getBlobUrl,
+    setBlobUrl,
+  } = useCertificateDownloadStore();
 
   const toDataUrl = async (url: string) => {
     // Use backend proxy to avoid CORS issues when reading bytes for base64 conversion
@@ -87,14 +97,27 @@ export default function CertificateDetailPage({
 
   const handleDownload = async () => {
     if (!enrollment || !user || !enrollment.course?.certificateTemplateUrl) return;
+    const activeCourseId = enrollment.course?.id || enrollment.courseId;
     try {
-      setDownloading(true);
       const name = user.fullName || 'Student';
       const dateStr = enrollment.completedAt
         ? formatDate(enrollment.completedAt)
         : enrollment.enrolledAt
         ? formatDate(enrollment.enrolledAt)
         : '';
+
+      const cached = getBlobUrl(activeCourseId);
+      if (cached) {
+        const a = document.createElement('a');
+        a.href = cached;
+        a.download = `${name.replace(/\s+/g, '_')}_certificate.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
+      startGenerating(activeCourseId);
 
       const rawTemplateUrl = enrollment.course.certificateTemplateUrl;
 
@@ -107,15 +130,9 @@ export default function CertificateDetailPage({
         );
       }
 
-      // Prefer embedding the image as a data URL (fixes CORS/blank background),
-      // but fall back to the direct URL if embedding fails.
-      let templateUrlToUse = rawTemplateUrl;
-      try {
-        const embedded = await toDataUrl(rawTemplateUrl);
-        if (embedded) templateUrlToUse = embedded;
-      } catch (embedErr) {
-        console.warn('Template embed failed, falling back to URL:', embedErr);
-      }
+      // Always embed as a data URL via backend proxy, so PDF background never blanks/blackens.
+      // Proxy also converts WEBP -> PNG for react-pdf compatibility.
+      const templateUrlToUse = await toDataUrl(rawTemplateUrl);
 
       const doc = (
         <CourseCertificatePdf
@@ -128,22 +145,23 @@ export default function CertificateDetailPage({
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       const fileName = `${name.replace(/\s+/g, '_')}_certificate.pdf`;
+
+      finishGenerating(activeCourseId, url, blob, user.id);
+
       const a = document.createElement('a');
       a.href = url;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to generate certificate PDF:', err);
+      clearGenerating();
       alert(
         err instanceof Error
           ? `Failed to generate PDF: ${err.message}`
           : 'Failed to generate PDF. Please try again.'
       );
-    } finally {
-      setDownloading(false);
     }
   };
 
@@ -224,10 +242,12 @@ export default function CertificateDetailPage({
             variant="primary"
             size="lg"
             onClick={handleDownload}
-            disabled={downloading}
+            disabled={generatingCourseId === (enrollment.course?.id || enrollment.courseId)}
             className="px-6"
           >
-            {downloading ? 'Generating PDF…' : 'Download PDF'}
+            {generatingCourseId === (enrollment.course?.id || enrollment.courseId)
+              ? `Generating… ${generatingProgress}%`
+              : 'Download PDF'}
           </Button>
           <Button
             variant="outline"

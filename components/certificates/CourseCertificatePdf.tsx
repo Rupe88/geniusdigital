@@ -3,11 +3,14 @@
 import React from 'react';
 import { Document, Page, Image, Text, View, StyleSheet } from '@react-pdf/renderer';
 
+// A4 landscape in @react-pdf points
+const A4_LANDSCAPE = { width: 842, height: 595 };
+
 const styles = StyleSheet.create({
   page: {
     position: 'relative',
-    width: '100%',
-    height: '100%',
+    width: A4_LANDSCAPE.width,
+    height: A4_LANDSCAPE.height,
   },
   background: {
     position: 'absolute',
@@ -15,22 +18,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain',
+    width: A4_LANDSCAPE.width,
+    height: A4_LANDSCAPE.height,
+    objectFit: 'cover',
   },
   nameContainer: {
     position: 'absolute',
-    // Nudge upward so it sits on the upper underline
-    top: '37.8%',
-    left: 60,
-    right: 60,
+    // Positioned on the underline under "This Certificate is awarded to"
+    top: 230,
+    left: 80,
+    right: 80,
     textAlign: 'center',
   },
   name: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#1a2f6b',       // matches the deep blue used in the certificate
+    color: '#111827',
     textAlign: 'center',
     letterSpacing: 2,
   },
@@ -53,11 +56,13 @@ export function CourseCertificatePdf({
         style={styles.page}
       >
         {/* Full-bleed certificate background image */}
-        <Image src={templateUrl} style={styles.background} />
+        <Image src={templateUrl} style={styles.background} fixed />
 
         {/* Recipient name placed in the blank gap after "This Certificate is awarded to" */}
-        <View style={styles.nameContainer}>
-          <Text style={styles.name}>{name}</Text>
+        <View style={styles.nameContainer} fixed>
+          <Text style={styles.name} fixed>
+            {name}
+          </Text>
         </View>
       </Page>
     </Document>
