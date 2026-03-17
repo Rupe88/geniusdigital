@@ -10,6 +10,7 @@ import { calculateMulank } from '@/lib/numerology/lib/mulank';
 import { calculateBhagyank } from '@/lib/numerology/lib/bhagyank';
 import { getPlanetName } from '@/lib/numerology/constants/planets';
 import { validateDob, adToBSDate, bsToADDate } from '@/lib/numerology/lib/dateValidation';
+import { getNumberDetail } from '@/lib/numerology/constants/numberDetails';
 
 function parseNum(s: string): number | null {
   const n = parseInt(s.trim(), 10);
@@ -156,6 +157,15 @@ export default function NumerologyBasicPage() {
       goDetail(mulankResult.final, 'mulank');
     }
   };
+
+  const mulankDetail = useMemo(
+    () => (mulankResult ? getNumberDetail(mulankResult.final) : null),
+    [mulankResult]
+  );
+  const bhagyankDetail = useMemo(
+    () => (bhagyankResult ? getNumberDetail(bhagyankResult.final) : null),
+    [bhagyankResult]
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -333,6 +343,37 @@ export default function NumerologyBasicPage() {
                     size="large"
                     onPressFinal={(num) => goDetail(num, 'mulank')}
                   />
+
+                  {mulankDetail ? (
+                    <div className="pt-4 text-left space-y-3">
+                      <div className="grid gap-2 text-sm text-slate-700">
+                        <div>
+                          <span className="font-bold">Ruling Planet:</span> {mulankDetail.rulingPlanet}
+                        </div>
+                        <div>
+                          <span className="font-bold">Good:</span> {mulankDetail.good}
+                        </div>
+                        <div>
+                          <span className="font-bold">Bad:</span> {mulankDetail.bad}
+                        </div>
+                        <div>
+                          <span className="font-bold">Famous Personalities:</span>{' '}
+                          {mulankDetail.famousPersonalities}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                        <ul className="space-y-2 text-sm text-slate-700">
+                          {mulankDetail.description.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
               {bhagyankResult && (
@@ -348,6 +389,37 @@ export default function NumerologyBasicPage() {
                     onPressFinal={(num) => goDetail(num, 'bhagyank')}
                     onPressSum={(num) => goDetail(num, 'bhagyank')}
                   />
+
+                  {bhagyankDetail ? (
+                    <div className="pt-4 text-left space-y-3">
+                      <div className="grid gap-2 text-sm text-slate-700">
+                        <div>
+                          <span className="font-bold">Ruling Planet:</span> {bhagyankDetail.rulingPlanet}
+                        </div>
+                        <div>
+                          <span className="font-bold">Good:</span> {bhagyankDetail.good}
+                        </div>
+                        <div>
+                          <span className="font-bold">Bad:</span> {bhagyankDetail.bad}
+                        </div>
+                        <div>
+                          <span className="font-bold">Famous Personalities:</span>{' '}
+                          {bhagyankDetail.famousPersonalities}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900 mb-2">Description</div>
+                        <ul className="space-y-2 text-sm text-slate-700">
+                          {bhagyankDetail.description.map((line, idx) => (
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-1">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>

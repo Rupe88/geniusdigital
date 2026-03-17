@@ -133,7 +133,8 @@ export const Navbar: React.FC = () => {
 
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
-    { label: 'Numerology Calculator', href: '/numerology/basic', icon: HiAcademicCap },
+    { label: 'Numerology', href: '/numerology/basic', icon: HiAcademicCap },
+    { label: 'Vaastu', href: '/vaastu', icon: HiAcademicCap },
     { label: 'Become A Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     {
       label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',
@@ -180,14 +181,39 @@ export const Navbar: React.FC = () => {
               );
             })}
 
-            {/* Numerology Calculator entry */}
-            <button
-              type="button"
-              onClick={handleNumerologyClick}
-              className="transition-colors font-sm text-base whitespace-nowrap text-gray-700 hover:text-[var(--primary-700)]"
-            >
-              Numerology Calculator
-            </button>
+            {/* Calculator dropdown (hover) */}
+            <div className="relative group">
+              <button
+                type="button"
+                className={`flex items-center gap-1 transition-colors font-normal text-base whitespace-nowrap ${
+                  pathname === '/numerology' ||
+                  pathname?.startsWith('/numerology/') ||
+                  pathname === '/vaastu' ||
+                  pathname?.startsWith('/vaastu/')
+                    ? 'text-[var(--primary-700)]'
+                    : 'text-gray-700 hover:text-[var(--primary-700)]'
+                }`}
+              >
+                <span>Calculator</span>
+                <HiChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
+              </button>
+
+              <div className="absolute left-0 mt-2 w-44 bg-white rounded-none shadow-lg py-1 z-50 border border-gray-200 hidden group-hover:block">
+                <button
+                  type="button"
+                  onClick={handleNumerologyClick}
+                  className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50`}
+                >
+                  Numerology
+                </button>
+                <Link
+                  href="/vaastu"
+                  className="block px-4 py-2 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50"
+                >
+                  Vaastu
+                </Link>
+              </div>
+            </div>
 
             {/* More dropdown */}
             <div className="relative" ref={moreMenuRef}>
@@ -444,20 +470,37 @@ export const Navbar: React.FC = () => {
               })}
 
               {/* Numerology Calculator entry (mobile hamburger) */}
-              <button
-                type="button"
-                onClick={() => {
-                  handleNumerologyClick();
-                  setIsMobileNavOpen(false);
-                }}
-                className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
-                  pathname === '/numerology' || pathname?.startsWith('/numerology/')
-                    ? 'text-[var(--primary-700)] bg-[var(--primary-50)]'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Numerology Calculator
-              </button>
+              {/* Calculator section (mobile hamburger) */}
+              <div className="px-2 pt-2">
+                <p className="px-2 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Calculator
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleNumerologyClick();
+                    setIsMobileNavOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
+                    pathname === '/numerology' || pathname?.startsWith('/numerology/')
+                      ? 'text-[var(--primary-700)] bg-[var(--primary-50)]'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Numerology
+                </button>
+                <Link
+                  href="/vaastu"
+                  className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg text-base font-medium ${
+                    pathname === '/vaastu' || pathname?.startsWith('/vaastu/')
+                      ? 'text-[var(--primary-700)] bg-[var(--primary-50)]'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setIsMobileNavOpen(false)}
+                >
+                  Vaastu
+                </Link>
+              </div>
               {moreMenuItems.map((item) => {
                 const active = isActive(item.href);
                 return (
