@@ -62,6 +62,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/courses/${id}`,
     STATUS: (id: string) => `/courses/${id}/status`,
     FEATURED: (id: string) => `/courses/${id}/featured`,
+    CERTIFICATE_TEMPLATE: (id: string) => `/courses/${id}/certificate-template`,
   },
   // Enrollments
   ENROLLMENTS: {

@@ -7,7 +7,7 @@ import { CourseForm } from '@/components/admin/CourseForm';
 import { Course } from '@/lib/types/course';
 import { Category } from '@/lib/types/course';
 import { Instructor } from '@/lib/api/instructors';
-import { CreateCourseData } from '@/lib/api/courses';
+import { CreateCourseData, uploadCourseCertificateTemplate } from '@/lib/api/courses';
 import * as courseApi from '@/lib/api/courses';
 import * as categoryApi from '@/lib/api/categories';
 import * as instructorApi from '@/lib/api/instructors';
@@ -37,6 +37,7 @@ export default function EditCoursePage({
     isActive: true,
   });
   const [savingPlan, setSavingPlan] = useState(false);
+  const [certUploading, setCertUploading] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -136,6 +137,42 @@ export default function EditCoursePage({
     }
   };
 
+  const handleCertificateTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!courseId) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showError('Only PDF and image files (JPG, PNG, WEBP) are allowed for certificate template.');
+      e.target.value = '';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setCertUploading(true);
+      const updated = await uploadCourseCertificateTemplate(courseId, formData);
+      showSuccess('Certificate template attached successfully.');
+      setCourse((prev) =>
+        prev
+          ? {
+              ...prev,
+              certificateTemplateUrl: (updated as any).certificateTemplateUrl,
+              certificateTemplateType: (updated as any).certificateTemplateType,
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error('Error uploading certificate template:', error);
+      showError(Object(error).message || 'Failed to upload certificate template');
+    } finally {
+      setCertUploading(false);
+      e.target.value = '';
+    }
+  };
+
   if (loading) {
     return (
       <div className="animate-in fade-in duration-200">
@@ -174,6 +211,51 @@ export default function EditCoursePage({
         onCancel={handleCancel}
         isLoading={submitting}
       />
+
+      {/* Certificate template section */}
+      <div className="mt-10 p-6 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <h2 className="text-lg font-semibold text-[var(--foreground)] mb-2">Certificate template</h2>
+        <p className="text-sm text-[var(--muted-foreground)] mb-4">
+          Attach a certificate design (image or PDF). Enrolled students will see a certificate for this course using this
+          template.
+        </p>
+        {course.certificateTemplateUrl ? (
+          <div className="mb-4 text-sm text-[var(--foreground)] space-y-2">
+            <p>
+              Current template type: <span className="font-semibold">{(course as any).certificateTemplateType || 'Unknown'}</span>
+            </p>
+            {((course as any).certificateTemplateType === 'IMAGE' ||
+              ((course as any).certificateTemplateType ?? '').toLowerCase().startsWith('image')) && (
+              <div className="border border-[var(--border)] rounded-lg overflow-hidden max-w-xl">
+                <img
+                  src={course.certificateTemplateUrl as string}
+                  alt="Certificate template"
+                  className="w-full h-auto object-contain bg-[var(--muted)]"
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--muted-foreground)] mb-4">
+            No certificate template attached yet.
+          </p>
+        )}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[var(--foreground)]">
+            Upload certificate file (PNG, JPG, WEBP or PDF)
+          </label>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={handleCertificateTemplateUpload}
+            disabled={certUploading}
+            className="block w-full text-sm text-[var(--foreground)]"
+          />
+          {certUploading && (
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">Uploading...</p>
+          )}
+        </div>
+      </div>
 
       {/* Installment plan (EMI) */}
       <div className="mt-10 p-6 rounded-xl border border-[var(--border)] bg-[var(--card)]">

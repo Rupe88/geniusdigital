@@ -123,6 +123,9 @@ export interface Course {
   } | null;
   createdAt: string;
   updatedAt: string;
+  // Optional per-course certificate template (image/PDF) uploaded by admin
+  certificateTemplateUrl?: string | null;
+  certificateTemplateType?: string | null;
 }
 
 export interface Enrollment {

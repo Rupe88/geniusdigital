@@ -435,3 +435,26 @@ export const deleteCourse = async (id: string): Promise<void> => {
   }
 };
 
+/**
+ * Attach or update a certificate template file for a course (admin only).
+ * Pass a FormData with:
+ * - file: File (image/PDF)
+ */
+export const uploadCourseCertificateTemplate = async (
+  id: string,
+  formData: FormData
+): Promise<Course> => {
+  try {
+    const response = await apiClient.post<ApiResponse<Course>>(
+      API_ENDPOINTS.COURSES.CERTIFICATE_TEMPLATE(id),
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    const payload = response.data;
+    if (payload.success && payload.data) return payload.data;
+    throw new Error(payload.message || 'Failed to upload certificate template');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+

@@ -6,21 +6,25 @@ export const formatCurrency = (amount: number, currency: string = 'NPR'): string
 };
 
 export const formatDate = (date: string | Date): string => {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(new Date(date));
+  }).format(d);
 };
 
 export const formatDateTime = (date: string | Date): string => {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(date));
+  }).format(d);
 };
 
 export const truncateText = (text: string, maxLength: number): string => {
