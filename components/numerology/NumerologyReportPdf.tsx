@@ -1,11 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import type { NumberDetail } from '@/lib/numerology/constants/numberDetails';
 
+// Use a Devanagari-capable font so Nepali text renders in downloaded PDFs.
+Font.register({
+  family: 'NotoSansDevanagari',
+  src: '/fonts/NotoSansDevanagari-Regular.ttf',
+});
+
 const styles = StyleSheet.create({
-  page: { padding: 28, fontSize: 11, lineHeight: 1.35, color: '#111827' },
+  page: {
+    padding: 28,
+    fontSize: 11,
+    lineHeight: 1.35,
+    color: '#111827',
+    fontFamily: 'NotoSansDevanagari',
+  },
   title: { fontSize: 18, fontWeight: 700, marginBottom: 12 },
   sectionTitle: { fontSize: 13, fontWeight: 700, marginTop: 10, marginBottom: 6 },
   row: { marginBottom: 4 },

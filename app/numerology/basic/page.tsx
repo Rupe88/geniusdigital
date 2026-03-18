@@ -425,7 +425,7 @@ export default function NumerologyBasicPage() {
                         <div className="mt-3 space-y-3">
                           {mulankDetail.coreKarakTatva?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">🔱 Karak Tatva (Core)</div>
+                              <div className="text-sm font-bold text-slate-900">Karak Tatva (Core)</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {mulankDetail.coreKarakTatva.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -438,7 +438,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {mulankDetail.lifeImpactArea?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">🔹 Life Impact Area</div>
+                              <div className="text-sm font-bold text-slate-900">Life Impact Area</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {mulankDetail.lifeImpactArea.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -451,7 +451,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {(mulankDetail.favourableColours?.length || mulankDetail.avoidColours?.length) ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">🎨 Favourable Colour</div>
+                              <div className="text-sm font-bold text-slate-900">Favourable Colour</div>
                               {mulankDetail.favourableColours?.length ? (
                                 <div className="flex flex-wrap gap-2">
                                   {mulankDetail.favourableColours.map((c) => (
@@ -463,7 +463,7 @@ export default function NumerologyBasicPage() {
                               ) : null}
                               {mulankDetail.avoidColours?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800 mb-1">❌ Avoid</div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">Avoid</div>
                                   <div className="flex flex-wrap gap-2">
                                     {mulankDetail.avoidColours.map((c) => (
                                       <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700 text-xs border border-rose-100">
@@ -477,7 +477,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {(mulankDetail.favourableDays?.length || mulankDetail.dayUse?.length) ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">📅 Favourable Day</div>
+                              <div className="text-sm font-bold text-slate-900">Favourable Day</div>
                               {mulankDetail.favourableDays?.length ? (
                                 <div className="flex flex-wrap gap-2">
                                   {mulankDetail.favourableDays.map((d) => (
@@ -489,7 +489,7 @@ export default function NumerologyBasicPage() {
                               ) : null}
                               {mulankDetail.dayUse?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800 mb-1">👉 Day use</div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">Day use</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {mulankDetail.dayUse.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -504,8 +504,8 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {mulankDetail.primaryCrystalOrGemstone?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💎 Crystal / Gemstone</div>
-                              <div className="text-xs font-bold text-slate-800">✅ Primary</div>
+                              <div className="text-sm font-bold text-slate-900">Crystal / Gemstone</div>
+                              <div className="text-xs font-bold text-slate-800">Primary</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {mulankDetail.primaryCrystalOrGemstone.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -516,7 +516,7 @@ export default function NumerologyBasicPage() {
                               </ul>
                               {mulankDetail.alternativeCrystals?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800 mt-2">🔹 Alternative</div>
+                                  <div className="text-xs font-bold text-slate-800 mt-2">Alternative</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {mulankDetail.alternativeCrystals.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -531,7 +531,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {mulankDetail.benefits?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💎 Benefits</div>
+                              <div className="text-sm font-bold text-slate-900">Benefits</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {mulankDetail.benefits.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -544,10 +544,10 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {(mulankDetail.moneyFlow?.length || mulankDetail.workStyle?.length) ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💼 Money & Work Style</div>
+                              <div className="text-sm font-bold text-slate-900">Money & Work Style</div>
                               {mulankDetail.moneyFlow?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800">💰 Money Flow</div>
+                                  <div className="text-xs font-bold text-slate-800">Money Flow</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {mulankDetail.moneyFlow.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -560,7 +560,7 @@ export default function NumerologyBasicPage() {
                               ) : null}
                               {mulankDetail.workStyle?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800">🏢 Work Style</div>
+                                  <div className="text-xs font-bold text-slate-800">Work Style</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {mulankDetail.workStyle.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -575,7 +575,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {mulankDetail.commonProblems?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">⚠️ Common Problems</div>
+                              <div className="text-sm font-bold text-slate-900">Common Problems</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {mulankDetail.commonProblems.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -588,7 +588,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {mulankDetail.behavioralRemedy?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💼 Behavioral Remedy</div>
+                              <div className="text-sm font-bold text-slate-900">Behavioral Remedy</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {mulankDetail.behavioralRemedy.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -656,7 +656,7 @@ export default function NumerologyBasicPage() {
                         <div className="mt-3 space-y-3">
                           {bhagyankDetail.coreKarakTatva?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">🔱 Karak Tatva (Core)</div>
+                              <div className="text-sm font-bold text-slate-900">Karak Tatva (Core)</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {bhagyankDetail.coreKarakTatva.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -669,7 +669,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {bhagyankDetail.lifeImpactArea?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">🔹 Life Impact Area</div>
+                              <div className="text-sm font-bold text-slate-900">Life Impact Area</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {bhagyankDetail.lifeImpactArea.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -682,7 +682,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {(bhagyankDetail.favourableColours?.length || bhagyankDetail.avoidColours?.length) ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">🎨 Favourable Colour</div>
+                              <div className="text-sm font-bold text-slate-900">Favourable Colour</div>
                               {bhagyankDetail.favourableColours?.length ? (
                                 <div className="flex flex-wrap gap-2">
                                   {bhagyankDetail.favourableColours.map((c) => (
@@ -694,7 +694,7 @@ export default function NumerologyBasicPage() {
                               ) : null}
                               {bhagyankDetail.avoidColours?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800 mb-1">❌ Avoid</div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">Avoid</div>
                                   <div className="flex flex-wrap gap-2">
                                     {bhagyankDetail.avoidColours.map((c) => (
                                       <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700 text-xs border border-rose-100">
@@ -708,7 +708,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {(bhagyankDetail.favourableDays?.length || bhagyankDetail.dayUse?.length) ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">📅 Favourable Day</div>
+                              <div className="text-sm font-bold text-slate-900">Favourable Day</div>
                               {bhagyankDetail.favourableDays?.length ? (
                                 <div className="flex flex-wrap gap-2">
                                   {bhagyankDetail.favourableDays.map((d) => (
@@ -720,7 +720,7 @@ export default function NumerologyBasicPage() {
                               ) : null}
                               {bhagyankDetail.dayUse?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800 mb-1">👉 Day use</div>
+                                  <div className="text-xs font-bold text-slate-800 mb-1">Day use</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {bhagyankDetail.dayUse.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -735,8 +735,8 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {bhagyankDetail.primaryCrystalOrGemstone?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💎 Crystal / Gemstone</div>
-                              <div className="text-xs font-bold text-slate-800">✅ Primary</div>
+                              <div className="text-sm font-bold text-slate-900">Crystal / Gemstone</div>
+                              <div className="text-xs font-bold text-slate-800">Primary</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {bhagyankDetail.primaryCrystalOrGemstone.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -747,7 +747,7 @@ export default function NumerologyBasicPage() {
                               </ul>
                               {bhagyankDetail.alternativeCrystals?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800 mt-2">🔹 Alternative</div>
+                                  <div className="text-xs font-bold text-slate-800 mt-2">Alternative</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {bhagyankDetail.alternativeCrystals.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -762,7 +762,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {bhagyankDetail.benefits?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💎 Benefits</div>
+                              <div className="text-sm font-bold text-slate-900">Benefits</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {bhagyankDetail.benefits.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -775,10 +775,10 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {(bhagyankDetail.moneyFlow?.length || bhagyankDetail.workStyle?.length) ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💼 Money & Work Style</div>
+                              <div className="text-sm font-bold text-slate-900">Money & Work Style</div>
                               {bhagyankDetail.moneyFlow?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800">💰 Money Flow</div>
+                                  <div className="text-xs font-bold text-slate-800">Money Flow</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {bhagyankDetail.moneyFlow.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -791,7 +791,7 @@ export default function NumerologyBasicPage() {
                               ) : null}
                               {bhagyankDetail.workStyle?.length ? (
                                 <div>
-                                  <div className="text-xs font-bold text-slate-800">🏢 Work Style</div>
+                                  <div className="text-xs font-bold text-slate-800">Work Style</div>
                                   <ul className="space-y-1 text-sm text-slate-700">
                                     {bhagyankDetail.workStyle.map((line, idx) => (
                                       <li key={idx} className="flex gap-2">
@@ -806,7 +806,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {bhagyankDetail.commonProblems?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">⚠️ Common Problems</div>
+                              <div className="text-sm font-bold text-slate-900">Common Problems</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {bhagyankDetail.commonProblems.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -819,7 +819,7 @@ export default function NumerologyBasicPage() {
                           ) : null}
                           {bhagyankDetail.behavioralRemedy?.length ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-bold text-slate-900">💼 Behavioral Remedy</div>
+                              <div className="text-sm font-bold text-slate-900">Behavioral Remedy</div>
                               <ul className="space-y-1 text-sm text-slate-700">
                                 {bhagyankDetail.behavioralRemedy.map((line, idx) => (
                                   <li key={idx} className="flex gap-2">
@@ -907,7 +907,7 @@ export default function NumerologyBasicPage() {
                   <div className="mt-3 space-y-3">
                     {nameDetail.coreKarakTatva?.length ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">🔱 Karak Tatva (Core)</div>
+                        <div className="text-sm font-bold text-slate-900">Karak Tatva (Core)</div>
                         <ul className="space-y-1 text-sm text-slate-700">
                           {nameDetail.coreKarakTatva.map((line, idx) => (
                             <li key={idx} className="flex gap-2">
@@ -920,7 +920,7 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {nameDetail.lifeImpactArea?.length ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">🔹 Life Impact Area</div>
+                        <div className="text-sm font-bold text-slate-900">Life Impact Area</div>
                         <ul className="space-y-1 text-sm text-slate-700">
                           {nameDetail.lifeImpactArea.map((line, idx) => (
                             <li key={idx} className="flex gap-2">
@@ -933,7 +933,7 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {(nameDetail.favourableColours?.length || nameDetail.avoidColours?.length) ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">🎨 Favourable Colour</div>
+                        <div className="text-sm font-bold text-slate-900">Favourable Colour</div>
                         {nameDetail.favourableColours?.length ? (
                           <div className="flex flex-wrap gap-2">
                             {nameDetail.favourableColours.map((c) => (
@@ -945,7 +945,7 @@ export default function NumerologyBasicPage() {
                         ) : null}
                         {nameDetail.avoidColours?.length ? (
                           <div>
-                            <div className="text-xs font-bold text-slate-800 mb-1">❌ Avoid</div>
+                            <div className="text-xs font-bold text-slate-800 mb-1">Avoid</div>
                             <div className="flex flex-wrap gap-2">
                               {nameDetail.avoidColours.map((c) => (
                                 <span key={c} className="px-2 py-1 rounded bg-rose-50 text-rose-700 text-xs border border-rose-100">
@@ -959,7 +959,7 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {(nameDetail.favourableDays?.length || nameDetail.dayUse?.length) ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">📅 Favourable Day</div>
+                        <div className="text-sm font-bold text-slate-900">Favourable Day</div>
                         {nameDetail.favourableDays?.length ? (
                           <div className="flex flex-wrap gap-2">
                             {nameDetail.favourableDays.map((d) => (
@@ -971,7 +971,7 @@ export default function NumerologyBasicPage() {
                         ) : null}
                         {nameDetail.dayUse?.length ? (
                           <div>
-                            <div className="text-xs font-bold text-slate-800 mb-1">👉 Day use</div>
+                            <div className="text-xs font-bold text-slate-800 mb-1">Day use</div>
                             <ul className="space-y-1 text-sm text-slate-700">
                               {nameDetail.dayUse.map((line, idx) => (
                                 <li key={idx} className="flex gap-2">
@@ -986,8 +986,8 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {nameDetail.primaryCrystalOrGemstone?.length ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">💎 Crystal / Gemstone</div>
-                        <div className="text-xs font-bold text-slate-800">✅ Primary</div>
+                        <div className="text-sm font-bold text-slate-900">Crystal / Gemstone</div>
+                        <div className="text-xs font-bold text-slate-800">Primary</div>
                         <ul className="space-y-1 text-sm text-slate-700">
                           {nameDetail.primaryCrystalOrGemstone.map((line, idx) => (
                             <li key={idx} className="flex gap-2">
@@ -998,7 +998,7 @@ export default function NumerologyBasicPage() {
                         </ul>
                         {nameDetail.alternativeCrystals?.length ? (
                           <div>
-                            <div className="text-xs font-bold text-slate-800 mt-2">🔹 Alternative</div>
+                            <div className="text-xs font-bold text-slate-800 mt-2">Alternative</div>
                             <ul className="space-y-1 text-sm text-slate-700">
                               {nameDetail.alternativeCrystals.map((line, idx) => (
                                 <li key={idx} className="flex gap-2">
@@ -1013,7 +1013,7 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {nameDetail.benefits?.length ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">💎 Benefits</div>
+                        <div className="text-sm font-bold text-slate-900">Benefits</div>
                         <ul className="space-y-1 text-sm text-slate-700">
                           {nameDetail.benefits.map((line, idx) => (
                             <li key={idx} className="flex gap-2">
@@ -1026,10 +1026,10 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {(nameDetail.moneyFlow?.length || nameDetail.workStyle?.length) ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">💼 Money & Work Style</div>
+                        <div className="text-sm font-bold text-slate-900">Money & Work Style</div>
                         {nameDetail.moneyFlow?.length ? (
                           <div>
-                            <div className="text-xs font-bold text-slate-800">💰 Money Flow</div>
+                            <div className="text-xs font-bold text-slate-800">Money Flow</div>
                             <ul className="space-y-1 text-sm text-slate-700">
                               {nameDetail.moneyFlow.map((line, idx) => (
                                 <li key={idx} className="flex gap-2">
@@ -1042,7 +1042,7 @@ export default function NumerologyBasicPage() {
                         ) : null}
                         {nameDetail.workStyle?.length ? (
                           <div>
-                            <div className="text-xs font-bold text-slate-800">🏢 Work Style</div>
+                            <div className="text-xs font-bold text-slate-800">Work Style</div>
                             <ul className="space-y-1 text-sm text-slate-700">
                               {nameDetail.workStyle.map((line, idx) => (
                                 <li key={idx} className="flex gap-2">
@@ -1057,7 +1057,7 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {nameDetail.commonProblems?.length ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">⚠️ Common Problems</div>
+                        <div className="text-sm font-bold text-slate-900">Common Problems</div>
                         <ul className="space-y-1 text-sm text-slate-700">
                           {nameDetail.commonProblems.map((line, idx) => (
                             <li key={idx} className="flex gap-2">
@@ -1070,7 +1070,7 @@ export default function NumerologyBasicPage() {
                     ) : null}
                     {nameDetail.behavioralRemedy?.length ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-bold text-slate-900">💼 Behavioral Remedy</div>
+                        <div className="text-sm font-bold text-slate-900">Behavioral Remedy</div>
                         <ul className="space-y-1 text-sm text-slate-700">
                           {nameDetail.behavioralRemedy.map((line, idx) => (
                             <li key={idx} className="flex gap-2">
