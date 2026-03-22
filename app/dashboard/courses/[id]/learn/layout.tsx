@@ -121,7 +121,7 @@ function LearnLayoutInner({
 
       <div className="flex-1 flex min-h-0">
         <main className="flex-1 min-w-0 overflow-y-auto bg-[var(--muted)] p-4 lg:p-6">
-          <div className="max-w-4xl mx-auto">{children}</div>
+          <div className="max-w-4xl mx-auto min-w-0 w-full">{children}</div>
         </main>
 
         <aside

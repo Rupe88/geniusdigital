@@ -385,7 +385,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 }
 
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-4 min-w-0 w-full">
                         {(effectiveQuiz as any)?.isConsultation && (
                             <div className="border border-[var(--border)] bg-[var(--muted)]/30 p-4 rounded-md">
                                 <div className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-1">
@@ -459,9 +459,11 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     };
 
     return (
-        <div className="space-y-6">
-            <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">{lesson.title}</h2>
+        <div className="space-y-6 min-w-0 w-full">
+            <div className="space-y-2 min-w-0">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight break-words">
+                    {lesson.title}
+                </h2>
                 {lesson.lessonType === 'VIDEO' && lesson.videoDuration && (
                     <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                         Duration: {Math.floor(lesson.videoDuration / 60)} minutes
