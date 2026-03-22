@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import { getUpcomingEvents } from '@/lib/api/events';
 import { getUpcomingEventCourses } from '@/lib/api/courses';
-import { getStorageImageSrc } from '@/lib/utils/storage';
-import { getApiBaseUrl } from '@/lib/api/axios';
 import { Enrollment } from '@/lib/types/course';
 import { formatDate } from '@/lib/utils/helpers';
 
@@ -92,20 +90,25 @@ export default function MyCoursesPage() {
     }
   };
 
+  const courseCardShellClass =
+    'bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg cursor-pointer';
+
+  const upcomingHref = (item: (typeof upcomingItems)[0]) =>
+    item.type === 'course' ? `/courses/${item.id}` : `/events/${item.slug || item.id}`;
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-[var(--foreground)] mb-8">My Courses</h1>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2.5fr)_minmax(0,1fr)] gap-8 items-start">
-        {/* Left: Enrolled courses */}
-        {loading ? (
-          <div>Loading...</div>
-        ) : enrollments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+      {/* Enrolled courses — full width */}
+      {loading ? (
+        <div className="text-[var(--muted-foreground)]">Loading...</div>
+      ) : enrollments.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
           {enrollments.map((enrollment) => (
             <div
               key={enrollment.id}
-              className="bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg cursor-pointer"
+              className={courseCardShellClass}
               onClick={() => router.push(`/dashboard/courses/${enrollment.courseId}/learn`)}
             >
               {/* Thumbnail - show full image (no cropping) */}
@@ -204,83 +207,117 @@ export default function MyCoursesPage() {
               </div>
             </div>
           ))}
-          </div>
-        ) : (
+        </div>
+      ) : (
+        <Card padding="lg" className="text-center mb-10">
+          <p className="text-[var(--muted-foreground)] mb-4">You haven&apos;t enrolled in any courses yet.</p>
+          <Link href="/courses">
+            <Button variant="primary">Browse Courses</Button>
+          </Link>
+        </Card>
+      )}
+
+      {/* Upcoming — below My Courses, same card grid & sizing */}
+      <section className="mt-12 pt-10 border-t border-[var(--border)]">
+        <h2 className="text-2xl font-bold text-[var(--foreground)] mb-2">Upcoming Courses & Events</h2>
+        <p className="text-sm text-[var(--muted-foreground)] mb-8 max-w-2xl">
+          Stay ahead by reserving your seat in our next programs.
+        </p>
+
+        {loadingUpcoming ? (
+          <p className="text-sm text-[var(--muted-foreground)]">Loading upcoming items...</p>
+        ) : upcomingItems.length === 0 ? (
           <Card padding="lg" className="text-center">
-            <p className="text-[var(--muted-foreground)] mb-4">You haven't enrolled in any courses yet.</p>
-            <Link href="/courses">
-              <Button variant="primary">Browse Courses</Button>
-            </Link>
-          </Card>
-        )}
-
-        {/* Right: Upcoming courses & events */}
-        <aside className="space-y-4">
-          <Card padding="lg">
-            <h2 className="text-lg font-semibold text-[var(--foreground)] mb-2">Upcoming Courses & Events</h2>
-            <p className="text-xs text-[var(--muted-foreground)] mb-4">
-              Stay ahead by reserving your seat in our next programs.
+            <p className="text-sm text-[var(--muted-foreground)]">
+              No upcoming items right now. Check back soon.
             </p>
-            {loadingUpcoming ? (
-              <p className="text-sm text-[var(--muted-foreground)]">Loading upcoming items...</p>
-            ) : upcomingItems.length === 0 ? (
-              <p className="text-sm text-[var(--muted-foreground)]">No upcoming items right now. Check back soon.</p>
-            ) : (
-              <ul className="space-y-3">
-                {upcomingItems.slice(0, 6).map((item) => (
-                  <li
-                    key={`${item.type}-${item.id}`}
-                    className="flex items-start gap-3 border-b border-[var(--border)] last:border-b-0 pb-3 last:pb-0"
-                  >
-                    {/* Thumbnail (full, not cropped) */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-md bg-[var(--muted)] overflow-hidden flex items-center justify-center">
-                      {item.thumbnail ? (
-                        item.type === 'course' ? (
-                          <img
-                            src={getStorageImageSrc(item.thumbnail, getApiBaseUrl()) || item.thumbnail}
-                            alt={item.title}
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <img
-                            src={item.thumbnail}
-                            alt={item.title}
-                            className="w-full h-full object-contain"
-                          />
-                        )
-                      ) : (
-                        <span className="text-xs font-semibold text-[var(--muted-foreground)]">
-                          {item.type === 'course' ? 'Course' : 'Event'}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--foreground)] line-clamp-2">
-                        {item.title}
-                      </p>
-                      <p className="text-[11px] uppercase tracking-wide text-[var(--muted-foreground)] mt-0.5">
-                        {item.type === 'course' ? 'Upcoming Course' : 'Event'}
-                        {item.dateLabel ? ` • ${item.dateLabel}` : ''}
-                      </p>
-                    </div>
-                    <Link
-                      href={
-                        item.type === 'course'
-                          ? `/courses/${item.id}`
-                          : `/events/${item.slug || item.id}`
-                      }
-                      className="text-xs font-semibold text-[var(--primary-700)] hover:text-[var(--primary-800)] whitespace-nowrap"
-                    >
-                      View
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
           </Card>
-        </aside>
-      </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+            {upcomingItems.map((item) => (
+              <div
+                key={`${item.type}-${item.id}`}
+                className={courseCardShellClass}
+                onClick={() => router.push(upcomingHref(item))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(upcomingHref(item));
+                  }
+                }}
+              >
+                <div className="relative w-full h-52 p-2 bg-white flex items-center justify-center">
+                  {item.thumbnail ? (
+                    item.type === 'course' ? (
+                      <StorageImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        fill
+                        className="object-contain rounded-lg"
+                      />
+                    ) : (
+                      <img
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="max-h-full max-w-full object-contain rounded-lg"
+                      />
+                    )
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
+                      <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                        {item.type === 'course' ? 'Course' : 'Event'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-5 pt-0 pb-4">
+                  <h3 className="text-base font-[550] md:text-lg leading-6 antialiased tracking-[0.05em] text-gray-900 mb-2 line-clamp-2">
+                    {item.title}
+                  </h3>
+
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-[var(--muted-foreground)]">Starts</span>
+                      <span className="font-medium">{item.dateLabel || 'TBA'}</span>
+                    </div>
+                    <div className="w-full bg-[var(--muted)] rounded-none h-2">
+                      <div
+                        className="bg-[var(--primary-700)] h-2 rounded-none"
+                        style={{ width: '0%' }}
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded inline-block">
+                      Open for booking
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-1">
+                    <div
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        item.type === 'course' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                      }`}
+                    >
+                      {item.type === 'course' ? 'UPCOMING COURSE' : 'EVENT'}
+                    </div>
+                    <Link href={upcomingHref(item)} onClick={(e) => e.stopPropagation()}>
+                      <Button variant="primary" size="sm">
+                        View
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
