@@ -134,7 +134,7 @@ export const Navbar: React.FC = () => {
   const mobileMoreMenuItems = [
     { label: 'Gallery', href: ROUTES.GALLERY, icon: HiPhotograph },
     { label: 'Numerology', href: '/numerology/basic', icon: HiAcademicCap },
-    { label: 'Vaastu', href: '/vaastu', icon: HiAcademicCap },
+    { label: 'Vastu', href: '/vaastu', icon: HiAcademicCap },
     { label: 'Become A Affiliate', href: ROUTES.AFFILIATE, icon: HiCash },
     {
       label: isAuthenticated ? (user?.role === 'ADMIN' ? 'Admin Panel' : 'Account') : 'Login',
@@ -212,7 +212,7 @@ export const Navbar: React.FC = () => {
                   href="/vaastu"
                   className="block px-4 py-2 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50"
                 >
-                  Vaastu
+                  Vastu
                 </Link>
                 </div>
               </div>
@@ -501,7 +501,7 @@ export const Navbar: React.FC = () => {
                   }`}
                   onClick={() => setIsMobileNavOpen(false)}
                 >
-                  Vaastu
+                  Vastu
                 </Link>
               </div>
               {moreMenuItems.map((item) => {

@@ -139,7 +139,7 @@ export default function AdminQuizAttemptsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
-                    {Array.from({ length: 7 }).map((__, j) => (
+                    {Array.from({ length: 8 }).map((__, j) => (
                       <td key={j} className="px-3 py-3">
                         <div className="h-4 bg-[var(--muted)] rounded w-24" />
                       </td>
@@ -149,7 +149,7 @@ export default function AdminQuizAttemptsPage() {
               ) : filteredAttempts.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-3 py-6 text-center text-sm text-[var(--muted-foreground)]"
                   >
                     No quiz attempts found for the current filters.

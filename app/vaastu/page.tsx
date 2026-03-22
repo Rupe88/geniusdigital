@@ -6,7 +6,7 @@ export default function VaastuComingSoonPage() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-xl w-full text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)]">Vaastu</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)]">Vastu</h1>
         <p className="text-[var(--muted-foreground)]">
           Coming soon.
         </p>
