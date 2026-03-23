@@ -178,6 +178,15 @@ export const unblockUser = async (userId: string): Promise<void> => {
   }
 };
 
+export const deleteUser = async (userId: string): Promise<void> => {
+  try {
+    const response = await apiClient.delete<ApiResponse<void>>(API_ENDPOINTS.ADMIN.DELETE_USER(userId));
+    handleApiResponse<void>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 // ==================== DASHBOARD ====================
 
 export const getDashboardStats = async (): Promise<AdminStats> => {

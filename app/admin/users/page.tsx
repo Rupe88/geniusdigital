@@ -20,6 +20,7 @@ export default function AdminUsersPage() {
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
   const [exportLoading, setExportLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [newFullName, setNewFullName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -73,6 +74,22 @@ export default function AdminUsersPage() {
       fetchUsers();
     } catch (error) {
       showError(Object(error).message || 'Operation failed');
+    }
+  };
+
+  const handleDelete = async (userId: string, fullName?: string | null) => {
+    const confirmMessage = `Delete user "${fullName || 'this user'}"? This keeps financial/enrollment records but disables and anonymizes the account.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      setDeletingUserId(userId);
+      await adminApi.deleteUser(userId);
+      showSuccess('User deleted successfully');
+      await fetchUsers();
+    } catch (error) {
+      showError(Object(error).message || 'Failed to delete user');
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -281,13 +298,24 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {user.role !== 'ADMIN' && (
-                        <Button
-                          variant={user.isActive ? 'danger' : 'primary'}
-                          size="sm"
-                          onClick={() => handleBlock(user.id, user.isActive)}
-                        >
-                          {user.isActive ? 'Block' : 'Unblock'}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={user.isActive ? 'danger' : 'primary'}
+                            size="sm"
+                            onClick={() => handleBlock(user.id, user.isActive)}
+                            disabled={deletingUserId === user.id}
+                          >
+                            {user.isActive ? 'Block' : 'Unblock'}
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleDelete(user.id, user.fullName)}
+                            disabled={deletingUserId === user.id}
+                          >
+                            {deletingUserId === user.id ? 'Deleting…' : 'Delete'}
+                          </Button>
+                        </div>
                       )}
                     </td>
                   </tr>
