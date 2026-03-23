@@ -23,10 +23,14 @@ import {
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 const STATUS_STYLES: Record<string, string> = {
-  SCHEDULED: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  LIVE: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  COMPLETED: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-  CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  SCHEDULED:
+    'bg-blue-50 text-blue-900 border border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-700',
+  LIVE:
+    'bg-emerald-50 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-700',
+  COMPLETED:
+    'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-900/70 dark:text-gray-200 dark:border-gray-600',
+  CANCELLED:
+    'bg-red-50 text-red-900 border border-red-300 dark:bg-red-950/60 dark:text-red-200 dark:border-red-700',
 };
 
 function formatDate(dateString: string): string {
