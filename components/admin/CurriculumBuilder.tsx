@@ -317,16 +317,24 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       const normalizeCorrectAnswer = (val: any): string => {
         if (val == null) return '';
         if (typeof val === 'string') {
-          const s = val.trim();
-          if (s.startsWith('[')) {
+          const raw = val;
+          const trimmed = raw.trim();
+          if (trimmed.startsWith('[')) {
             try {
-              const arr = JSON.parse(s);
+              const arr = JSON.parse(trimmed);
               return Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : '';
             } catch {
-              return s;
+              return raw;
             }
           }
-          return s;
+          if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+            try {
+              return String(JSON.parse(trimmed));
+            } catch {
+              return raw;
+            }
+          }
+          return raw;
         }
         if (Array.isArray(val) && val.length > 0) return String(val[0]);
         return String(val);
@@ -448,6 +456,43 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
         setIsUploading(true);
         setUploadProgress(0);
         
+        const sanitizedQuizData: QuizData | undefined =
+          lessonForm.lessonType === 'QUIZ'
+            ? {
+                ...lessonForm.quizData,
+                questions: lessonForm.quizData.questions.map((q) => {
+                  const questionType = q.questionType || 'multiple_choice';
+                  const isObjective = ['multiple_choice', 'single_choice', 'true_false'].includes(questionType);
+                  const normalizedOptions = isObjective
+                    ? (questionType === 'true_false'
+                        ? ['True', 'False']
+                        : (q.options || []).map((opt) => String(opt ?? '').trim()))
+                    : [];
+
+                  // Keep correctAnswer aligned with available options to avoid stale/non-matching values.
+                  let normalizedCorrect = String(q.correctAnswer ?? '');
+                  if (isObjective) {
+                    const candidate = normalizedCorrect.trim();
+                    const exact = normalizedOptions.find((o) => o === candidate);
+                    const caseInsensitive =
+                      exact || normalizedOptions.find((o) => o.toLowerCase() === candidate.toLowerCase());
+                    normalizedCorrect = caseInsensitive ?? candidate;
+                  } else {
+                    normalizedCorrect = normalizedCorrect.trim();
+                  }
+
+                  return {
+                    ...q,
+                    question: String(q.question ?? '').trim(),
+                    questionType,
+                    options: normalizedOptions,
+                    correctAnswer: normalizedCorrect,
+                    points: Number(q.points) > 0 ? Number(q.points) : 1,
+                  };
+                }),
+              }
+            : undefined;
+
         const lessonData: CreateLessonData = {
           courseId,
           chapterId: selectedChapterId || undefined,
@@ -460,7 +505,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           isLocked: lessonForm.isLocked,
           videoFile: lessonForm.videoFile || undefined,
           attachmentFile: lessonForm.attachmentFile || undefined,
-          quizData: lessonForm.lessonType === 'QUIZ' ? lessonForm.quizData : undefined,
+          quizData: sanitizedQuizData,
           onProgress: (progress: number) => {
             requestAnimationFrame(() => setUploadProgress(progress));
           },
