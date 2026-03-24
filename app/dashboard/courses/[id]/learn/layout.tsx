@@ -8,7 +8,7 @@ import * as chapterApi from '@/lib/api/chapters';
 import * as lessonApi from '@/lib/api/lessons';
 import * as progressApi from '@/lib/api/progress';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { HiMenu, HiX, HiChevronLeft, HiChevronDown } from 'react-icons/hi';
+import { HiMenu, HiX, HiChevronLeft, HiChevronDown, HiVideoCamera, HiClipboardList, HiDocumentText, HiPencilAlt } from 'react-icons/hi';
 import { useAuth } from '@/lib/context/AuthContext';
 import { showError } from '@/lib/utils/toast';
 import { LearnProvider, useLearn } from '@/lib/context/LearnContext';
@@ -75,6 +75,21 @@ function LearnLayoutInner({
 
   if (!course) return null;
 
+  const getLessonTypeIcon = (lessonType: Lesson['lessonType']) => {
+    switch (lessonType) {
+      case 'VIDEO':
+        return <HiVideoCamera className="w-4 h-4 flex-shrink-0" />;
+      case 'QUIZ':
+        return <HiClipboardList className="w-4 h-4 flex-shrink-0" />;
+      case 'PDF':
+        return <HiDocumentText className="w-4 h-4 flex-shrink-0" />;
+      case 'TEXT':
+      case 'ASSIGNMENT':
+      default:
+        return <HiPencilAlt className="w-4 h-4 flex-shrink-0" />;
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[var(--muted)]">
       <header className="h-14 flex-shrink-0 bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)] flex items-center justify-between px-4 lg:px-6 z-20">
@@ -120,8 +135,8 @@ function LearnLayoutInner({
       </header>
 
       <div className="flex-1 flex min-h-0">
-        <main className="flex-1 min-w-0 overflow-y-auto bg-[var(--muted)] p-4 lg:p-6">
-          <div className="max-w-4xl mx-auto min-w-0 w-full">{children}</div>
+        <main className="flex-1 min-w-0 overflow-y-auto bg-[var(--muted)] p-3 lg:p-5">
+          <div className="max-w-6xl mx-auto min-w-0 w-full">{children}</div>
         </main>
 
         <aside
@@ -180,7 +195,12 @@ function LearnLayoutInner({
                                     : 'text-[var(--foreground)] hover:bg-[var(--muted)]',
                                 ].join(' ')}
                               >
-                                <span className="line-clamp-2">{lesson.title}</span>
+                                <span className="flex items-start gap-2 min-w-0">
+                                  <span className="text-[var(--muted-foreground)] mt-0.5">
+                                    {getLessonTypeIcon(lesson.lessonType)}
+                                  </span>
+                                  <span className="line-clamp-2 min-w-0">{lesson.title}</span>
+                                </span>
                               </Link>
                             </li>
                           );
@@ -208,7 +228,12 @@ function LearnLayoutInner({
                                 : 'text-[var(--foreground)] hover:bg-[var(--muted)]',
                             ].join(' ')}
                           >
-                            <span className="line-clamp-2">{lesson.title}</span>
+                            <span className="flex items-start gap-2 min-w-0">
+                              <span className="text-[var(--muted-foreground)] mt-0.5">
+                                {getLessonTypeIcon(lesson.lessonType)}
+                              </span>
+                              <span className="line-clamp-2 min-w-0">{lesson.title}</span>
+                            </span>
                           </Link>
                         </li>
                       );

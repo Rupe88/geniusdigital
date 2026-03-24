@@ -385,7 +385,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 }
 
                 return (
-                    <div className="space-y-4 min-w-0 w-full">
+                    <div className="space-y-3 min-w-0 w-full">
                         {(effectiveQuiz as any)?.isConsultation && (
                             <div className="border border-[var(--border)] bg-[var(--muted)]/30 p-4 rounded-md">
                                 <div className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-1">
@@ -413,12 +413,14 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                             </div>
                         )}
 
-                        <QuizPlayer
-                            quiz={effectiveQuiz as any}
-                            onComplete={(result) => {
-                                if (result.passed && onComplete) onComplete();
-                            }}
-                        />
+                        <div className="w-full">
+                            <QuizPlayer
+                                quiz={effectiveQuiz as any}
+                                onComplete={(result) => {
+                                    if (result.passed && onComplete) onComplete();
+                                }}
+                            />
+                        </div>
                     </div>
                 );
             }

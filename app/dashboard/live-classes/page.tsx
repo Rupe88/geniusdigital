@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { StorageImage } from '@/components/ui/StorageImage';
 import * as liveClassApi from '@/lib/api/liveClasses';
 import type { LiveClass } from '@/lib/api/liveClasses';
+import { stripSeriesMarkerFromDescription } from '@/lib/api/liveClasses';
+import { showError, showSuccess } from '@/lib/utils/toast';
 import {
   HiCalendar,
   HiClock,
@@ -53,9 +55,20 @@ function formatTime(dateString: string): string {
   }
 }
 
-function LiveClassCard({ item }: { item: LiveClass }) {
+function LiveClassCard({
+  item,
+  enrolled,
+  enrolling,
+  onEnroll,
+}: {
+  item: LiveClass;
+  enrolled: boolean;
+  enrolling: boolean;
+  onEnroll: (id: string) => void;
+}) {
   const statusStyle = STATUS_STYLES[item.status] ?? 'bg-gray-100 text-gray-700';
   const joinUrl = item.zoomJoinUrl || item.meetingUrl;
+  const canEnroll = !enrolled && item.status !== 'CANCELLED' && item.status !== 'COMPLETED';
 
   return (
     <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-200)] transition-colors flex flex-col h-full">
@@ -85,7 +98,7 @@ function LiveClassCard({ item }: { item: LiveClass }) {
         </div>
         {item.description && (
           <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-4">
-            {item.description}
+            {stripSeriesMarkerFromDescription(item.description)}
           </p>
         )}
         <div className="space-y-2 text-sm text-[var(--muted-foreground)]">
@@ -117,6 +130,22 @@ function LiveClassCard({ item }: { item: LiveClass }) {
           )}
         </div>
         <div className="mt-4 pt-4 border-t border-[var(--border)] flex flex-wrap gap-2">
+          {enrolled ? (
+            <Button variant="ghost" size="sm" disabled className="font-semibold">
+              Enrolled
+            </Button>
+          ) : canEnroll ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEnroll(item.id)}
+              isLoading={enrolling}
+              disabled={enrolling}
+              className="font-semibold"
+            >
+              Enroll
+            </Button>
+          ) : null}
           {joinUrl && (item.status === 'SCHEDULED' || item.status === 'LIVE') && (
             <a
               href={joinUrl}
@@ -154,6 +183,8 @@ export default function DashboardLiveClassesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 0 });
+  const [enrolledLiveClassIds, setEnrolledLiveClassIds] = useState<Set<string>>(new Set());
+  const [enrollingClassId, setEnrollingClassId] = useState<string | null>(null);
 
   const fetchClasses = useCallback(async () => {
     setError(null);
@@ -178,9 +209,32 @@ export default function DashboardLiveClassesPage() {
     }
   }, [pagination.page, pagination.limit]);
 
+  const fetchEnrollments = useCallback(async () => {
+    try {
+      const res = await liveClassApi.getMyLiveClassEnrollments({ page: 1, limit: 200 });
+      setEnrolledLiveClassIds(new Set((res.data || []).map((e) => e.liveClassId)));
+    } catch {
+      setEnrolledLiveClassIds(new Set());
+    }
+  }, []);
+
+  const handleEnroll = useCallback(async (liveClassId: string) => {
+    try {
+      setEnrollingClassId(liveClassId);
+      await liveClassApi.enrollInLiveClass(liveClassId);
+      setEnrolledLiveClassIds((prev) => new Set([...prev, liveClassId]));
+      showSuccess('Enrolled successfully');
+    } catch (e) {
+      showError(e instanceof Error ? e.message : 'Failed to enroll');
+    } finally {
+      setEnrollingClassId(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchClasses();
-  }, [fetchClasses]);
+    fetchEnrollments();
+  }, [fetchClasses, fetchEnrollments]);
 
   return (
     <div>
@@ -223,7 +277,13 @@ export default function DashboardLiveClassesPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {classes.map((item) => (
-              <LiveClassCard key={item.id} item={item} />
+              <LiveClassCard
+                key={item.id}
+                item={item}
+                enrolled={enrolledLiveClassIds.has(item.id)}
+                enrolling={enrollingClassId === item.id}
+                onEnroll={handleEnroll}
+              />
             ))}
           </div>
           {pagination.pages > 1 && (

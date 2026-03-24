@@ -327,11 +327,11 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     }
 
     return (
-        <div className="w-full min-w-0 max-w-3xl mx-auto px-1 sm:px-0 space-y-4 sm:space-y-6 md:space-y-8">
+        <div className="w-full min-w-0 max-w-none mx-auto px-0 space-y-3 sm:space-y-4 md:space-y-5">
             {/* Header / Progress */}
-            <div className="bg-white p-4 sm:p-5 md:p-6 rounded-none border border-gray-200 shadow-sm space-y-4 min-w-0">
+            <div className="bg-white p-3 sm:p-4 md:p-5 rounded-none border border-gray-200 shadow-sm space-y-3 min-w-0">
                 <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 tracking-tight break-words">
+                    <h2 className="text-base sm:text-lg md:text-xl font-black text-gray-900 tracking-tight break-words">
                         {quiz.title}
                     </h2>
                     <p className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
@@ -366,18 +366,18 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                 padding="none"
                 className="w-full min-w-0 overflow-hidden border-2 border-gray-200 transform transition-all shadow-xl"
             >
-                <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 min-w-0">
-                    <div className="space-y-2 sm:space-y-3 min-w-0">
+                <div className="p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4 min-w-0">
+                    <div className="space-y-2 min-w-0">
                         <span className="inline-block max-w-full px-3 py-1 sm:px-4 bg-blue-100 text-[var(--primary-700)] rounded-none text-[0.65rem] sm:text-xs font-black uppercase tracking-[0.12em] sm:tracking-[0.2em] break-words">
                             {(currentQuestion.questionType || 'single_choice').replace('_', ' ')}
                         </span>
-                        <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-gray-900 leading-snug break-words">
+                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-black text-gray-900 leading-snug break-words">
                             {currentQuestion.question}
                         </h3>
                     </div>
 
-                    {/* 2×2 from ~400px; single column on very narrow phones; scales on xl */}
-                    <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 auto-rows-fr min-w-0">
+                    {/* 2×2 from ~400px; compact spacing to reduce scrolling */}
+                    <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-2 sm:gap-2.5 md:gap-3 auto-rows-fr min-w-0">
                         {(() => {
                             const questionId = currentQuestion.id!;
                             const questionType = currentQuestion.questionType || 'single_choice';
@@ -396,14 +396,14 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                             key={index}
                                             type="button"
                                             onClick={() => handleSelectAnswer(option)}
-                                            className={`flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-none border-2 sm:border-4 text-left transition-all min-h-[4rem] min-[400px]:min-h-[4.5rem] sm:min-h-[5rem] h-full min-w-0 touch-manipulation active:scale-[0.99] ${
+                                            className={`flex items-start gap-2 sm:gap-2.5 p-2.5 sm:p-3 rounded-none border-2 sm:border-3 text-left transition-all min-h-[3.4rem] min-[400px]:min-h-[3.8rem] sm:min-h-[4.2rem] h-full min-w-0 touch-manipulation active:scale-[0.99] ${
                                                 isSelected
                                                     ? 'border-[var(--primary-700)] bg-blue-50/50 shadow-inner'
                                                     : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
                                             }`}
                                         >
                                             <div
-                                                className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 text-sm sm:text-base rounded-none flex items-center justify-center font-black ${
+                                                className={`flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm rounded-none flex items-center justify-center font-black ${
                                                     isSelected
                                                         ? 'bg-[var(--primary-700)] text-white'
                                                         : 'bg-white text-gray-400 border border-gray-200'
@@ -412,7 +412,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                                 {String.fromCharCode(65 + index)}
                                             </div>
                                             <span
-                                                className={`text-sm sm:text-base md:text-lg font-bold flex-1 min-w-0 leading-snug break-words ${
+                                                className={`text-xs sm:text-sm md:text-base font-bold flex-1 min-w-0 leading-snug break-words ${
                                                     isSelected ? 'text-[var(--primary-700)]' : 'text-gray-700'
                                                 }`}
                                             >
@@ -443,12 +443,12 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-6 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-stretch sm:justify-between items-stretch sm:items-center gap-3 min-w-0">
+                <div className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-stretch sm:justify-between items-stretch sm:items-center gap-2.5 min-w-0">
                     <Button
                         variant="ghost"
                         onClick={handlePrevious}
                         disabled={currentQuestionIndex === 0}
-                        className="font-bold text-gray-500 w-full sm:w-auto justify-center h-11 sm:h-12"
+                        className="font-bold text-gray-500 w-full sm:w-auto justify-center h-10 sm:h-11"
                     >
                         <HiChevronLeft className="mr-2 h-5 w-5" /> Previous
                     </Button>
@@ -459,7 +459,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                             size="lg"
                             onClick={handleSubmit}
                             isLoading={submitting}
-                            className="rounded-none w-full sm:w-auto px-8 sm:px-12 h-12 sm:h-14 font-black shadow-lg shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
+                            className="rounded-none w-full sm:w-auto px-7 sm:px-10 h-10 sm:h-12 font-black shadow-lg shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
                         >
                             Submit Quiz
                         </Button>
@@ -468,7 +468,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                             variant="primary"
                             size="lg"
                             onClick={handleNext}
-                            className="rounded-none w-full sm:w-auto px-8 sm:px-12 h-12 sm:h-14 font-black shadow-lg shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
+                            className="rounded-none w-full sm:w-auto px-7 sm:px-10 h-10 sm:h-12 font-black shadow-lg shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
                         >
                             Next <HiChevronRight className="ml-2 h-5 w-5" />
                         </Button>
