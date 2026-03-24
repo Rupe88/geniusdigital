@@ -104,9 +104,9 @@ function LiveClassCard({ item }: { item: LiveClass }) {
           </p>
         )}
         {!!item.adminNotes?.trim() && (
-          <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100">
-            <div className="font-semibold mb-0.5">Admin note</div>
-            <p className="leading-snug">{item.adminNotes}</p>
+          <div className="mb-4 rounded-md border border-blue-300 bg-blue-50 px-3 py-2.5 shadow-sm dark:border-blue-700 dark:bg-blue-950/35">
+            <div className="text-sm font-bold mb-1 text-blue-900 dark:text-blue-100">Admin note</div>
+            <p className="text-sm leading-relaxed font-medium text-slate-800 dark:text-slate-100">{item.adminNotes}</p>
           </div>
         )}
         <div className="space-y-2 text-sm text-[var(--muted-foreground)]">
