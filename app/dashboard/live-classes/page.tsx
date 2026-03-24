@@ -121,10 +121,6 @@ function LiveClassCard({
               <span>{item.instructor.name}</span>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <HiCalendar className="w-4 h-4 flex-shrink-0" />
-            <span>{formatDate(item.scheduledAt)} · {formatTime(item.scheduledAt)}</span>
-          </div>
           {(item.startDate || item.endDate) && (
             <div className="flex items-center gap-2">
               <HiClock className="w-4 h-4 flex-shrink-0" />
