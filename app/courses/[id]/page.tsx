@@ -904,7 +904,7 @@ export default function CourseDetailPage({
                       reviews.map((review) => (
                         <div key={review.id} className="p-5 bg-[var(--muted)] rounded-lg">
                           <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-[var(--primary-700)] overflow-hidden flex-shrink-0">
+                            <div className="relative w-12 h-12 rounded-full bg-[var(--primary-700)] overflow-hidden flex-shrink-0">
                               {review.user?.profileImage ? (
                                 <Image src={review.user.profileImage} alt={review.user.fullName || 'User'} fill className="object-cover" sizes="48px" />
                               ) : (

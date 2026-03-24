@@ -8,7 +8,7 @@ import * as quizApi from '@/lib/api/quizzes';
 import { Lesson } from '@/lib/types/course';
 import { LessonPlayer } from '@/components/player/LessonPlayer';
 import { Button } from '@/components/ui/Button';
-import { HiCheckCircle, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { showSuccess } from '@/lib/utils/toast';
 import { useLearn } from '@/lib/context/LearnContext';
 
@@ -73,6 +73,21 @@ export default function LessonPage({
     }
   };
 
+  const handleNextLesson = async () => {
+    if (!lesson || !nextLesson || !course) return;
+    try {
+      setCompleting(true);
+      await progressApi.completeLesson(lesson.id);
+      await refreshProgress();
+    } catch (error) {
+      console.error('Auto-complete before next failed:', error);
+      // Do not block navigation even if completion call fails.
+    } finally {
+      setCompleting(false);
+      router.push(`/dashboard/courses/${course.id}/learn/${nextLesson.id}`);
+    }
+  };
+
   const nextLesson = lesson && course ? getNextLesson(lesson.id) : null;
   const prevLesson = lesson && course ? getPrevLesson(lesson.id) : null;
 
@@ -110,40 +125,31 @@ export default function LessonPage({
       <LessonPlayer lesson={lesson} onComplete={handleComplete} />
 
       <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          {prevLesson && course && (
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => router.push(`/dashboard/courses/${course.id}/learn/${prevLesson.id}`)}
-              className="rounded-lg"
-            >
-              <HiChevronLeft className="w-5 h-5 mr-1" />
-              Previous
-            </Button>
-          )}
-          {nextLesson && course && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => router.push(`/dashboard/courses/${course.id}/learn/${nextLesson.id}`)}
-              className="rounded-lg h-8 px-3 text-xs font-semibold"
-            >
-              Next
-              <HiChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          )}
-        </div>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleComplete}
-          isLoading={completing}
-          className="rounded-lg h-8 px-3 text-xs font-semibold"
-        >
-          Mark as Completed
-          <HiCheckCircle className="ml-1.5 w-4 h-4" />
-        </Button>
+        {prevLesson && course ? (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => router.push(`/dashboard/courses/${course.id}/learn/${prevLesson.id}`)}
+            className="rounded-lg self-start sm:self-auto"
+          >
+            <HiChevronLeft className="w-5 h-5 mr-1" />
+            Previous
+          </Button>
+        ) : (
+          <div />
+        )}
+        {nextLesson && course && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleNextLesson}
+            isLoading={completing}
+            className="rounded-lg h-8 px-3 text-xs font-semibold self-start sm:self-auto"
+          >
+            Next
+            <HiChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        )}
       </div>
 
       <style jsx global>{`
