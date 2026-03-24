@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { StorageImage } from '@/components/ui/StorageImage';
 import * as liveClassApi from '@/lib/api/liveClasses';
 import type { LiveClass } from '@/lib/api/liveClasses';
+import { extractSeriesIdFromLiveClass, stripSeriesMarkerFromDescription } from '@/lib/api/liveClasses';
 import {
   HiCalendar,
-  HiClock,
   HiUser,
   HiVideoCamera,
   HiChevronLeft,
@@ -56,6 +55,19 @@ function formatTime(dateString: string): string {
   }
 }
 
+const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function getWeeklyTimeRows(dateString: string) {
+  const date = new Date(dateString);
+  const activeDay = Number.isNaN(date.getTime()) ? -1 : date.getDay();
+  const activeTime = Number.isNaN(date.getTime()) ? '-' : formatTime(dateString);
+  return WEEK_DAYS.map((day, idx) => ({
+    day,
+    time: idx === activeDay ? activeTime : 'Not scheduled',
+    active: idx === activeDay,
+  }));
+}
+
 function LiveClassCard({ item }: { item: LiveClass }) {
   const statusStyle = STATUS_STYLES[item.status] ?? 'bg-gray-100 text-gray-700';
   const joinUrl = item.zoomJoinUrl || item.meetingUrl;
@@ -88,8 +100,13 @@ function LiveClassCard({ item }: { item: LiveClass }) {
         </div>
         {item.description && (
           <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-4">
-            {item.description}
+            {stripSeriesMarkerFromDescription(item.description)}
           </p>
+        )}
+        {item.adminNotes && (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-100">
+            <span className="font-semibold">Admin note:</span> {item.adminNotes}
+          </div>
         )}
         <div className="space-y-2 text-sm text-[var(--muted-foreground)]">
           {item.instructor?.name && (
@@ -102,29 +119,37 @@ function LiveClassCard({ item }: { item: LiveClass }) {
             <HiCalendar className="w-4 h-4 flex-shrink-0" />
             <span>{formatDate(item.scheduledAt)} · {formatTime(item.scheduledAt)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <HiClock className="w-4 h-4 flex-shrink-0" />
-            <span>{item.duration} min</span>
-          </div>
           {item.course?.title && (
             <div className="flex items-center gap-2">
               <HiBookOpen className="w-4 h-4 flex-shrink-0" />
               <span>{item.course.title}</span>
             </div>
           )}
-          {item._count != null && (
-            <div className="flex items-center gap-2">
-              <HiVideoCamera className="w-4 h-4 flex-shrink-0" />
-              <span>{item._count.enrollments ?? 0} enrolled</span>
-            </div>
-          )}
+        </div>
+        <div className="mt-3 rounded-md border border-[var(--border)] overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-[var(--muted)] text-[var(--muted-foreground)]">
+              <tr>
+                <th className="px-2 py-1.5 text-left font-medium">Day</th>
+                <th className="px-2 py-1.5 text-left font-medium">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getWeeklyTimeRows(item.scheduledAt).map((row) => (
+                <tr
+                  key={row.day}
+                  className={`border-t border-[var(--border)] ${
+                    row.active ? 'bg-orange-50 dark:bg-orange-900/20' : 'text-[var(--muted-foreground)]'
+                  }`}
+                >
+                  <td className={`px-2 py-1.5 ${row.active ? 'text-orange-800 dark:text-orange-200 font-medium' : ''}`}>{row.day}</td>
+                  <td className={`px-2 py-1.5 ${row.active ? 'text-orange-800 dark:text-orange-200 font-medium' : ''}`}>{row.time}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <div className="mt-4 pt-4 border-t border-[var(--border)] flex flex-wrap gap-2">
-          <Link href={`/dashboard/live-classes/${item.id}`} className="inline-flex">
-            <Button variant="primary" size="sm">
-              View details
-            </Button>
-          </Link>
           {joinUrl && (item.status === 'SCHEDULED' || item.status === 'LIVE') && (
             <a
               href={joinUrl}
@@ -132,7 +157,7 @@ function LiveClassCard({ item }: { item: LiveClass }) {
               rel="noopener noreferrer"
               className="inline-flex"
             >
-              <Button variant="outline" size="sm">
+              <Button variant="primary" size="sm">
                 Join meeting
               </Button>
             </a>
@@ -178,7 +203,16 @@ export default function LiveClassesPage() {
         params.status = 'COMPLETED';
       }
       const res = await liveClassApi.getAllLiveClasses(params);
-      setClasses(res.data ?? []);
+      const raw = res.data ?? [];
+      const seen = new Set<string>();
+      const deduped = raw.filter((item) => {
+        const seriesId = extractSeriesIdFromLiveClass(item);
+        const key = seriesId ? `series:${seriesId}` : `class:${item.id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      setClasses(deduped);
       setPagination((prev) => ({
         ...prev,
         page: res.pagination?.page ?? prev.page,

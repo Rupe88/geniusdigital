@@ -6,6 +6,7 @@ export interface LiveClass {
   id: string;
   title: string;
   description?: string;
+  adminNotes?: string;
   courseId?: string;
   instructorId: string;
   scheduledAt: string;
@@ -59,12 +60,11 @@ export interface CreateLiveClassPayload {
   meetingProvider?: 'ZOOM';
   autoGenerateMeeting?: boolean;
   // Recurrence support (admin create, recurring only)
-  recurrenceType?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  recurrenceType?: 'WEEKLY';
   startDate?: string; // YYYY-MM-DD
-  endDate?: string; // YYYY-MM-DD
   startTime?: string; // HH:mm
-  daysOfWeek?: number[]; // 0-6 (Sun-Sat)
-  monthlyDay?: number; // 1-31
+  daysOfWeek?: number[]; // 0-6 (Sun-Sat), use first for single create
+  adminNotes?: string;
 }
 
 /** Backend returns { success, data: LiveClass[], pagination } */

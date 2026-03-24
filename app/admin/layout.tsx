@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiCalendar, HiVideoCamera, HiChartBar, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout, HiQuestionMarkCircle } from 'react-icons/hi';
+import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiCalendar, HiVideoCamera, HiChartBar, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout, HiQuestionMarkCircle, HiSparkles, HiLocationMarker } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 
 interface MenuItem {
@@ -91,6 +91,8 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/audit-logs`, label: 'Audit Logs', icon: HiShieldCheck },
       { href: `${ROUTES.ADMIN}/quiz-attempts`, label: 'Quiz Attempts', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/certificates`, label: 'Certificates', icon: HiDocumentText },
+      { href: `${ROUTES.ADMIN}/numerology`, label: 'Numerology', icon: HiSparkles },
+      { href: `${ROUTES.ADMIN}/compass`, label: 'Compass', icon: HiLocationMarker },
     ],
   },
   { label: 'Account', icon: HiShieldCheck, items: [{ href: `${ROUTES.ADMIN}/account`, label: 'Account Settings', icon: HiShieldCheck }] },

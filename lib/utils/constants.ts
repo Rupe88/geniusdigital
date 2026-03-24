@@ -54,6 +54,8 @@ export const API_ENDPOINTS = {
     MASS_EMAIL_AUDIENCE_COUNT: '/admin/mass-email/audience-count',
     MASS_EMAIL_SEND: '/admin/mass-email/send',
   },
+  NUMEROLOGY_LEADS: '/numerology-leads',
+  COMPASS_LEADS: '/compass-leads',
   // Courses
   COURSES: {
     LIST: '/courses',
