@@ -31,8 +31,40 @@ export interface LiveClass {
     id: string;
     title: string;
     slug?: string;
+    thumbnail?: string;
   };
   _count?: { enrollments: number };
+}
+
+const SERIES_MARKER_REGEX = /\[\[series:([a-f0-9-]{8,})\]\]/i;
+
+export const extractSeriesIdFromLiveClass = (liveClass: Pick<LiveClass, 'description'>): string | null => {
+  const match = String(liveClass.description || '').match(SERIES_MARKER_REGEX);
+  return match?.[1] || null;
+};
+
+export const stripSeriesMarkerFromDescription = (description?: string | null): string => {
+  return String(description || '').replace(SERIES_MARKER_REGEX, '').trim();
+};
+
+export interface CreateLiveClassPayload {
+  title: string;
+  description?: string;
+  courseId?: string;
+  instructorId: string;
+  duration: number; // minutes
+  meetingUrl?: string;
+  meetingId?: string;
+  meetingPassword?: string;
+  meetingProvider?: 'ZOOM';
+  autoGenerateMeeting?: boolean;
+  // Recurrence support (admin create, recurring only)
+  recurrenceType?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+  startTime?: string; // HH:mm
+  daysOfWeek?: number[]; // 0-6 (Sun-Sat)
+  monthlyDay?: number; // 1-31
 }
 
 /** Backend returns { success, data: LiveClass[], pagination } */
@@ -97,7 +129,7 @@ export const getLiveClassById = async (id: string): Promise<LiveClass> => {
   }
 };
 
-export const createLiveClass = async (liveClassData: Partial<LiveClass>): Promise<LiveClass> => {
+export const createLiveClass = async (liveClassData: CreateLiveClassPayload): Promise<LiveClass> => {
   try {
     const response = await apiClient.post<ApiResponse<LiveClass>>(API_ENDPOINTS.LIVE_CLASSES.LIST, liveClassData);
     const data = handleApiResponse<LiveClass>(response);
@@ -107,7 +139,10 @@ export const createLiveClass = async (liveClassData: Partial<LiveClass>): Promis
   }
 };
 
-export const updateLiveClass = async (id: string, liveClassData: Partial<LiveClass>): Promise<LiveClass> => {
+export const updateLiveClass = async (
+  id: string,
+  liveClassData: Partial<CreateLiveClassPayload> & Partial<LiveClass>
+): Promise<LiveClass> => {
   try {
     const response = await apiClient.put<ApiResponse<LiveClass>>(API_ENDPOINTS.LIVE_CLASSES.BY_ID(id), liveClassData);
     const data = handleApiResponse<LiveClass>(response);
@@ -120,6 +155,19 @@ export const updateLiveClass = async (id: string, liveClassData: Partial<LiveCla
 export const deleteLiveClass = async (id: string): Promise<void> => {
   try {
     await apiClient.delete(API_ENDPOINTS.LIVE_CLASSES.BY_ID(id));
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const cancelLiveClassSeries = async (
+  seriesId: string
+): Promise<{ seriesId: string; cancelledCount: number }> => {
+  try {
+    const response = await apiClient.post<ApiResponse<{ seriesId: string; cancelledCount: number }>>(
+      API_ENDPOINTS.LIVE_CLASSES.CANCEL_SERIES(seriesId)
+    );
+    return handleApiResponse(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }

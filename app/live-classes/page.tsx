@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { StorageImage } from '@/components/ui/StorageImage';
 import * as liveClassApi from '@/lib/api/liveClasses';
 import type { LiveClass } from '@/lib/api/liveClasses';
 import {
@@ -61,6 +62,21 @@ function LiveClassCard({ item }: { item: LiveClass }) {
 
   return (
     <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-200)] transition-colors flex flex-col h-full">
+      <div className="relative h-40 w-full bg-[var(--muted)] p-2">
+        {item.course?.thumbnail ? (
+          <StorageImage
+            src={item.course.thumbnail}
+            alt={item.course?.title || item.title}
+            fill
+            className="object-contain"
+            sizes="(max-width: 1024px) 100vw, 33vw"
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
+            No course thumbnail
+          </div>
+        )}
+      </div>
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-2 mb-3">
           <h3 className="text-lg font-semibold text-[var(--foreground)] line-clamp-2 flex-1 min-w-0">
@@ -100,20 +116,6 @@ function LiveClassCard({ item }: { item: LiveClass }) {
             <div className="flex items-center gap-2">
               <HiVideoCamera className="w-4 h-4 flex-shrink-0" />
               <span>{item._count.enrollments ?? 0} enrolled</span>
-            </div>
-          )}
-          {joinUrl && (item.status === 'SCHEDULED' || item.status === 'LIVE') && (
-            <div className="flex items-center gap-2 pt-2">
-              <HiVideoCamera className="w-4 h-4 flex-shrink-0 text-[var(--primary-600)]" />
-              <a
-                href={joinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--primary-700)] hover:underline font-medium text-sm truncate max-w-full"
-                title={joinUrl}
-              >
-                Meeting link – Join directly
-              </a>
             </div>
           )}
         </div>

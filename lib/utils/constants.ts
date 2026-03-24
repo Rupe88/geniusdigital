@@ -202,6 +202,7 @@ export const API_ENDPOINTS = {
   LIVE_CLASSES: {
     LIST: '/live-classes',
     BY_ID: (id: string) => `/live-classes/${id}`,
+    CANCEL_SERIES: (seriesId: string) => `/live-classes/series/${seriesId}/cancel`,
   },
   // Events
   EVENTS: {

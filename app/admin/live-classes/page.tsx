@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as liveClassApi from '@/lib/api/liveClasses';
-import type { LiveClass } from '@/lib/api/liveClasses';
+import type { LiveClass, CreateLiveClassPayload } from '@/lib/api/liveClasses';
+import { extractSeriesIdFromLiveClass } from '@/lib/api/liveClasses';
 import * as instructorApi from '@/lib/api/instructors';
 import * as courseApi from '@/lib/api/courses';
 import { showError, showSuccess } from '@/lib/utils/toast';
@@ -20,6 +21,22 @@ const STATUS_OPTIONS = [
 ];
 
 export default function AdminLiveClassesPage() {
+  const DAY_OPTIONS = [
+    { value: 0, label: 'Sun' },
+    { value: 1, label: 'Mon' },
+    { value: 2, label: 'Tue' },
+    { value: 3, label: 'Wed' },
+    { value: 4, label: 'Thu' },
+    { value: 5, label: 'Fri' },
+    { value: 6, label: 'Sat' },
+  ];
+  const DURATION_OPTIONS = [
+    { label: '1 hr', value: 60 },
+    { label: '1.5 hrs', value: 90 },
+    { label: '2 hrs', value: 120 },
+    { label: '3 hrs', value: 180 },
+  ];
+
   const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 });
   const [loading, setLoading] = useState(true);
@@ -31,6 +48,7 @@ export default function AdminLiveClassesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<LiveClass | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [cancellingSeriesId, setCancellingSeriesId] = useState<string | null>(null);
   const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
   const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
   const [formData, setFormData] = useState({
@@ -41,8 +59,13 @@ export default function AdminLiveClassesPage() {
     scheduledAt: '',
     duration: 60,
     meetingUrl: '',
-    meetingProvider: 'OTHER',
     meetingPassword: '',
+    recurrenceType: 'DAILY' as 'DAILY' | 'WEEKLY' | 'MONTHLY',
+    startDate: '',
+    endDate: '',
+    startTime: '21:00',
+    daysOfWeek: [0] as number[],
+    monthlyDay: 1,
   });
 
   useEffect(() => {
@@ -86,7 +109,7 @@ export default function AdminLiveClassesPage() {
 
   useEffect(() => {
     instructorApi.getAllInstructors().then((r) => setInstructors(r.data || [])).catch(() => setInstructors([]));
-    courseApi.getAllCourses({ limit: 200 }).then((r) => setCourses(r.data || [])).catch(() => setCourses([]));
+    courseApi.getOngoingCourses().then((r) => setCourses(r || [])).catch(() => setCourses([]));
   }, []);
 
   const clearFilters = () => {
@@ -104,12 +127,56 @@ export default function AdminLiveClassesPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const payload: CreateLiveClassPayload = {
+        title: formData.title,
+        description: formData.description,
+        courseId: formData.courseId || undefined,
+        instructorId: formData.instructorId,
+        duration: formData.duration,
+        meetingUrl: formData.meetingUrl || undefined,
+        meetingPassword: formData.meetingPassword || undefined,
+        meetingProvider: 'ZOOM',
+      };
+
+      if (!editingClass) {
+        if (!formData.startDate || !formData.endDate || !formData.startTime) {
+          throw new Error('Start date, end date and start time are required for recurring schedule.');
+        }
+        if (
+          formData.recurrenceType === 'WEEKLY' &&
+          (!formData.daysOfWeek || formData.daysOfWeek.length === 0)
+        ) {
+          throw new Error('Select at least one weekday for weekly recurrence.');
+        }
+        if (formData.recurrenceType === 'MONTHLY' && (!formData.monthlyDay || formData.monthlyDay < 1 || formData.monthlyDay > 31)) {
+          throw new Error('Monthly day must be between 1 and 31.');
+        }
+        payload.recurrenceType = formData.recurrenceType;
+        payload.startDate = formData.startDate;
+        payload.endDate = formData.endDate;
+        payload.startTime = formData.startTime;
+        payload.daysOfWeek = formData.recurrenceType === 'WEEKLY' ? formData.daysOfWeek : [];
+        payload.monthlyDay = formData.recurrenceType === 'MONTHLY' ? formData.monthlyDay : undefined;
+      } else {
+        if (!formData.scheduledAt) {
+          throw new Error('Scheduled date and time is required.');
+        }
+      }
+
       if (editingClass) {
-        await liveClassApi.updateLiveClass(editingClass.id, formData);
+        await liveClassApi.updateLiveClass(editingClass.id, {
+          ...payload,
+          scheduledAt: formData.scheduledAt,
+          recurrenceType: undefined,
+          startDate: undefined,
+          endDate: undefined,
+          startTime: undefined,
+          daysOfWeek: undefined,
+        });
         showSuccess('Live class updated successfully');
       } else {
-        await liveClassApi.createLiveClass(formData);
-        showSuccess('Live class created successfully');
+        await liveClassApi.createLiveClass(payload);
+        showSuccess('Live class series created successfully');
       }
       setShowForm(false);
       setEditingClass(null);
@@ -132,8 +199,13 @@ export default function AdminLiveClassesPage() {
       scheduledAt: new Date(liveClass.scheduledAt).toISOString().slice(0, 16),
       duration: liveClass.duration,
       meetingUrl: liveClass.meetingUrl || '',
-      meetingProvider: (liveClass.meetingProvider as 'ZOOM' | 'GOOGLE_MEET' | 'OTHER') || 'OTHER',
       meetingPassword: liveClass.meetingPassword || '',
+      recurrenceType: 'DAILY',
+      startDate: '',
+      endDate: '',
+      startTime: '21:00',
+      daysOfWeek: [0],
+      monthlyDay: 1,
     });
     setShowForm(true);
   };
@@ -148,6 +220,20 @@ export default function AdminLiveClassesPage() {
     }
   };
 
+  const handleCancelSeries = async (seriesId: string) => {
+    if (!confirm('Cancel all sessions in this recurring series?')) return;
+    try {
+      setCancellingSeriesId(seriesId);
+      const result = await liveClassApi.cancelLiveClassSeries(seriesId);
+      showSuccess(`Cancelled ${result.cancelledCount} sessions in series.`);
+      fetchLiveClasses();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to cancel series');
+    } finally {
+      setCancellingSeriesId(null);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -157,16 +243,15 @@ export default function AdminLiveClassesPage() {
       scheduledAt: '',
       duration: 60,
       meetingUrl: '',
-      meetingProvider: 'OTHER',
       meetingPassword: '',
+      recurrenceType: 'DAILY',
+      startDate: '',
+      endDate: '',
+      startTime: '21:00',
+      daysOfWeek: [0],
+      monthlyDay: 1,
     });
   };
-
-  const meetingProviders = [
-    { value: 'ZOOM', label: 'Zoom' },
-    { value: 'GOOGLE_MEET', label: 'Google Meet' },
-    { value: 'OTHER', label: 'Other' },
-  ];
 
   return (
     <div>
@@ -196,14 +281,14 @@ export default function AdminLiveClassesPage() {
             resetForm();
           }}
         >
-          {showForm ? 'Cancel' : 'Create Live Class'}
+          {showForm ? 'Cancel' : 'Create Recurring Live Class'}
         </Button>
       </div>
 
       {showForm && (
         <Card padding="lg" className="mb-6">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-4">
-            {editingClass ? 'Edit Live Class' : 'Create Live Class'}
+            {editingClass ? 'Edit Live Class' : 'Create Recurring Live Class'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,7 +332,35 @@ export default function AdminLiveClassesPage() {
                     </option>
                   ))}
                 </select>
+                <p className="mt-1 text-xs text-[var(--muted-foreground)]">Only ongoing courses are shown.</p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Duration *</label>
+                <select
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value, 10) || 60 })}
+                  className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {DURATION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Meeting Provider</label>
+                <input
+                  type="text"
+                  value="Zoom"
+                  readOnly
+                  className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--muted)] text-[var(--foreground)]"
+                />
+              </div>
+            </div>
+            {editingClass ? (
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Scheduled Date & Time *</label>
                 <input
@@ -258,32 +371,106 @@ export default function AdminLiveClassesPage() {
                   className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Duration (minutes) *</label>
-                <input
-                  type="number"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 60 })}
-                  required
-                  min={1}
-                  className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
+            ) : (
+              <div className="space-y-4 rounded-md border border-[var(--border)] p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Recurrence</label>
+                    <select
+                      value={formData.recurrenceType}
+                      onChange={(e) => setFormData({ ...formData, recurrenceType: e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' })}
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="DAILY">Daily</option>
+                      <option value="WEEKLY">Weekly</option>
+                      <option value="MONTHLY">Monthly</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Start Time *</label>
+                    <input
+                      type="time"
+                      value={formData.startTime}
+                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Start Date *</label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">End Date *</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
+                {formData.recurrenceType === 'WEEKLY' && (
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Weekly On *</label>
+                    <div className="flex flex-wrap gap-2">
+                      {DAY_OPTIONS.map((day) => {
+                        const active = formData.daysOfWeek.includes(day.value);
+                        return (
+                          <button
+                            key={day.value}
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                daysOfWeek: active
+                                  ? prev.daysOfWeek.filter((d) => d !== day.value)
+                                  : [...prev.daysOfWeek, day.value].sort((a, b) => a - b),
+                              }))
+                            }
+                            className={`px-3 py-1.5 rounded-md border text-sm ${
+                              active
+                                ? 'bg-primary-100 border-primary-300 text-primary-800'
+                                : 'bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]'
+                            }`}
+                          >
+                            {day.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {formData.recurrenceType === 'MONTHLY' && (
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Day of Month *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={formData.monthlyDay}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          monthlyDay: Math.min(31, Math.max(1, parseInt(e.target.value, 10) || 1)),
+                        })
+                      }
+                      className="w-full md:w-56 px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      Example: 5 means class repeats on the 5th of each month in range.
+                    </p>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Meeting Provider</label>
-                <select
-                  value={formData.meetingProvider}
-                  onChange={(e) => setFormData({ ...formData, meetingProvider: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  {meetingProviders.map((provider) => (
-                    <option key={provider.value} value={provider.value}>
-                      {provider.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Description</label>
               <textarea
@@ -300,7 +487,7 @@ export default function AdminLiveClassesPage() {
                   type="url"
                   value={formData.meetingUrl}
                   onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
-                  placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                  placeholder="https://zoom.us/j/..."
                   className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
@@ -316,7 +503,7 @@ export default function AdminLiveClassesPage() {
             </div>
             <div className="flex gap-2">
               <Button type="submit" variant="primary" disabled={submitting}>
-                {editingClass ? 'Update' : 'Create'} Live Class
+                {editingClass ? 'Update' : 'Create'} {editingClass ? 'Live Class' : 'Recurring Live Class'}
               </Button>
               <Button
                 type="button"
@@ -447,7 +634,16 @@ export default function AdminLiveClassesPage() {
               ) : liveClasses.length > 0 ? (
                 liveClasses.map((liveClass) => (
                   <tr key={liveClass.id} className="hover:bg-[var(--muted)]">
-                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">{liveClass.title}</td>
+                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
+                      <div className="flex items-center gap-2">
+                        <span>{liveClass.title}</span>
+                        {extractSeriesIdFromLiveClass(liveClass) && (
+                          <span className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-800">
+                            Series session
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-sm text-[var(--muted-foreground)]">
                       {liveClass.instructor?.name || 'N/A'}
                     </td>
@@ -502,6 +698,18 @@ export default function AdminLiveClassesPage() {
                         >
                           Delete
                         </button>
+                        {extractSeriesIdFromLiveClass(liveClass) && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelSeries(extractSeriesIdFromLiveClass(liveClass)!)}
+                            disabled={cancellingSeriesId === extractSeriesIdFromLiveClass(liveClass)}
+                            className="text-sm text-amber-700 hover:underline disabled:opacity-60"
+                          >
+                            {cancellingSeriesId === extractSeriesIdFromLiveClass(liveClass)
+                              ? 'Cancelling...'
+                              : 'Cancel Series'}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
