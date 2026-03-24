@@ -142,11 +142,11 @@ function LiveClassCard({
                 <tr
                   key={row.day}
                   className={`border-t border-[var(--border)] ${
-                    row.active ? 'bg-orange-50 dark:bg-orange-900/20' : 'text-[var(--muted-foreground)]'
+                    row.active ? 'bg-blue-100/80 dark:bg-blue-900/35' : 'text-[var(--muted-foreground)]'
                   }`}
                 >
-                  <td className={`px-2 py-1.5 ${row.active ? 'text-orange-800 dark:text-orange-200 font-medium' : ''}`}>{row.day}</td>
-                  <td className={`px-2 py-1.5 ${row.active ? 'text-orange-800 dark:text-orange-200 font-medium' : ''}`}>{row.time}</td>
+                  <td className={`px-2 py-1.5 ${row.active ? 'text-blue-900 dark:text-blue-200 font-semibold' : ''}`}>{row.day}</td>
+                  <td className={`px-2 py-1.5 ${row.active ? 'text-blue-900 dark:text-blue-200 font-semibold' : ''}`}>{row.time}</td>
                 </tr>
               ))}
             </tbody>
@@ -233,9 +233,6 @@ export default function DashboardLiveClassesPage() {
         <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-2">
           Live Classes
         </h1>
-        <p className="text-lg text-[var(--muted-foreground)]">
-          Available live sessions for your enrolled courses. Classes are visible until 5 hours after the scheduled start time.
-        </p>
       </header>
 
       {error && (
