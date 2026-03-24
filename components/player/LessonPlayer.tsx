@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { getVideoEmbedUrl, getDocumentOpenUrl, isGoogleClassroomUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { getQuizByLesson } from '@/lib/api/quizzes';
-import Link from 'next/link';
-import { ROUTES } from '@/lib/utils/constants';
 import { getMyAttemptsForQuiz, type UserQuizAttempt } from '@/lib/api/userQuizAttempts';
 
 interface LessonPlayerProps {
@@ -386,30 +384,17 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
 
                 return (
                     <div className="space-y-3 min-w-0 w-full">
-                        {(effectiveQuiz as any)?.isConsultation && (
+                        {(effectiveQuiz as any)?.isConsultation && consultationReply?.adminVisible && consultationReply.adminNotes && (
                             <div className="border border-[var(--border)] bg-[var(--muted)]/30 p-4 rounded-md">
                                 <div className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-1">
                                     Consultation quiz
                                 </div>
-                                {consultationReply?.adminVisible && consultationReply.adminNotes ? (
-                                    <div className="space-y-2">
-                                        <div className="text-sm font-semibold text-[var(--foreground)]">Admin reply</div>
-                                        <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
-                                            {consultationReply.adminNotes}
-                                        </div>
+                                <div className="space-y-2">
+                                    <div className="text-sm font-semibold text-[var(--foreground)]">Admin reply</div>
+                                    <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
+                                        {consultationReply.adminNotes}
                                     </div>
-                                ) : (
-                                    <div className="text-sm text-[var(--muted-foreground)]">
-                                        After you submit, an admin will review your answers and reply. You’ll see the reply in{' '}
-                                        <Link
-                                            href={`${ROUTES.DASHBOARD}/quiz-reports`}
-                                            className="font-semibold text-[var(--primary-700)] hover:underline"
-                                        >
-                                            Quiz Reports
-                                        </Link>
-                                        .
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         )}
 

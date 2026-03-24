@@ -98,6 +98,39 @@ export default function MyCoursesPage() {
 
   const upcomingSideItems = upcomingItems.slice(0, 6);
   const relatedCourseItems = upcomingItems.filter((item) => item.type === 'course').slice(0, 6);
+  const shimmerPulse = 'animate-pulse';
+
+  const CourseCardShimmer = () => (
+    <div className={`${courseCardShellClass} ${shimmerPulse}`} aria-hidden>
+      <div className="relative w-full h-52 p-2 bg-white">
+        <div className="h-full w-full rounded-lg bg-[var(--muted)]" />
+      </div>
+      <div className="px-5 pt-0 pb-4">
+        <div className="h-5 w-3/4 rounded bg-[var(--muted)] mb-3" />
+        <div className="h-3 w-1/2 rounded bg-[var(--muted)] mb-4" />
+        <div className="h-2 w-full rounded bg-[var(--muted)] mb-2" />
+        <div className="h-2 w-2/3 rounded bg-[var(--muted)] mb-4" />
+        <div className="flex items-center justify-between">
+          <div className="h-6 w-20 rounded-full bg-[var(--muted)]" />
+          <div className="h-8 w-24 rounded bg-[var(--muted)]" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const UpcomingSideShimmer = () => (
+    <div className={`bg-white border border-gray-200 rounded-lg p-3 shadow-[0_4px_10px_rgba(0,0,0,0.10)] ${shimmerPulse}`} aria-hidden>
+      <div className="flex gap-3">
+        <div className="w-32 h-20 rounded-md bg-[var(--muted)] shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="h-4 w-5/6 rounded bg-[var(--muted)] mb-2" />
+          <div className="h-3 w-1/2 rounded bg-[var(--muted)] mb-3" />
+          <div className="h-5 w-16 rounded-full bg-[var(--muted)] mb-3" />
+          <div className="h-8 w-20 rounded bg-[var(--muted)]" />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -105,7 +138,24 @@ export default function MyCoursesPage() {
 
       {/* My Courses split layout: 60% + 40% */}
       {loading ? (
-        <div className="text-[var(--muted-foreground)]">Loading...</div>
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          <section className="xl:col-span-3 min-h-0">
+            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">My Courses</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <CourseCardShimmer key={`my-course-shimmer-${idx}`} />
+              ))}
+            </div>
+          </section>
+          <aside className="xl:col-span-2 xl:sticky xl:top-24 xl:self-start">
+            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">Upcoming Courses & Events</h2>
+            <div className="grid grid-cols-1 gap-6">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <UpcomingSideShimmer key={`upcoming-side-shimmer-${idx}`} />
+              ))}
+            </div>
+          </aside>
+        </div>
       ) : enrollments.length > 0 ? (
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           <section className="xl:col-span-3 min-h-0">
@@ -281,7 +331,11 @@ export default function MyCoursesPage() {
         <h2 className="text-2xl font-bold text-[var(--foreground)] mb-6">Related Courses</h2>
 
         {loadingUpcoming ? (
-          <p className="text-sm text-[var(--muted-foreground)]">Loading upcoming items...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <CourseCardShimmer key={`related-course-shimmer-${idx}`} />
+            ))}
+          </div>
         ) : relatedCourseItems.length === 0 ? (
           <Card padding="lg" className="text-center">
             <p className="text-sm text-[var(--muted-foreground)]">

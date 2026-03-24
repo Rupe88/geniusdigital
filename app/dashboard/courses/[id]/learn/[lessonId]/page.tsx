@@ -125,24 +125,24 @@ export default function LessonPage({
           {nextLesson && course && (
             <Button
               variant="primary"
-              size="md"
+              size="sm"
               onClick={() => router.push(`/dashboard/courses/${course.id}/learn/${nextLesson.id}`)}
-              className="rounded-lg"
+              className="rounded-lg h-8 px-3 text-xs font-semibold"
             >
               Next
-              <HiChevronRight className="w-5 h-5 ml-1" />
+              <HiChevronRight className="w-4 h-4 ml-1" />
             </Button>
           )}
         </div>
         <Button
           variant="primary"
-          size="lg"
+          size="sm"
           onClick={handleComplete}
           isLoading={completing}
-          className="rounded-lg px-6 font-semibold"
+          className="rounded-lg h-8 px-3 text-xs font-semibold"
         >
           Mark as Completed
-          <HiCheckCircle className="ml-2 w-5 h-5" />
+          <HiCheckCircle className="ml-1.5 w-4 h-4" />
         </Button>
       </div>
 
