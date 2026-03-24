@@ -35,7 +35,7 @@ export default function AdminLiveClassesPage() {
     { label: '2 hrs', value: 120 },
     { label: '3 hrs', value: 180 },
   ];
-  const getWeeklyTimeRows = (dateString: string) => {
+  const getWeeklyTimeRows = (dateString: string, weeklySchedule?: Record<number, string>) => {
     const d = new Date(dateString);
     const activeDay = Number.isNaN(d.getTime()) ? -1 : d.getDay();
     const activeTime = Number.isNaN(d.getTime())
@@ -43,8 +43,8 @@ export default function AdminLiveClassesPage() {
       : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     return DAY_OPTIONS.map((day) => ({
       label: day.label,
-      time: day.value === activeDay ? activeTime : 'Not scheduled',
-      active: day.value === activeDay,
+      time: weeklySchedule?.[day.value] || (day.value === activeDay ? activeTime : 'Not scheduled'),
+      active: Boolean(weeklySchedule?.[day.value]) || day.value === activeDay,
     }));
   };
 
@@ -73,6 +73,7 @@ export default function AdminLiveClassesPage() {
     recurrenceType: 'WEEKLY' as 'WEEKLY',
     daysOfWeek: [0] as number[],
     startDate: '',
+    endDate: '',
     startTime: '21:00',
     dayTimes: {
       0: '21:00',
@@ -141,6 +142,7 @@ export default function AdminLiveClassesPage() {
 
   const hasActiveFilters = searchInput.trim() || statusFilter || instructorFilter || courseFilter;
   const selectedWeeklyDay = formData.daysOfWeek[0] ?? 0;
+  const selectedDayTime = formData.dayTimes[selectedWeeklyDay] || '21:00';
   const combineDateAndTime = (date: string, time: string) => {
     if (!date || !time) return '';
     return `${date}T${time}`;
@@ -159,7 +161,7 @@ export default function AdminLiveClassesPage() {
   const renderDayTimeInputs = () => (
     <div className="rounded-md border border-[var(--border)] p-3">
       <p className="text-xs text-[var(--muted-foreground)] mb-2">
-        Sunday to Saturday time setup (editable). Selected day/time will be used for save.
+        Sunday to Saturday time setup (editable). You can select multiple days and schedule all together.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {DAY_OPTIONS.map((day) => (
@@ -169,8 +171,12 @@ export default function AdminLiveClassesPage() {
               onClick={() =>
                 setFormData((prev) => ({
                   ...prev,
-                  daysOfWeek: [day.value],
-                  startDate: shiftDateToSelectedWeekday(prev.startDate, day.value),
+                  daysOfWeek: prev.daysOfWeek.includes(day.value)
+                    ? prev.daysOfWeek.filter((d) => d !== day.value)
+                    : [...prev.daysOfWeek, day.value].sort((a, b) => a - b),
+                  startDate: prev.daysOfWeek.length
+                    ? prev.startDate
+                    : shiftDateToSelectedWeekday(prev.startDate, day.value),
                   startTime: prev.dayTimes[day.value] || prev.startTime,
                 }))
               }
@@ -220,8 +226,14 @@ export default function AdminLiveClassesPage() {
       };
 
       if (!editingClass) {
-        if (!formData.startDate || !formData.startTime) {
-          throw new Error('Start date and start time are required.');
+        if (!formData.startDate) {
+          throw new Error('Start date is required.');
+        }
+        if (!formData.endDate) {
+          throw new Error('End date is required.');
+        }
+        if (new Date(formData.endDate) < new Date(formData.startDate)) {
+          throw new Error('End date must be on or after start date.');
         }
         if (!formData.daysOfWeek.length) {
           throw new Error('Please select at least one weekday.');
@@ -229,20 +241,21 @@ export default function AdminLiveClassesPage() {
         payload.recurrenceType = 'WEEKLY';
         payload.daysOfWeek = formData.daysOfWeek;
         payload.startDate = formData.startDate;
-        payload.startTime = formData.startTime;
+        payload.endDate = formData.endDate;
+        payload.startTime = selectedDayTime;
+        payload.dayTimes = formData.dayTimes;
       } else {
-        if (!formData.startDate || !formData.startTime) {
-          throw new Error('Scheduled date and time are required.');
+        if (!formData.startDate) {
+          throw new Error('Scheduled date is required.');
         }
       }
 
       if (editingClass) {
+        const selectedWeekday = formData.daysOfWeek[0] ?? new Date(formData.startDate).getDay();
+        const adjustedDate = shiftDateToSelectedWeekday(formData.startDate, selectedWeekday);
         await liveClassApi.updateLiveClass(editingClass.id, {
           ...payload,
-          scheduledAt: combineDateAndTime(formData.startDate, formData.startTime),
-          recurrenceType: undefined,
-          startDate: undefined,
-          startTime: undefined,
+          scheduledAt: combineDateAndTime(adjustedDate, selectedDayTime),
         });
         showSuccess('Live class updated successfully');
       } else {
@@ -261,30 +274,49 @@ export default function AdminLiveClassesPage() {
   };
 
   const handleEdit = (liveClass: LiveClass) => {
+    const scheduledDate = new Date(liveClass.scheduledAt);
+    const scheduledDay = scheduledDate.getDay();
+    const scheduledTime = scheduledDate.toTimeString().slice(0, 5);
+    const scheduleEntries = Object.entries(liveClass.weeklySchedule || {})
+      .map(([day, time]) => ({
+        day: parseInt(day, 10),
+        time,
+      }))
+      .filter((entry) => !Number.isNaN(entry.day) && entry.day >= 0 && entry.day <= 6 && !!entry.time);
+    const daysFromSchedule = scheduleEntries.map((entry) => entry.day).sort((a, b) => a - b);
+    const selectedDays = daysFromSchedule.length ? daysFromSchedule : [scheduledDay];
+    const defaultTimeMap: Record<number, string> = {
+      0: '21:00',
+      1: '21:00',
+      2: '21:00',
+      3: '21:00',
+      4: '21:00',
+      5: '21:00',
+      6: '21:00',
+    };
+    for (const entry of scheduleEntries) {
+      defaultTimeMap[entry.day] = entry.time;
+    }
+    if (!scheduleEntries.length) {
+      defaultTimeMap[scheduledDay] = scheduledTime;
+    }
+
     setEditingClass(liveClass);
     setFormData({
       title: liveClass.title,
       description: liveClass.description || '',
       courseId: liveClass.courseId || '',
       instructorId: liveClass.instructorId,
-      scheduledAt: new Date(liveClass.scheduledAt).toISOString().slice(0, 16),
+      scheduledAt: scheduledDate.toISOString().slice(0, 16),
       duration: liveClass.duration,
       meetingUrl: liveClass.meetingUrl || '',
       meetingPassword: liveClass.meetingPassword || '',
       recurrenceType: 'WEEKLY',
-      daysOfWeek: [new Date(liveClass.scheduledAt).getDay()],
-      startDate: new Date(liveClass.scheduledAt).toISOString().slice(0, 10),
-      startTime: new Date(liveClass.scheduledAt).toTimeString().slice(0, 5),
-      dayTimes: {
-        0: '21:00',
-        1: '21:00',
-        2: '21:00',
-        3: '21:00',
-        4: '21:00',
-        5: '21:00',
-        6: '21:00',
-        [new Date(liveClass.scheduledAt).getDay()]: new Date(liveClass.scheduledAt).toTimeString().slice(0, 5),
-      },
+      daysOfWeek: selectedDays,
+      startDate: scheduledDate.toISOString().slice(0, 10),
+      endDate: scheduledDate.toISOString().slice(0, 10),
+      startTime: defaultTimeMap[selectedDays[0]] || scheduledTime,
+      dayTimes: defaultTimeMap,
       adminNotes: liveClass.adminNotes || '',
     });
     setShowForm(true);
@@ -294,6 +326,7 @@ export default function AdminLiveClassesPage() {
     if (!confirm('Are you sure you want to delete this live class?')) return;
     try {
       await liveClassApi.deleteLiveClass(id);
+      showSuccess('Live class deleted successfully');
       fetchLiveClasses();
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Failed to delete');
@@ -313,6 +346,7 @@ export default function AdminLiveClassesPage() {
       recurrenceType: 'WEEKLY',
       daysOfWeek: [0],
       startDate: '',
+      endDate: '',
       startTime: '21:00',
       dayTimes: {
         0: '21:00',
@@ -459,53 +493,12 @@ export default function AdminLiveClassesPage() {
                       className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Scheduled Time *</label>
-                    <input
-                      type="time"
-                      value={formData.startTime}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          startTime: e.target.value,
-                          dayTimes: {
-                            ...prev.dayTimes,
-                            [selectedWeeklyDay]: e.target.value,
-                          },
-                        }))
-                      }
-                      required
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-4 rounded-md border border-[var(--border)] p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {renderDayTimeInputs()}
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Start Time *</label>
-                    <input
-                      type="time"
-                      value={formData.startTime}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          startTime: e.target.value,
-                          dayTimes: {
-                            ...prev.dayTimes,
-                            [selectedWeeklyDay]: e.target.value,
-                          },
-                        }))
-                      }
-                      required
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                      Time is saved per selected weekday.
-                    </p>
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Start Date *</label>
                     <input
@@ -516,9 +509,19 @@ export default function AdminLiveClassesPage() {
                       className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">End Date *</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
                 </div>
                 <p className="text-xs text-[var(--muted-foreground)]">
-                  Weekly recurrence is enabled. One live class is created per submit.
+                  Weekly recurrence is enabled. Classes are created for selected weekdays between start and end date.
                 </p>
               </div>
             )}
@@ -712,7 +715,7 @@ export default function AdminLiveClassesPage() {
                       <div className="rounded-md border border-[var(--border)] overflow-hidden">
                         <table className="w-full text-[10px]">
                           <tbody>
-                            {getWeeklyTimeRows(liveClass.scheduledAt).map((row) => (
+                            {getWeeklyTimeRows(liveClass.scheduledAt, liveClass.weeklySchedule).map((row) => (
                               <tr
                                 key={`${liveClass.id}-${row.label}`}
                                 className={`border-t border-[var(--border)] first:border-t-0 ${

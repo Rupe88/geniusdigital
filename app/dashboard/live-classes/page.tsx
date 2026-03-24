@@ -16,17 +16,19 @@ import {
   HiChevronRight,
   HiRefresh,
   HiBookOpen,
+  HiXCircle,
+  HiClock,
 } from 'react-icons/hi';
 
 const STATUS_STYLES: Record<string, string> = {
   SCHEDULED:
-    'bg-blue-50 text-blue-900 border border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-700',
+    'bg-[var(--primary-600)] text-white border border-[var(--primary-700)] dark:bg-[var(--primary-700)] dark:text-white dark:border-[var(--primary-800)]',
   LIVE:
-    'bg-emerald-50 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-700',
+    'bg-emerald-50 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-700',
   COMPLETED:
-    'bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-900/70 dark:text-gray-200 dark:border-gray-600',
+    'bg-[var(--muted)] text-[var(--foreground)] border border-[var(--border)]',
   CANCELLED:
-    'bg-red-50 text-red-900 border border-red-300 dark:bg-red-950/60 dark:text-red-200 dark:border-red-700',
+    'bg-red-50 text-red-900 border border-red-300 dark:bg-red-950/40 dark:text-red-200 dark:border-red-700',
 };
 
 function formatDate(dateString: string): string {
@@ -56,14 +58,14 @@ function formatTime(dateString: string): string {
 
 const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-function getWeeklyTimeRows(dateString: string) {
+function getWeeklyTimeRows(dateString: string, weeklySchedule?: Record<number, string>) {
   const date = new Date(dateString);
   const activeDay = Number.isNaN(date.getTime()) ? -1 : date.getDay();
   const activeTime = Number.isNaN(date.getTime()) ? '-' : formatTime(dateString);
   return WEEK_DAYS.map((day, idx) => ({
     day,
-    time: idx === activeDay ? activeTime : 'Not scheduled',
-    active: idx === activeDay,
+    time: weeklySchedule?.[idx] || (idx === activeDay ? activeTime : 'Not scheduled'),
+    active: Boolean(weeklySchedule?.[idx]) || idx === activeDay,
   }));
 }
 
@@ -76,8 +78,8 @@ function LiveClassCard({
   const joinUrl = item.zoomJoinUrl || item.meetingUrl;
 
   return (
-    <Card className="overflow-hidden border border-[var(--border)] hover:border-[var(--primary-200)] transition-colors flex flex-col h-full">
-      <div className="relative h-40 w-full bg-[var(--muted)] p-2">
+    <Card className="overflow-hidden border border-[var(--border)] bg-[var(--background)] shadow-sm hover:shadow-md hover:border-[var(--primary-300)] transition-all duration-200 flex flex-col h-full">
+      <div className="relative h-40 w-full bg-[var(--muted)] p-2 border-b border-[var(--border)]">
         {item.course?.thumbnail ? (
           <StorageImage
             src={item.course.thumbnail}
@@ -97,7 +99,7 @@ function LiveClassCard({
           <h3 className="text-lg font-semibold text-[var(--foreground)] line-clamp-2 flex-1 min-w-0">
             {item.title}
           </h3>
-          <span className={`flex-shrink-0 px-2.5 py-1 rounded-md text-xs font-medium ${statusStyle}`}>
+          <span className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-sm ${statusStyle}`}>
             {item.status}
           </span>
         </div>
@@ -107,12 +109,12 @@ function LiveClassCard({
           </p>
         )}
         {!!item.adminNotes?.trim() && (
-          <div className="mb-4 rounded-md border border-blue-300 bg-blue-50 px-3 py-2.5 shadow-sm dark:border-blue-700 dark:bg-blue-950/35">
-            <div className="text-sm font-bold mb-1 text-blue-900 dark:text-blue-100">Admin note</div>
-            <p className="text-sm leading-relaxed font-medium text-slate-800 dark:text-slate-100">{item.adminNotes}</p>
+          <div className="mb-4 rounded-md border border-[var(--primary-300)] bg-[var(--primary-50)] px-3 py-2.5 shadow-sm dark:border-[var(--primary-700)] dark:bg-[var(--primary-900)]/25">
+            <div className="text-sm font-bold mb-1 text-[var(--primary-800)] dark:text-[var(--primary-200)]">Admin note</div>
+            <p className="text-sm leading-relaxed font-medium text-[var(--foreground)]">{item.adminNotes}</p>
           </div>
         )}
-        <div className="space-y-2 text-sm text-[var(--muted-foreground)]">
+        <div className="space-y-2.5 text-sm text-[var(--muted-foreground)]">
           {item.instructor?.name && (
             <div className="flex items-center gap-2">
               <HiUser className="w-4 h-4 flex-shrink-0" />
@@ -123,6 +125,14 @@ function LiveClassCard({
             <HiCalendar className="w-4 h-4 flex-shrink-0" />
             <span>{formatDate(item.scheduledAt)} · {formatTime(item.scheduledAt)}</span>
           </div>
+          {(item.startDate || item.endDate) && (
+            <div className="flex items-center gap-2">
+              <HiClock className="w-4 h-4 flex-shrink-0" />
+              <span>
+                {item.startDate || '-'} to {item.endDate || item.startDate || '-'}
+              </span>
+            </div>
+          )}
           {item.course?.title && (
             <div className="flex items-center gap-2">
               <HiBookOpen className="w-4 h-4 flex-shrink-0" />
@@ -130,30 +140,46 @@ function LiveClassCard({
             </div>
           )}
         </div>
-        <div className="mt-3 rounded-md border border-[var(--border)] overflow-hidden">
+        <div className="mt-4 rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--background)]/80">
           <table className="w-full text-xs">
-            <thead className="bg-[var(--muted)] text-[var(--muted-foreground)]">
+            <thead className="bg-[var(--muted)]/80 text-[var(--muted-foreground)]">
               <tr>
                 <th className="px-2 py-1.5 text-left font-medium">Day</th>
                 <th className="px-2 py-1.5 text-left font-medium">Time</th>
               </tr>
             </thead>
             <tbody>
-              {getWeeklyTimeRows(item.scheduledAt).map((row) => (
-                <tr
-                  key={row.day}
-                  className={`border-t border-[var(--border)] ${
-                    row.active ? 'bg-blue-100/80 dark:bg-blue-900/35' : 'text-[var(--muted-foreground)]'
-                  }`}
-                >
-                  <td className={`px-2 py-1.5 ${row.active ? 'text-blue-900 dark:text-blue-200 font-semibold' : ''}`}>{row.day}</td>
-                  <td className={`px-2 py-1.5 ${row.active ? 'text-blue-900 dark:text-blue-200 font-semibold' : ''}`}>{row.time}</td>
-                </tr>
-              ))}
+              {getWeeklyTimeRows(item.scheduledAt, item.weeklySchedule).map((row) => {
+                const isUnscheduled = row.time === 'Not scheduled';
+                return (
+                  <tr
+                    key={row.day}
+                    className={`border-t border-[var(--border)] ${
+                      row.active
+                        ? 'bg-[var(--primary-100)] dark:bg-[var(--primary-900)]/25'
+                        : isUnscheduled
+                        ? 'text-[var(--muted-foreground)] bg-[var(--muted)]/20'
+                        : 'text-[var(--muted-foreground)]'
+                    }`}
+                  >
+                    <td className={`px-2 py-1.5 ${row.active ? 'text-[var(--primary-700)] dark:text-[var(--primary-300)] font-bold' : ''}`}>{row.day}</td>
+                    <td className={`px-2 py-1.5 ${row.active ? 'text-[var(--primary-700)] dark:text-[var(--primary-300)] font-bold' : ''}`}>
+                      {isUnscheduled ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <HiXCircle className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+                          <span>Not scheduled</span>
+                        </span>
+                      ) : (
+                        row.time
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-        <div className="mt-4 pt-4 border-t border-[var(--border)] flex flex-wrap gap-2">
+        <div className="mt-5 pt-4 border-t border-[var(--border)] flex flex-wrap gap-2">
           {joinUrl && (item.status === 'SCHEDULED' || item.status === 'LIVE') && (
             <a
               href={joinUrl}
@@ -161,7 +187,7 @@ function LiveClassCard({
               rel="noopener noreferrer"
               className="inline-flex"
             >
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" className="shadow-sm">
                 Join meeting
               </Button>
             </a>

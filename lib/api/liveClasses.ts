@@ -35,6 +35,9 @@ export interface LiveClass {
     thumbnail?: string;
   };
   _count?: { enrollments: number };
+  weeklySchedule?: Record<number, string>;
+  startDate?: string;
+  endDate?: string;
 }
 
 const SERIES_MARKER_REGEX = /\[\[series:([a-f0-9-]{8,})\]\]/i;
@@ -62,8 +65,10 @@ export interface CreateLiveClassPayload {
   // Recurrence support (admin create, recurring only)
   recurrenceType?: 'WEEKLY';
   startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
   startTime?: string; // HH:mm
   daysOfWeek?: number[]; // 0-6 (Sun-Sat), use first for single create
+  dayTimes?: Record<number, string>; // per-day HH:mm
   adminNotes?: string;
 }
 
