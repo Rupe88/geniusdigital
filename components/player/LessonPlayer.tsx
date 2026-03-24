@@ -461,9 +461,9 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
     };
 
     return (
-        <div className="space-y-6 min-w-0 w-full">
+        <div className="space-y-3 min-w-0 w-full">
             <div className="space-y-2 min-w-0">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight break-words">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 tracking-tight break-words">
                     {lesson.title}
                 </h2>
                 {lesson.lessonType === 'VIDEO' && lesson.videoDuration && (

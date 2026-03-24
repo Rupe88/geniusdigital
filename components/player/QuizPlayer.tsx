@@ -34,9 +34,12 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
 
     const selectedAnswersRef = useRef(selectedAnswers);
     selectedAnswersRef.current = selectedAnswers;
+    const onCompleteRef = useRef(onComplete);
+    onCompleteRef.current = onComplete;
 
     const questions = QUESTIONS_SAFE(quiz);
-    const timeLimitMinutes = typeof quiz.timeLimit === 'number' && quiz.timeLimit > 0 ? quiz.timeLimit : 0;
+    const parsedTimeLimit = Number((quiz as any)?.timeLimit);
+    const timeLimitMinutes = Number.isFinite(parsedTimeLimit) && parsedTimeLimit > 0 ? parsedTimeLimit : 0;
     const totalSeconds = timeLimitMinutes * 60;
     const currentQuestion = questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -127,7 +130,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
 
     // Countdown: when it hits 0, auto-submit and show fail (time's up)
     useEffect(() => {
-        if (totalSeconds <= 0 || result !== null || secondsRemaining === null) return;
+        if (totalSeconds <= 0 || result !== null || secondsRemaining === null || timeExpired) return;
 
         const id = setInterval(() => {
             setSecondsRemaining((prev) => {
@@ -143,7 +146,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                         .then((quizResult) => {
                             setResult(quizResult);
                             showError('Time\'s up! Your answers were submitted automatically.');
-                            if (onComplete) onComplete(quizResult);
+                            if (onCompleteRef.current) onCompleteRef.current(quizResult);
                         })
                         .catch((err) => showError(Object(err).message || 'Failed to submit quiz'))
                         .finally(() => setSubmitting(false));
@@ -153,7 +156,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
             });
         }, 1000);
         return () => clearInterval(id);
-    }, [totalSeconds, result, quiz.id, onComplete]);
+    }, [totalSeconds, result, secondsRemaining, timeExpired, quiz.id]);
 
     // No questions: show empty state instead of crashing
     if (!questions.length) {
@@ -327,20 +330,20 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
     }
 
     return (
-        <div className="w-full min-w-0 max-w-none mx-auto px-0 space-y-3 sm:space-y-4 md:space-y-5">
+        <div className="w-full min-w-0 max-w-none mx-auto px-0 space-y-2 sm:space-y-3">
             {/* Header / Progress */}
-            <div className="bg-white p-3 sm:p-4 md:p-5 rounded-none border border-gray-200 shadow-sm space-y-3 min-w-0">
+            <div className="bg-white p-2.5 sm:p-3 md:p-3.5 rounded-none border border-gray-200 shadow-sm space-y-2 min-w-0">
                 <div className="min-w-0">
-                    <h2 className="text-base sm:text-lg md:text-xl font-black text-gray-900 tracking-tight break-words">
+                    <h2 className="text-sm sm:text-base md:text-lg font-black text-gray-900 tracking-tight break-words">
                         {quiz.title}
                     </h2>
-                    <p className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
+                    <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">
                         Question {currentQuestionIndex + 1} of {questions.length}
                     </p>
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 w-full min-w-0">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 w-full min-w-0">
                     {/* Mobile: timer on top; desktop: bar grows, timer on the right */}
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex-1 min-w-0 w-full order-2 sm:order-1 sm:min-w-[140px] md:min-w-[180px]">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden flex-1 min-w-0 w-full order-2 sm:order-1 sm:min-w-[120px] md:min-w-[160px]">
                         <div
                             className="h-full bg-[var(--primary-700)] transition-all duration-500"
                             style={{
@@ -350,7 +353,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                     </div>
                     {totalSeconds > 0 && secondsRemaining !== null && (
                         <div
-                            className={`text-base sm:text-lg font-black tabular-nums shrink-0 order-1 sm:order-2 sm:text-right ${
+                            className={`text-sm sm:text-base font-black tabular-nums shrink-0 order-1 sm:order-2 sm:text-right ${
                                 secondsRemaining < 60 ? 'text-red-600' : 'text-gray-700'
                             }`}
                             aria-live="polite"
@@ -364,20 +367,20 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
             {/* Question Card */}
             <Card
                 padding="none"
-                className="w-full min-w-0 overflow-hidden border-2 border-gray-200 transform transition-all shadow-xl"
+                className="w-full min-w-0 overflow-hidden border border-gray-200 transform transition-all shadow-md"
             >
-                <div className="p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4 min-w-0">
-                    <div className="space-y-2 min-w-0">
-                        <span className="inline-block max-w-full px-3 py-1 sm:px-4 bg-blue-100 text-[var(--primary-700)] rounded-none text-[0.65rem] sm:text-xs font-black uppercase tracking-[0.12em] sm:tracking-[0.2em] break-words">
+                <div className="p-2.5 sm:p-3 md:p-3.5 space-y-2.5 sm:space-y-3 min-w-0">
+                    <div className="space-y-1.5 min-w-0">
+                        <span className="inline-block max-w-full px-2 py-0.5 sm:px-2.5 bg-blue-100 text-[var(--primary-700)] rounded-none text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-[0.08em] sm:tracking-[0.12em] break-words">
                             {(currentQuestion.questionType || 'single_choice').replace('_', ' ')}
                         </span>
-                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-black text-gray-900 leading-snug break-words">
+                        <h3 className="text-sm sm:text-base md:text-lg font-black text-gray-900 leading-snug break-words">
                             {currentQuestion.question}
                         </h3>
                     </div>
 
                     {/* 2×2 from ~400px; compact spacing to reduce scrolling */}
-                    <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-2 sm:gap-2.5 md:gap-3 auto-rows-fr min-w-0">
+                    <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-1.5 sm:gap-2 md:gap-2.5 auto-rows-fr min-w-0">
                         {(() => {
                             const questionId = currentQuestion.id!;
                             const questionType = currentQuestion.questionType || 'single_choice';
@@ -396,14 +399,14 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                             key={index}
                                             type="button"
                                             onClick={() => handleSelectAnswer(option)}
-                                            className={`flex items-start gap-2 sm:gap-2.5 p-2.5 sm:p-3 rounded-none border-2 sm:border-3 text-left transition-all min-h-[3.4rem] min-[400px]:min-h-[3.8rem] sm:min-h-[4.2rem] h-full min-w-0 touch-manipulation active:scale-[0.99] ${
+                                            className={`flex items-start gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-none border text-left transition-all min-h-[2.8rem] min-[400px]:min-h-[3.1rem] sm:min-h-[3.4rem] h-full min-w-0 touch-manipulation active:scale-[0.99] ${
                                                 isSelected
                                                     ? 'border-[var(--primary-700)] bg-blue-50/50 shadow-inner'
                                                     : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
                                             }`}
                                         >
                                             <div
-                                                className={`flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 text-xs sm:text-sm rounded-none flex items-center justify-center font-black ${
+                                                className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs rounded-none flex items-center justify-center font-black ${
                                                     isSelected
                                                         ? 'bg-[var(--primary-700)] text-white'
                                                         : 'bg-white text-gray-400 border border-gray-200'
@@ -412,7 +415,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                                 {String.fromCharCode(65 + index)}
                                             </div>
                                             <span
-                                                className={`text-xs sm:text-sm md:text-base font-bold flex-1 min-w-0 leading-snug break-words ${
+                                                className={`text-[11px] sm:text-xs md:text-sm font-bold flex-1 min-w-0 leading-snug break-words ${
                                                     isSelected ? 'text-[var(--primary-700)]' : 'text-gray-700'
                                                 }`}
                                             >
@@ -435,7 +438,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                                     value={currentValue}
                                     onChange={(e) => handleTextAnswerChange(e.target.value)}
                                     placeholder={placeholder}
-                                    className="col-span-full w-full min-h-[100px] sm:min-h-[120px] px-3 sm:px-4 py-3 border-2 border-gray-200 rounded-none bg-white text-base text-gray-800 focus:outline-none focus:border-[var(--primary-700)]"
+                                    className="col-span-full w-full min-h-[84px] sm:min-h-[96px] px-2.5 sm:px-3 py-2 border border-gray-200 rounded-none bg-white text-sm text-gray-800 focus:outline-none focus:border-[var(--primary-700)]"
                                 />
                             );
                         })()}
@@ -443,12 +446,12 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-stretch sm:justify-between items-stretch sm:items-center gap-2.5 min-w-0">
+                <div className="px-2.5 sm:px-3 md:px-3.5 py-2 sm:py-2.5 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-stretch sm:justify-between items-stretch sm:items-center gap-2 min-w-0">
                     <Button
                         variant="ghost"
                         onClick={handlePrevious}
                         disabled={currentQuestionIndex === 0}
-                        className="font-bold text-gray-500 w-full sm:w-auto justify-center h-10 sm:h-11"
+                        className="font-bold text-gray-500 w-full sm:w-auto justify-center h-8.5 sm:h-9.5 text-xs sm:text-sm"
                     >
                         <HiChevronLeft className="mr-2 h-5 w-5" /> Previous
                     </Button>
@@ -459,7 +462,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                             size="lg"
                             onClick={handleSubmit}
                             isLoading={submitting}
-                            className="rounded-none w-full sm:w-auto px-7 sm:px-10 h-10 sm:h-12 font-black shadow-lg shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
+                            className="rounded-none w-full sm:w-auto px-5 sm:px-7 h-8.5 sm:h-9.5 text-xs sm:text-sm font-black shadow-md shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
                         >
                             Submit Quiz
                         </Button>
@@ -468,7 +471,7 @@ export const QuizPlayer: React.FC<QuizPlayerProps> = ({ quiz, onComplete }) => {
                             variant="primary"
                             size="lg"
                             onClick={handleNext}
-                            className="rounded-none w-full sm:w-auto px-7 sm:px-10 h-10 sm:h-12 font-black shadow-lg shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
+                            className="rounded-none w-full sm:w-auto px-5 sm:px-7 h-8.5 sm:h-9.5 text-xs sm:text-sm font-black shadow-md shadow-blue-700/20 active:scale-[0.99] transition-transform justify-center"
                         >
                             Next <HiChevronRight className="ml-2 h-5 w-5" />
                         </Button>

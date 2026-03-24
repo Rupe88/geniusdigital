@@ -96,117 +96,176 @@ export default function MyCoursesPage() {
   const upcomingHref = (item: (typeof upcomingItems)[0]) =>
     item.type === 'course' ? `/courses/${item.id}` : `/events/${item.slug || item.id}`;
 
+  const upcomingSideItems = upcomingItems.slice(0, 6);
+  const relatedCourseItems = upcomingItems.filter((item) => item.type === 'course').slice(0, 6);
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-[var(--foreground)] mb-8">My Courses</h1>
 
-      {/* Enrolled courses — full width */}
+      {/* My Courses split layout: 60% + 40% */}
       {loading ? (
         <div className="text-[var(--muted-foreground)]">Loading...</div>
       ) : enrollments.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-          {enrollments.map((enrollment) => (
-            <div
-              key={enrollment.id}
-              className={courseCardShellClass}
-              onClick={() => router.push(`/dashboard/courses/${enrollment.courseId}/learn`)}
-            >
-              {/* Thumbnail - show full image (no cropping) */}
-              <div className="relative w-full h-52 p-2 bg-white flex items-center justify-center">
-                {enrollment.course?.thumbnail ? (
-                  <StorageImage
-                    src={enrollment.course.thumbnail}
-                    alt={enrollment.course.title}
-                    fill
-                    className="object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
-                    <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
-                      {enrollment.course?.title?.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="px-5 pt-0 pb-4">
-                <h3 className="text-base font-[550] md:text-lg leading-6 antialiased tracking-[0.05em] text-gray-900 mb-2 line-clamp-2">
-                  {enrollment.course?.title}
-                </h3>
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-[var(--muted-foreground)]">Progress</span>
-                    <span className="font-medium">{enrollment.progress}%</span>
-                  </div>
-                  <div className="w-full bg-[var(--muted)] rounded-none h-2">
-                    <div
-                      className="bg-[var(--primary-700)] h-2 rounded-none"
-                      style={{ width: `${enrollment.progress}%` }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Access Expiry Information */}
-                {accessInfo[enrollment.courseId] && (
-                  <div className="mb-4">
-                    {accessInfo[enrollment.courseId].accessStatus === 'FULL_ACCESS' ? (
-                      <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
-                        Full Access
-                      </div>
-                    ) : (
-                      <div className={`text-sm px-2 py-1 rounded ${
-                        accessInfo[enrollment.courseId].warningLevel === 'CRITICAL' ? 'bg-red-100 text-red-700' :
-                        accessInfo[enrollment.courseId].warningLevel === 'HIGH' ? 'bg-orange-100 text-orange-700' :
-                        accessInfo[enrollment.courseId].warningLevel === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        <div className="flex justify-between items-center">
-                          <span>
-                            {accessInfo[enrollment.courseId].accessStatus === 'EXPIRED' ? 'Access Expired' :
-                             accessInfo[enrollment.courseId].accessStatus === 'EXPIRING_SOON' ? 'Expires Soon' :
-                             'Partial Access'}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          <section className="xl:col-span-3 min-h-0">
+            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">My Courses</h2>
+            <div className="xl:max-h-[calc(100vh-220px)] xl:overflow-y-auto xl:pr-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {enrollments.map((enrollment) => (
+                  <div
+                    key={enrollment.id}
+                    className={courseCardShellClass}
+                    onClick={() => router.push(`/dashboard/courses/${enrollment.courseId}/learn`)}
+                  >
+                    <div className="relative w-full h-52 p-2 bg-white flex items-center justify-center">
+                      {enrollment.course?.thumbnail ? (
+                        <StorageImage
+                          src={enrollment.course.thumbnail}
+                          alt={enrollment.course.title}
+                          fill
+                          className="object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] rounded-lg flex items-center justify-center">
+                          <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                            {enrollment.course?.title?.charAt(0)}
                           </span>
-                          {accessInfo[enrollment.courseId].daysRemaining !== undefined && (
-                            <span className="font-medium">
-                              {accessInfo[enrollment.courseId].daysRemaining < 0 
-                                ? `${Math.abs(accessInfo[enrollment.courseId].daysRemaining)} days ago`
-                                : `${accessInfo[enrollment.courseId].daysRemaining} days left`
-                              }
-                            </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-5 pt-0 pb-4">
+                      <h3 className="text-base font-[550] md:text-lg leading-6 antialiased tracking-[0.05em] text-gray-900 mb-2 line-clamp-2">
+                        {enrollment.course?.title}
+                      </h3>
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-[var(--muted-foreground)]">Progress</span>
+                          <span className="font-medium">{enrollment.progress}%</span>
+                        </div>
+                        <div className="w-full bg-[var(--muted)] rounded-none h-2">
+                          <div className="bg-[var(--primary-700)] h-2 rounded-none" style={{ width: `${enrollment.progress}%` }} />
+                        </div>
+                      </div>
+                      {accessInfo[enrollment.courseId] && (
+                        <div className="mb-4">
+                          {accessInfo[enrollment.courseId].accessStatus === 'FULL_ACCESS' ? (
+                            <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">Full Access</div>
+                          ) : (
+                            <div
+                              className={`text-sm px-2 py-1 rounded ${
+                                accessInfo[enrollment.courseId].warningLevel === 'CRITICAL'
+                                  ? 'bg-red-100 text-red-700'
+                                  : accessInfo[enrollment.courseId].warningLevel === 'HIGH'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : accessInfo[enrollment.courseId].warningLevel === 'MEDIUM'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <span>
+                                  {accessInfo[enrollment.courseId].accessStatus === 'EXPIRED'
+                                    ? 'Access Expired'
+                                    : accessInfo[enrollment.courseId].accessStatus === 'EXPIRING_SOON'
+                                    ? 'Expires Soon'
+                                    : 'Partial Access'}
+                                </span>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        {accessInfo[enrollment.courseId].accessExpiresAt && (
-                          <div className="text-xs mt-1 opacity-75">
-                            Expires: {formatDate(accessInfo[enrollment.courseId].accessExpiresAt)}
-                          </div>
-                        )}
+                      )}
+                      <div className="flex items-center justify-between mt-1">
+                        <div
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            enrollment.accessType === 'PARTIAL'
+                              ? 'bg-blue-100 text-blue-800'
+                              : enrollment.accessType === 'FULL'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {enrollment.accessType || 'FULL'}
+                        </div>
+                        <Link href={`/dashboard/courses/${enrollment.courseId}/learn`} onClick={(e) => e.stopPropagation()}>
+                          <Button variant="primary" size="sm">
+                            {enrollment.status === 'COMPLETED' ? 'Review' : 'Continue'}
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="xl:col-span-2 xl:sticky xl:top-24 xl:self-start">
+            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">Upcoming Courses & Events</h2>
+            <div className="grid grid-cols-1 gap-6">
+              {loadingUpcoming ? (
+                <Card padding="md">
+                  <p className="text-sm text-[var(--muted-foreground)]">Loading upcoming items...</p>
+                </Card>
+              ) : upcomingSideItems.length === 0 ? (
+                <Card padding="md">
+                  <p className="text-sm text-[var(--muted-foreground)]">No upcoming courses or events.</p>
+                </Card>
+              ) : (
+                upcomingSideItems.map((item) => (
+                <div
+                  key={`upcoming-side-${item.type}-${item.id}`}
+                  className="bg-white border border-gray-200 rounded-lg p-3 shadow-[0_4px_10px_rgba(0,0,0,0.10)] hover:shadow-[0_10px_20px_rgba(0,0,0,0.12)] transition-all duration-200 cursor-pointer"
+                  onClick={() => router.push(upcomingHref(item))}
+                >
+                  <div className="flex gap-3">
+                    <div className="relative w-32 h-20 shrink-0 rounded-md overflow-hidden bg-[var(--muted)]">
+                      {item.thumbnail ? (
+                        item.type === 'course' ? (
+                        <StorageImage
+                          src={item.thumbnail}
+                          alt={item.title}
+                          fill
+                          className="object-contain"
+                        />
+                        ) : (
+                          <img src={item.thumbnail} alt={item.title} className="h-full w-full object-contain" />
+                        )
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] flex items-center justify-center">
+                        <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                            {item.type === 'course' ? 'C' : 'E'}
+                        </span>
                       </div>
                     )}
                   </div>
-                )}
-                <div className="flex items-center justify-between mt-1">
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        enrollment.accessType === 'PARTIAL' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : enrollment.accessType === 'FULL'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {enrollment.accessType || 'FULL'}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
+                        {item.title}
+                    </h3>
+                      <div className="text-xs text-[var(--muted-foreground)] mb-2">
+                        {item.dateLabel ? `Starts: ${item.dateLabel}` : 'Date: TBA'}
                       </div>
-                  <Link
-                    href={`/dashboard/courses/${enrollment.courseId}/learn`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button variant="primary" size="sm">
-                      {enrollment.status === 'COMPLETED' ? 'Review' : 'Continue'}
-                    </Button>
-                  </Link>
+                      <div
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium mb-2 ${
+                          item.type === 'course' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                        }`}
+                      >
+                        {item.type === 'course' ? 'COURSE' : 'EVENT'}
+                      </div>
+                      <Link href={upcomingHref(item)} onClick={(e) => e.stopPropagation()}>
+                        <Button variant="primary" size="sm">
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
+                ))
+              )}
             </div>
-          ))}
+          </aside>
         </div>
       ) : (
         <Card padding="lg" className="text-center mb-10">
@@ -217,27 +276,24 @@ export default function MyCoursesPage() {
         </Card>
       )}
 
-      {/* Upcoming — below My Courses, same card grid & sizing */}
+      {/* Related courses — full width */}
       <section className="mt-12 pt-10 border-t border-[var(--border)]">
-        <h2 className="text-2xl font-bold text-[var(--foreground)] mb-2">Upcoming Courses & Events</h2>
-        <p className="text-sm text-[var(--muted-foreground)] mb-8 max-w-2xl">
-          Stay ahead by reserving your seat in our next programs.
-        </p>
+        <h2 className="text-2xl font-bold text-[var(--foreground)] mb-6">Related Courses</h2>
 
         {loadingUpcoming ? (
           <p className="text-sm text-[var(--muted-foreground)]">Loading upcoming items...</p>
-        ) : upcomingItems.length === 0 ? (
+        ) : relatedCourseItems.length === 0 ? (
           <Card padding="lg" className="text-center">
             <p className="text-sm text-[var(--muted-foreground)]">
-              No upcoming items right now. Check back soon.
+              No related courses right now. Check back soon.
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-            {upcomingItems.map((item) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {relatedCourseItems.map((item) => (
               <div
                 key={`${item.type}-${item.id}`}
-                className={courseCardShellClass}
+                className={`${courseCardShellClass} h-full`}
                 onClick={() => router.push(upcomingHref(item))}
                 role="button"
                 tabIndex={0}
