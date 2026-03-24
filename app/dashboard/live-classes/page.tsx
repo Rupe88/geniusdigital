@@ -106,9 +106,10 @@ function LiveClassCard({
             {stripSeriesMarkerFromDescription(item.description)}
           </p>
         )}
-        {item.adminNotes && (
-          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-100">
-            <span className="font-semibold">Admin note:</span> {item.adminNotes}
+        {!!item.adminNotes?.trim() && (
+          <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100">
+            <div className="font-semibold mb-0.5">Admin note</div>
+            <p className="leading-snug">{item.adminNotes}</p>
           </div>
         )}
         <div className="space-y-2 text-sm text-[var(--muted-foreground)]">
