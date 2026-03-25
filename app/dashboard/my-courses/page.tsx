@@ -16,6 +16,14 @@ export default function MyCoursesPage() {
   const router = useRouter();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageLimit = 100; // backend max for this endpoint is 100
+  const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; pages: number }>({
+    page: 1,
+    limit: pageLimit,
+    total: 0,
+    pages: 1,
+  });
   const [accessInfo, setAccessInfo] = useState<Record<string, any | null>>({});
   const [upcomingItems, setUpcomingItems] = useState<
     {
@@ -30,14 +38,15 @@ export default function MyCoursesPage() {
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
 
   useEffect(() => {
-    fetchEnrollments();
     fetchUpcoming();
   }, []);
 
   const fetchEnrollments = async () => {
     try {
-      const data = await enrollmentApi.getUserEnrollments();
+      setLoading(true);
+      const data = await enrollmentApi.getUserEnrollments({ page, limit: pageLimit });
       setEnrollments(data.data);
+      setPagination(data.pagination);
       
       // Check access expiry for each enrollment
       const accessPromises = data.data.map(async (enrollment) => {
@@ -59,6 +68,10 @@ export default function MyCoursesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, [page]);
 
   const fetchUpcoming = async () => {
     try {
@@ -325,6 +338,31 @@ export default function MyCoursesPage() {
           </Link>
         </Card>
       )}
+
+      {pagination.pages > 1 && !loading && enrollments.length > 0 ? (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pagination.page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </Button>
+          <div className="text-sm text-[var(--muted-foreground)]">
+            Page <span className="font-semibold text-[var(--foreground)]">{pagination.page}</span> of{' '}
+            <span className="font-semibold text-[var(--foreground)]">{pagination.pages}</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pagination.page >= pagination.pages}
+            onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
+          >
+            Next
+          </Button>
+        </div>
+      ) : null}
 
       {/* Related courses — full width */}
       <section className="mt-12 pt-10 border-t border-[var(--border)]">
