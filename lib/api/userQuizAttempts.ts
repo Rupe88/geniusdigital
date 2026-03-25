@@ -26,6 +26,29 @@ export interface UserQuizAttempt {
   };
 }
 
+export interface QuizAttemptReportResult {
+  questionId: string;
+  question: string;
+  userAnswer: any;
+  correctAnswer: any;
+  isCorrect: boolean;
+  points: number;
+}
+
+export interface QuizAttemptReport {
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  passingScore: number;
+  isPassed: boolean;
+  results: QuizAttemptReportResult[];
+}
+
+export interface UserQuizAttemptDetailsPayload {
+  attempt: UserQuizAttempt;
+  report: QuizAttemptReport;
+}
+
 export const getMyConsultationAttempts = async (): Promise<UserQuizAttempt[]> => {
   try {
     const response = await apiClient.get<ApiResponse<UserQuizAttempt[]>>(
@@ -41,6 +64,21 @@ export const getMyConsultationAttempts = async (): Promise<UserQuizAttempt[]> =>
   }
 };
 
+export const getMyQuizAttempts = async (params?: { page?: number; limit?: number }): Promise<UserQuizAttempt[]> => {
+  try {
+    const response = await apiClient.get<ApiResponse<UserQuizAttempt[]>>(API_ENDPOINTS.QUIZZES.MY_ATTEMPTS, {
+      params,
+    });
+    const responseData = response.data;
+    if (!responseData.success || !responseData.data) {
+      throw new Error(responseData.message || 'Failed to load quiz attempts');
+    }
+    return responseData.data;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 export const getMyAttemptsForQuiz = async (quizId: string): Promise<UserQuizAttempt[]> => {
   try {
     const response = await apiClient.get<ApiResponse<UserQuizAttempt[]>>(
@@ -49,6 +87,23 @@ export const getMyAttemptsForQuiz = async (quizId: string): Promise<UserQuizAtte
     const responseData = response.data;
     if (!responseData.success || !responseData.data) {
       throw new Error(responseData.message || 'Failed to load quiz attempts');
+    }
+    return responseData.data;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const getMyQuizAttemptDetails = async (
+  attemptId: string
+): Promise<UserQuizAttemptDetailsPayload> => {
+  try {
+    const response = await apiClient.get<ApiResponse<UserQuizAttemptDetailsPayload>>(
+      API_ENDPOINTS.QUIZZES.MY_ATTEMPT_DETAILS(attemptId)
+    );
+    const responseData = response.data;
+    if (!responseData.success || !responseData.data) {
+      throw new Error(responseData.message || 'Failed to load quiz attempt details');
     }
     return responseData.data;
   } catch (error) {

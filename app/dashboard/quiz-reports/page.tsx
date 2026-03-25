@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { getMyConsultationAttempts, type UserQuizAttempt } from '@/lib/api/userQuizAttempts';
+import { getMyQuizAttempts, type UserQuizAttempt } from '@/lib/api/userQuizAttempts';
 import { ROUTES } from '@/lib/utils/constants';
 
 export default function DashboardQuizReportsPage() {
@@ -16,7 +16,7 @@ export default function DashboardQuizReportsPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getMyConsultationAttempts()
+    getMyQuizAttempts()
       .then((data) => {
         if (!cancelled) setItems(Array.isArray(data) ? data : []);
       })
@@ -32,7 +32,7 @@ export default function DashboardQuizReportsPage() {
   }, []);
 
   const visibleItems = useMemo(
-    () => items.filter((a) => a.adminVisible && (a.adminNotes || '').trim().length > 0),
+    () => items,
     [items]
   );
 
@@ -42,7 +42,7 @@ export default function DashboardQuizReportsPage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Quiz Reports</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            View replies from admins on consultation quizzes.
+            View your quiz history and admin replies (if available).
           </p>
         </div>
         <Link href={`${ROUTES.DASHBOARD}/my-courses`}>
@@ -61,7 +61,7 @@ export default function DashboardQuizReportsPage() {
       ) : visibleItems.length === 0 ? (
         <Card padding="lg">
           <div className="text-sm text-[var(--muted-foreground)]">
-            No reports yet. After you submit a consultation quiz, your reply will appear here once an admin reviews it.
+            No quiz attempts yet. Play any quiz to see your history here.
           </div>
         </Card>
       ) : (
@@ -71,6 +71,12 @@ export default function DashboardQuizReportsPage() {
             const lessonTitle = a.quiz?.lesson?.title || 'Lesson';
             const quizTitle = a.quiz?.title || 'Quiz';
             const completed = a.completedAt ? new Date(a.completedAt).toLocaleString() : '—';
+            const scoreLine =
+              typeof a.score === 'number' && typeof a.isPassed === 'boolean'
+                ? `Score: ${a.score} • ${a.isPassed ? 'Passed' : 'Not passed'}`
+                : a.score !== null && a.score !== undefined
+                  ? `Score: ${a.score}`
+                  : '';
             return (
               <Card key={a.id} padding="lg" className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -87,13 +93,29 @@ export default function DashboardQuizReportsPage() {
                   </div>
                 </div>
 
-                <div className="border border-[var(--border)] bg-[var(--muted)]/30 p-4 rounded-md">
-                  <div className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">
-                    Admin reply
+                {(a.adminVisible && (a.adminNotes || '').trim().length > 0) ? (
+                  <div className="border border-[var(--border)] bg-[var(--muted)]/30 p-4 rounded-md">
+                    <div className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">
+                      Admin reply
+                    </div>
+                    <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
+                      {a.adminNotes}
+                    </div>
                   </div>
-                  <div className="text-sm text-[var(--foreground)] whitespace-pre-wrap">
-                    {a.adminNotes}
-                  </div>
+                ) : scoreLine ? (
+                  <div className="text-sm text-[var(--muted-foreground)]">{scoreLine}</div>
+                ) : null}
+
+                {!a.adminVisible && !scoreLine ? (
+                  <div className="text-sm text-[var(--muted-foreground)]">—</div>
+                ) : null}
+
+                <div className="flex justify-end pt-2">
+                  <Link href={`${ROUTES.DASHBOARD}/quiz-reports/${a.id}`}>
+                    <Button variant="outline" size="sm">
+                      View details
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             );

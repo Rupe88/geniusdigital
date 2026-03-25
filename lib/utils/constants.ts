@@ -238,6 +238,8 @@ export const API_ENDPOINTS = {
     SUBMIT: (id: string) => `/quizzes/${id}/submit`,
     ADMIN_ATTEMPTS: '/quizzes/admin/attempts',
     MY_CONSULTATION_ATTEMPTS: '/quizzes/my/consultation-attempts',
+    MY_ATTEMPTS: '/quizzes/my/attempts',
+    MY_ATTEMPT_DETAILS: (id: string) => `/quizzes/my/attempts/${id}`,
   },
   // Assignments
   ASSIGNMENTS: {

@@ -107,7 +107,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <ul className="space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive =
+            pathname === item.href ||
+            (item.href !== ROUTES.DASHBOARD && pathname.startsWith(`${item.href}/`));
           return (
             <li key={item.href}>
               <Link
