@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import * as liveClassApi from '@/lib/api/liveClasses';
 import type { LiveClass, CreateLiveClassPayload } from '@/lib/api/liveClasses';
+import { stripSeriesMarkerFromDescription } from '@/lib/api/liveClasses';
 import * as instructorApi from '@/lib/api/instructors';
 import * as courseApi from '@/lib/api/courses';
 import { showError, showSuccess } from '@/lib/utils/toast';
@@ -41,10 +42,15 @@ export default function AdminLiveClassesPage() {
     const activeTime = Number.isNaN(d.getTime())
       ? '-'
       : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    const hasWeeklySchedule = weeklySchedule && Object.keys(weeklySchedule).length > 0;
     return DAY_OPTIONS.map((day) => ({
       label: day.label,
-      time: weeklySchedule?.[day.value] || (day.value === activeDay ? activeTime : 'Not scheduled'),
-      active: Boolean(weeklySchedule?.[day.value]) || day.value === activeDay,
+      time: hasWeeklySchedule
+        ? weeklySchedule?.[day.value] || 'Not scheduled'
+        : day.value === activeDay
+        ? activeTime
+        : 'Not scheduled',
+      active: hasWeeklySchedule ? Boolean(weeklySchedule?.[day.value]) : day.value === activeDay,
     }));
   };
 
@@ -141,8 +147,6 @@ export default function AdminLiveClassesPage() {
   };
 
   const hasActiveFilters = searchInput.trim() || statusFilter || instructorFilter || courseFilter;
-  const selectedWeeklyDay = formData.daysOfWeek[0] ?? 0;
-  const selectedDayTime = formData.dayTimes[selectedWeeklyDay] || '21:00';
   const combineDateAndTime = (date: string, time: string) => {
     if (!date || !time) return '';
     return `${date}T${time}`;
@@ -158,6 +162,26 @@ export default function AdminLiveClassesPage() {
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   };
+
+  function normalizeTimeForInput(value: string): string {
+    const v = String(value || '').trim();
+    if (!v) return '';
+    // Already HH:mm
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) return v;
+    // Parse "hh:mm AM/PM"
+    const m = v.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return '';
+    let hours = parseInt(m[1], 10);
+    const minutes = parseInt(m[2], 10);
+    const meridiem = m[3].toUpperCase();
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) return '';
+    if (meridiem === 'AM') {
+      if (hours === 12) hours = 0;
+    } else {
+      if (hours !== 12) hours += 12;
+    }
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
   const renderDayTimeInputs = () => (
     <div className="rounded-md border border-[var(--border)] p-3">
       <p className="text-xs text-[var(--muted-foreground)] mb-2">
@@ -190,7 +214,7 @@ export default function AdminLiveClassesPage() {
             </button>
             <input
               type="time"
-              value={formData.dayTimes[day.value] || '21:00'}
+              value={normalizeTimeForInput(formData.dayTimes[day.value] || '21:00') || '21:00'}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -213,9 +237,21 @@ export default function AdminLiveClassesPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const sanitizedDayTimes: Record<number, string> = Object.fromEntries(
+        Object.entries(formData.dayTimes || {}).map(([k, v]) => [
+          k,
+          normalizeTimeForInput(String(v || '21:00')) || '21:00',
+        ])
+      ) as Record<number, string>;
+
+      const sanitizedSelectedWeeklyDay = formData.daysOfWeek[0] ?? 0;
+      const sanitizedSelectedDayTime = normalizeTimeForInput(
+        sanitizedDayTimes[sanitizedSelectedWeeklyDay] || '21:00'
+      ) || '21:00';
+
       const payload: CreateLiveClassPayload = {
         title: formData.title,
-        description: formData.description,
+        ...(formData.description.trim() ? { description: formData.description.trim() } : {}),
         adminNotes: formData.adminNotes || undefined,
         courseId: formData.courseId || undefined,
         instructorId: formData.instructorId,
@@ -242,20 +278,28 @@ export default function AdminLiveClassesPage() {
         payload.daysOfWeek = formData.daysOfWeek;
         payload.startDate = formData.startDate;
         payload.endDate = formData.endDate;
-        payload.startTime = selectedDayTime;
-        payload.dayTimes = formData.dayTimes;
+        payload.startTime = sanitizedSelectedDayTime;
+        payload.dayTimes = sanitizedDayTimes;
       } else {
-        if (!formData.startDate) {
-          throw new Error('Scheduled date is required.');
+        if (!formData.startDate) throw new Error('Start date is required.');
+        if (!formData.endDate) throw new Error('End date is required.');
+        if (new Date(formData.endDate) < new Date(formData.startDate)) {
+          throw new Error('End date must be on or after start date.');
+        }
+        if (!formData.daysOfWeek.length) {
+          throw new Error('Please select at least one weekday.');
         }
       }
 
       if (editingClass) {
-        const selectedWeekday = formData.daysOfWeek[0] ?? new Date(formData.startDate).getDay();
-        const adjustedDate = shiftDateToSelectedWeekday(formData.startDate, selectedWeekday);
         await liveClassApi.updateLiveClass(editingClass.id, {
           ...payload,
-          scheduledAt: combineDateAndTime(adjustedDate, selectedDayTime),
+          recurrenceType: 'WEEKLY',
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          daysOfWeek: formData.daysOfWeek,
+          startTime: sanitizedSelectedDayTime,
+          dayTimes: sanitizedDayTimes,
         });
         showSuccess('Live class updated successfully');
       } else {
@@ -295,7 +339,7 @@ export default function AdminLiveClassesPage() {
       6: '21:00',
     };
     for (const entry of scheduleEntries) {
-      defaultTimeMap[entry.day] = entry.time;
+      defaultTimeMap[entry.day] = normalizeTimeForInput(entry.time);
     }
     if (!scheduleEntries.length) {
       defaultTimeMap[scheduledDay] = scheduledTime;
@@ -304,7 +348,7 @@ export default function AdminLiveClassesPage() {
     setEditingClass(liveClass);
     setFormData({
       title: liveClass.title,
-      description: liveClass.description || '',
+      description: stripSeriesMarkerFromDescription(liveClass.description || ''),
       courseId: liveClass.courseId || '',
       instructorId: liveClass.instructorId,
       scheduledAt: scheduledDate.toISOString().slice(0, 16),
@@ -313,8 +357,8 @@ export default function AdminLiveClassesPage() {
       meetingPassword: liveClass.meetingPassword || '',
       recurrenceType: 'WEEKLY',
       daysOfWeek: selectedDays,
-      startDate: scheduledDate.toISOString().slice(0, 10),
-      endDate: scheduledDate.toISOString().slice(0, 10),
+      startDate: liveClass.startDate || scheduledDate.toISOString().slice(0, 10),
+      endDate: liveClass.endDate || scheduledDate.toISOString().slice(0, 10),
       startTime: defaultTimeMap[selectedDays[0]] || scheduledTime,
       dayTimes: defaultTimeMap,
       adminNotes: liveClass.adminNotes || '',
@@ -484,11 +528,21 @@ export default function AdminLiveClassesPage() {
                 {renderDayTimeInputs()}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Scheduled Date *</label>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">Start Date *</label>
                     <input
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-2">End Date *</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                       required
                       className="w-full px-3 py-2 border border-[var(--border)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
