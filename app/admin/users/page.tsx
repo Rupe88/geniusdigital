@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
       while (hasMore) {
         const data = await adminApi.getAllUsers({
           page,
-          limit: 500,
+          limit: 100, // Backend validation allows limit only up to 100
           search: search || undefined,
         });
         allUsers.push(...(data?.data || []));
