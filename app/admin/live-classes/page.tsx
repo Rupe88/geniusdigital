@@ -151,17 +151,6 @@ export default function AdminLiveClassesPage() {
     if (!date || !time) return '';
     return `${date}T${time}`;
   };
-  const shiftDateToSelectedWeekday = (dateValue: string, weekday: number) => {
-    if (!dateValue) return dateValue;
-    const d = new Date(dateValue);
-    if (Number.isNaN(d.getTime())) return dateValue;
-    const delta = (weekday - d.getDay() + 7) % 7;
-    d.setDate(d.getDate() + delta);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
 
   function normalizeTimeForInput(value: string): string {
     const v = String(value || '').trim();
@@ -198,9 +187,6 @@ export default function AdminLiveClassesPage() {
                   daysOfWeek: prev.daysOfWeek.includes(day.value)
                     ? prev.daysOfWeek.filter((d) => d !== day.value)
                     : [...prev.daysOfWeek, day.value].sort((a, b) => a - b),
-                  startDate: prev.daysOfWeek.length
-                    ? prev.startDate
-                    : shiftDateToSelectedWeekday(prev.startDate, day.value),
                   startTime: prev.dayTimes[day.value] || prev.startTime,
                 }))
               }
@@ -763,7 +749,9 @@ export default function AdminLiveClassesPage() {
                       {liveClass.instructor?.name || 'N/A'}
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--muted-foreground)]">
-                      {new Date(liveClass.scheduledAt).toLocaleString()}
+                      {(liveClass.startDate || liveClass.endDate)
+                        ? `${liveClass.startDate || '-'} to ${liveClass.endDate || liveClass.startDate || '-'}`
+                        : new Date(liveClass.scheduledAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="rounded-md border border-[var(--border)] overflow-hidden">

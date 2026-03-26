@@ -40,15 +40,19 @@ export interface LiveClass {
   endDate?: string;
 }
 
-const SERIES_MARKER_REGEX = /\[\[series:([a-f0-9-]{8,})\]\]/i;
+const SERIES_MARKER_REGEX = /\[\[series:[^\]]+\]\]/gi;
+const SERIES_RANGE_MARKER_REGEX = /\[\[series-range:[^\]]+\]\]/gi;
 
 export const extractSeriesIdFromLiveClass = (liveClass: Pick<LiveClass, 'description'>): string | null => {
-  const match = String(liveClass.description || '').match(SERIES_MARKER_REGEX);
-  return match?.[1] || null;
+  const first = String(liveClass.description || '').match(/\[\[series:([a-f0-9-]{8,})\]\]/i);
+  return first?.[1] || null;
 };
 
 export const stripSeriesMarkerFromDescription = (description?: string | null): string => {
-  return String(description || '').replace(SERIES_MARKER_REGEX, '').trim();
+  return String(description || '')
+    .replace(SERIES_MARKER_REGEX, '')
+    .replace(SERIES_RANGE_MARKER_REGEX, '')
+    .trim();
 };
 
 export interface CreateLiveClassPayload {
