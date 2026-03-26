@@ -89,6 +89,10 @@ export default function DashboardPage() {
       const enrollments = enrollmentsRes.status === 'fulfilled' && enrollmentsRes.value?.data
         ? enrollmentsRes.value.data
         : [];
+      const enrolledTotal =
+        enrollmentsRes.status === 'fulfilled'
+          ? enrollmentsRes.value?.pagination?.total ?? enrollments.length
+          : 0;
       const completed = enrollments.filter((e: Enrollment) => e.status === 'COMPLETED');
       setRecentEnrollments(enrollments.slice(0, 3));
 
@@ -102,7 +106,7 @@ export default function DashboardPage() {
       const referral = referralRes.status === 'fulfilled' ? referralRes.value : null;
 
       setStats({
-        enrolledCourses: enrollments.length,
+        enrolledCourses: enrolledTotal,
         completedCourses: completed.length,
         paymentCount: paymentTotal,
         referralConversions: referral?.totalConversions ?? 0,

@@ -288,7 +288,7 @@ export default function DashboardLiveClassesPage() {
         <Card padding="md" className="mb-6 border-[var(--error)]/30 bg-[var(--error)]/5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <p className="text-[var(--foreground)]">{error}</p>
-            <Button variant="primary" size="sm" onClick={fetchClasses} className="gap-2">
+            <Button variant="primary" size="sm" onClick={() => fetchClasses()} className="gap-2">
               <HiRefresh className="w-4 h-4" />
               Try again
             </Button>
