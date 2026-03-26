@@ -10,7 +10,7 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [moderatingId, setModeratingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('pending');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingComment, setEditingComment] = useState('');
 
@@ -92,7 +92,7 @@ export default function AdminReviewsPage() {
             Approved
           </Button>
           <Button variant={filter === 'all' ? 'primary' : 'outline'} size="sm" onClick={() => setFilter('all')}>
-            All
+            History
           </Button>
         </div>
       </div>
@@ -112,6 +112,10 @@ export default function AdminReviewsPage() {
                     <p className="text-sm text-[var(--muted-foreground)]">
                       by {review.user?.fullName || 'User'} ({review.user?.email || 'no-email'})
                     </p>
+                    <div className="text-amber-500 text-sm leading-none" aria-label={`${review.rating || 0} star rating`}>
+                      {'★'.repeat(Math.max(0, Math.min(5, review.rating || 0)))}
+                      {'☆'.repeat(Math.max(0, 5 - Math.max(0, Math.min(5, review.rating || 0))))}
+                    </div>
                     <p className="text-sm text-[var(--muted-foreground)]">
                       {new Date(review.createdAt).toLocaleString()}
                     </p>
