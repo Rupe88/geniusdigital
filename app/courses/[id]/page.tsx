@@ -96,7 +96,7 @@ export default function CourseDetailPage({
       });
 
       if (data.success) {
-        showSuccess('Review submitted successfully!');
+      showSuccess('Review submitted. It will appear after admin approval.');
         setReviewComment('');
         // Refresh course to show new review
         fetchCourse(course.id);

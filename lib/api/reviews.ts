@@ -10,14 +10,22 @@ export interface Review {
   comment: string;
   isVerified: boolean;
   published: boolean;
+  isApproved?: boolean;
+  reviewedAt?: string | null;
+  reviewedById?: string | null;
   createdAt: string;
   updatedAt: string;
   user?: {
     fullName: string;
+    email?: string;
     avatar?: string;
   };
   course?: {
     title: string;
+  };
+  reviewedBy?: {
+    fullName: string;
+    email?: string;
   };
 }
 
@@ -38,6 +46,12 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message: string;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 /**
@@ -47,8 +61,13 @@ export const reviewsApi = {
   /**
    * Get all reviews (admin only)
    */
-  getAll: async (): Promise<ApiResponse<Review[]>> => {
-    const response = await apiClient.get(API_ENDPOINTS.REVIEWS.LIST);
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    approved?: boolean;
+    search?: string;
+  }): Promise<ApiResponse<Review[]>> => {
+    const response = await apiClient.get(API_ENDPOINTS.REVIEWS.LIST, { params });
     return response.data;
   },
 
@@ -82,6 +101,11 @@ export const reviewsApi = {
    */
   update: async (id: string, data: UpdateReviewRequest): Promise<ApiResponse<Review>> => {
     const response = await apiClient.put(API_ENDPOINTS.REVIEWS.BY_ID(id), data);
+    return response.data;
+  },
+
+  moderate: async (id: string, isApproved: boolean): Promise<ApiResponse<Review>> => {
+    const response = await apiClient.patch(`${API_ENDPOINTS.REVIEWS.BY_ID(id)}/moderate`, { isApproved });
     return response.data;
   },
 

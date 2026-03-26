@@ -36,6 +36,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/courses`, label: 'Courses', icon: HiBookOpen },
       { href: `${ROUTES.ADMIN}/categories`, label: 'Categories', icon: HiFolder },
       { href: `${ROUTES.ADMIN}/enrollments`, label: 'Enrollments', icon: HiBookOpen },
+      { href: `${ROUTES.ADMIN}/reviews`, label: 'Reviews', icon: HiStar },
       { href: `${ROUTES.ADMIN}/live-classes`, label: 'Live Classes', icon: HiVideoCamera },
       { href: `${ROUTES.ADMIN}/student-success`, label: 'Student Success', icon: HiStar },
     ],
