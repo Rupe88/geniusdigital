@@ -142,6 +142,9 @@ function LiveClassCard({
           )}
         </div>
         <div className="mt-4 rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--background)]/80">
+          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)] border-b border-[var(--border)] bg-[var(--muted)]/40">
+            Weekly Scheduled
+          </div>
           <table className="w-full text-xs">
             <thead className="bg-[var(--muted)]/80 text-[var(--muted-foreground)]">
               <tr>
