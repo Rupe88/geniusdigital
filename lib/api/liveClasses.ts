@@ -105,11 +105,19 @@ export const getAllLiveClasses = async (params?: {
 export const getMyAvailableLiveClasses = async (params?: {
   page?: number;
   limit?: number;
+  refreshKey?: number;
 }): Promise<PaginatedResponse<LiveClass>> => {
   try {
+    const { refreshKey, ...queryParams } = params || {};
     const response = await apiClient.get<{ success: boolean; data: LiveClass[]; pagination: Pagination }>(
       '/live-classes/my-available',
-      { params }
+      {
+        params: {
+          ...queryParams,
+          // Cache buster helps on aggressive mobile/webview caches.
+          _t: refreshKey ?? Date.now(),
+        },
+      }
     );
     const payload = response.data;
     if (payload?.success) {

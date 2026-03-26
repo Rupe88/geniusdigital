@@ -62,10 +62,15 @@ function getWeeklyTimeRows(dateString: string, weeklySchedule?: Record<number, s
   const date = new Date(dateString);
   const activeDay = Number.isNaN(date.getTime()) ? -1 : date.getDay();
   const activeTime = Number.isNaN(date.getTime()) ? '-' : formatTime(dateString);
+  const hasWeeklySchedule = weeklySchedule && Object.keys(weeklySchedule).length > 0;
   return WEEK_DAYS.map((day, idx) => ({
     day,
-    time: weeklySchedule?.[idx] || (idx === activeDay ? activeTime : 'Not scheduled'),
-    active: Boolean(weeklySchedule?.[idx]) || idx === activeDay,
+    time: hasWeeklySchedule
+      ? weeklySchedule?.[idx] || 'Not scheduled'
+      : idx === activeDay
+      ? activeTime
+      : 'Not scheduled',
+    active: hasWeeklySchedule ? Boolean(weeklySchedule?.[idx]) : idx === activeDay,
   }));
 }
 
@@ -214,13 +219,14 @@ export default function DashboardLiveClassesPage() {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 0 });
 
-  const fetchClasses = useCallback(async () => {
+  const fetchClasses = useCallback(async (showLoader = true) => {
     setError(null);
-    setLoading(true);
+    if (showLoader) setLoading(true);
     try {
       const res = await liveClassApi.getMyAvailableLiveClasses({
         page: pagination.page,
         limit: pagination.limit,
+        refreshKey: Date.now(),
       });
       const raw = res.data ?? [];
       const seen = new Set<string>();
@@ -242,12 +248,32 @@ export default function DashboardLiveClassesPage() {
       setError(e instanceof Error ? e.message : 'Failed to load live classes');
       setClasses([]);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   }, [pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchClasses();
+  }, [fetchClasses]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const onVisibleOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        fetchClasses(false);
+      }
+    };
+
+    const interval = window.setInterval(() => fetchClasses(false), 30000);
+    window.addEventListener('focus', onVisibleOrFocus);
+    document.addEventListener('visibilitychange', onVisibleOrFocus);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', onVisibleOrFocus);
+      document.removeEventListener('visibilitychange', onVisibleOrFocus);
+    };
   }, [fetchClasses]);
 
   return (
