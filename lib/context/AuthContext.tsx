@@ -5,6 +5,7 @@ import axios from 'axios';
 import { User, LoginRequest, RegisterRequest, VerifyOtpRequest } from '@/lib/types/auth';
 import * as authApi from '@/lib/api/auth';
 import { shouldRefreshToken, getTimeUntilExpiry } from '@/lib/utils/tokenUtils';
+import { storageClearTokens, storageGet, storageSetTokens } from '@/lib/utils/safeStorage';
 
 interface AuthContextType {
   user: User | null;
@@ -43,12 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (is401) {
         setUser(null);
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          storageClearTokens();
         }
       } else if (!isRetry && typeof window !== 'undefined') {
         // Network/timeout/5xx: keep tokens and retry once (helps PWA after refresh)
-        const token = localStorage.getItem('accessToken');
+        const token = storageGet('accessToken');
         if (token) {
           await new Promise((r) => setTimeout(r, 1500));
           await refreshUser(true);
@@ -77,8 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return; // Don't refresh tokens on auth pages
     }
 
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshTokenValue = localStorage.getItem('refreshToken');
+    const accessToken = storageGet('accessToken');
+    const refreshTokenValue = storageGet('refreshToken');
 
     if (!accessToken || !refreshTokenValue) {
       return;
@@ -88,17 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (shouldRefreshToken(accessToken)) {
       try {
         const response = await authApi.refreshToken({ refreshToken: refreshTokenValue });
-        localStorage.setItem('accessToken', response.accessToken);
-        // Always update refreshToken if provided (backend always returns it now)
-        if (response.refreshToken) {
-          localStorage.setItem('refreshToken', response.refreshToken);
-        }
+        storageSetTokens(response.accessToken, response.refreshToken);
         console.log('Token refreshed successfully');
       } catch (error) {
         // Refresh failed - clear tokens and logout
         console.error('Token refresh failed:', error);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        storageClearTokens();
         setUser(null);
         // Only redirect if on a protected route (so reload on home stays on home)
         const isProtected =
@@ -161,14 +156,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const token = localStorage.getItem('accessToken');
+      const token = storageGet('accessToken');
       if (token) {
         try {
           await refreshUser();
         } catch {
           // Token is invalid, clear it silently (don't redirect if on auth page)
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          storageClearTokens();
           setUser(null);
           setLoading(false);
         }
@@ -182,8 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginRequest): Promise<User | null> => {
     const response = await authApi.login(credentials);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      storageSetTokens(response.accessToken, response.refreshToken);
     }
     setUser(response.user);
     return response.user ?? null;
@@ -196,8 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyOtp = async (data: VerifyOtpRequest) => {
     const response = await authApi.verifyOtp(data);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      storageSetTokens(response.accessToken, response.refreshToken);
     }
     setUser(response.user);
   };
@@ -218,8 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshIntervalRef.current = null;
       }
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        storageClearTokens();
       }
       setUser(null);
     }

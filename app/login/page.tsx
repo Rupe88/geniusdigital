@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { ROUTES } from '@/lib/utils/constants';
 import { getApiBaseUrl } from '@/lib/api/axios';
 import * as authApi from '@/lib/api/auth';
+import { storageClearTokens, storageSetTokens } from '@/lib/utils/safeStorage';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -82,8 +83,13 @@ function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
       callbackHandled.current = true;
       setCallbackProcessing(true);
 
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      const saved = storageSetTokens(accessToken, refreshToken);
+      if (!saved) {
+        setError('Unable to save session on this browser. Please disable private mode and try again.');
+        setCallbackProcessing(false);
+        callbackHandled.current = false;
+        return;
+      }
       window.history.replaceState({}, '', window.location.pathname);
 
       authApi
@@ -93,8 +99,7 @@ function LoginForm({ searchParams }: { searchParams: SearchParamsLike }) {
           else window.location.href = ROUTES.HOME;
         })
         .catch(() => {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          storageClearTokens();
           setError('Session could not be restored. Please try logging in again.');
           setCallbackProcessing(false);
           callbackHandled.current = false;

@@ -2,6 +2,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { ApiError, ApiResponse } from '@/lib/types/api';
 import { shouldRefreshToken, isTokenExpired } from '@/lib/utils/tokenUtils';
+import { storageClearTokens, storageGet, storageSetTokens } from '@/lib/utils/safeStorage';
 
 // Production backend URL (DigitalOcean) – used when frontend runs in production (non-localhost)
 const PRODUCTION_API_URL = 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
@@ -70,7 +71,7 @@ apiClient.interceptors.request.use(
         config.url?.includes('/auth/reset-password') ||
         config.url?.includes('/auth/refresh-token');
 
-      const token = localStorage.getItem('accessToken');
+      const token = storageGet('accessToken');
 
       // Only add token if it exists and we're not on auth endpoints
       if (!isAuthEndpoint && token) {
@@ -127,7 +128,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+      const refreshToken = typeof window !== 'undefined' ? storageGet('refreshToken') : null;
 
       if (refreshToken) {
         try {
@@ -147,10 +148,7 @@ apiClient.interceptors.response.use(
             console.log('Token refresh successful, updating storage');
 
             if (typeof window !== 'undefined') {
-              localStorage.setItem('accessToken', accessToken);
-              if (newRefreshToken) {
-                localStorage.setItem('refreshToken', newRefreshToken);
-              }
+              storageSetTokens(accessToken, newRefreshToken);
             }
 
             // Update default headers for subsequent requests
@@ -214,8 +212,7 @@ const isProtectedRoute = (pathname: string) =>
 // Helper: clear tokens and optionally redirect. Redirect only on protected routes so reload on home stays on home.
 const handleLogout = () => {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    storageClearTokens();
 
     const pathname = window.location.pathname;
     const isAuthPage =

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/utils/constants';
 import * as authApi from '@/lib/api/auth';
+import { storageClearTokens, storageSetTokens } from '@/lib/utils/safeStorage';
 
 function getHashTokens(): { accessToken: string | null; refreshToken: string | null } {
   if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
@@ -25,15 +26,13 @@ export default function OAuthCallbackPage() {
       return;
     }
 
-    try {
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      // Clean URL (remove tokens from hash)
-      window.history.replaceState({}, '', window.location.pathname);
-    } catch {
+    const saved = storageSetTokens(accessToken, refreshToken);
+    if (!saved) {
       setError('Unable to save session on this device. Please try again.');
       return;
     }
+    // Clean URL (remove tokens from hash)
+    window.history.replaceState({}, '', window.location.pathname);
 
     authApi
       .getMe()
@@ -42,8 +41,7 @@ export default function OAuthCallbackPage() {
         else window.location.replace(ROUTES.HOME);
       })
       .catch(() => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        storageClearTokens();
         setError('Session could not be restored. Please try logging in again.');
       });
   }, []);
