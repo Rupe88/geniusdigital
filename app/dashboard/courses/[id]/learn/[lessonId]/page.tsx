@@ -9,8 +9,9 @@ import { Lesson } from '@/lib/types/course';
 import { LessonPlayer } from '@/components/player/LessonPlayer';
 import { Button } from '@/components/ui/Button';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
-import { showSuccess } from '@/lib/utils/toast';
+import { showError, showSuccess } from '@/lib/utils/toast';
 import { useLearn } from '@/lib/context/LearnContext';
+import { reviewsApi, type Review } from '@/lib/api/reviews';
 
 export default function LessonPage({
   params: paramsPromise,
@@ -24,12 +25,38 @@ export default function LessonPage({
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   useEffect(() => {
     if (params.lessonId) {
       fetchLesson(params.lessonId as string);
     }
   }, [params.lessonId]);
+
+  useEffect(() => {
+    const courseId = course?.id;
+    if (!courseId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await reviewsApi.getMyReview(courseId);
+        if (cancelled) return;
+        const review = res.data || null;
+        setMyReview(review);
+        setReviewComment(review?.comment || '');
+      } catch {
+        if (!cancelled) {
+          setMyReview(null);
+          setReviewComment('');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [course?.id]);
 
   const fetchLesson = async (id: string) => {
     try {
@@ -91,6 +118,40 @@ export default function LessonPage({
   const nextLesson = lesson && course ? getNextLesson(lesson.id) : null;
   const prevLesson = lesson && course ? getPrevLesson(lesson.id) : null;
 
+  const handleSubmitReview = async () => {
+    if (!course?.id) return;
+    try {
+      setReviewLoading(true);
+      const res = await reviewsApi.create({
+        courseId: course.id,
+        rating: 5,
+        comment: reviewComment.trim() || undefined,
+      });
+      setMyReview(res.data || myReview);
+      showSuccess('Review submitted. It will appear after admin approval.');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to submit review');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!course?.id) return;
+    if (!confirm('Delete your review?')) return;
+    try {
+      setReviewLoading(true);
+      await reviewsApi.delete(course.id);
+      setMyReview(null);
+      setReviewComment('');
+      showSuccess('Review deleted');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to delete review');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -151,6 +212,41 @@ export default function LessonPage({
           </Button>
         )}
       </div>
+
+      {course?.id && (
+        <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="text-base font-semibold text-gray-900">Your Course Review</h3>
+            {myReview ? (
+              <span className={`text-xs font-medium px-2 py-1 rounded ${myReview.isApproved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                {myReview.isApproved ? 'Approved' : 'Pending approval'}
+              </span>
+            ) : null}
+          </div>
+          <div className="mb-2 flex items-center gap-2">
+            <div className="text-amber-400 text-lg leading-none" aria-label="5 out of 5 stars">
+              {'★★★★★'}
+            </div>
+          </div>
+          <textarea
+            rows={3}
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+            placeholder="Write your review..."
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+          />
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" variant="primary" isLoading={reviewLoading} onClick={handleSubmitReview}>
+              {myReview ? 'Update Review' : 'Submit Review'}
+            </Button>
+            {myReview ? (
+              <Button size="sm" variant="outline" disabled={reviewLoading} onClick={handleDeleteReview}>
+                Delete
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes fadeIn {

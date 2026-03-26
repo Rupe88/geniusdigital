@@ -880,7 +880,6 @@ export default function CourseDetailPage({
                               <span key={i} className="text-3xl text-yellow-400">★</span>
                             ))}
                           </div>
-                          <p className="text-xs text-gray-500">Only 5-star reviews are allowed.</p>
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-gray-700">Your review</label>

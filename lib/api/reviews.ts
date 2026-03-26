@@ -40,6 +40,7 @@ export interface UpdateReviewRequest {
   title?: string;
   comment?: string;
   published?: boolean;
+  isApproved?: boolean;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -79,6 +80,11 @@ export const reviewsApi = {
     return response.data;
   },
 
+  getMyReview: async (courseId: string): Promise<ApiResponse<Review>> => {
+    const response = await apiClient.get(API_ENDPOINTS.REVIEWS.MY_REVIEW(courseId));
+    return response.data;
+  },
+
   /**
    * Get review by ID
    */
@@ -114,6 +120,11 @@ export const reviewsApi = {
    */
   delete: async (courseId: string): Promise<ApiResponse> => {
     const response = await apiClient.delete(API_ENDPOINTS.REVIEWS.DELETE(courseId));
+    return response.data;
+  },
+
+  deleteById: async (id: string): Promise<ApiResponse> => {
+    const response = await apiClient.delete(API_ENDPOINTS.REVIEWS.BY_ID(id));
     return response.data;
   },
 };

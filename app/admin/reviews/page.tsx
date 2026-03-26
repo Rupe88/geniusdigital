@@ -11,6 +11,8 @@ export default function AdminReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [moderatingId, setModeratingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('pending');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingComment, setEditingComment] = useState('');
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -38,6 +40,41 @@ export default function AdminReviewsPage() {
       await fetchReviews();
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Failed to moderate review');
+    } finally {
+      setModeratingId(null);
+    }
+  };
+
+  const startEdit = (review: Review) => {
+    setEditingId(review.id);
+    setEditingComment(review.comment || '');
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    try {
+      setModeratingId(editingId);
+      await reviewsApi.update(editingId, { comment: editingComment });
+      showSuccess('Review updated');
+      setEditingId(null);
+      setEditingComment('');
+      await fetchReviews();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to update review');
+    } finally {
+      setModeratingId(null);
+    }
+  };
+
+  const deleteReview = async (reviewId: string) => {
+    if (!confirm('Delete this review?')) return;
+    try {
+      setModeratingId(reviewId);
+      await reviewsApi.deleteById(reviewId);
+      showSuccess('Review deleted');
+      await fetchReviews();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to delete review');
     } finally {
       setModeratingId(null);
     }
@@ -78,7 +115,16 @@ export default function AdminReviewsPage() {
                     <p className="text-sm text-[var(--muted-foreground)]">
                       {new Date(review.createdAt).toLocaleString()}
                     </p>
-                    <p className="text-sm text-[var(--foreground)] mt-2">{review.comment || 'No comment provided.'}</p>
+                    {editingId === review.id ? (
+                      <textarea
+                        className="mt-2 w-full rounded-md border border-[var(--border)] bg-[var(--background)] p-2 text-sm"
+                        rows={3}
+                        value={editingComment}
+                        onChange={(e) => setEditingComment(e.target.value)}
+                      />
+                    ) : (
+                      <p className="text-sm text-[var(--foreground)] mt-2">{review.comment || 'No comment provided.'}</p>
+                    )}
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -104,6 +150,31 @@ export default function AdminReviewsPage() {
                     onClick={() => handleModeration(review.id, false)}
                   >
                     Reject
+                  </Button>
+                  {editingId === review.id ? (
+                    <>
+                      <Button size="sm" variant="outline" disabled={moderatingId === review.id} onClick={saveEdit}>
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={moderatingId === review.id}
+                        onClick={() => {
+                          setEditingId(null);
+                          setEditingComment('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" disabled={moderatingId === review.id} onClick={() => startEdit(review)}>
+                      Edit
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" disabled={moderatingId === review.id} onClick={() => deleteReview(review.id)}>
+                    Delete
                   </Button>
                 </div>
               </div>
