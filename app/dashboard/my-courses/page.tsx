@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import { getUpcomingEvents } from '@/lib/api/events';
 import { getUpcomingEventCourses } from '@/lib/api/courses';
+import { reviewsApi, type Review } from '@/lib/api/reviews';
 import { Enrollment } from '@/lib/types/course';
 import { formatDate } from '@/lib/utils/helpers';
+import { showError, showSuccess } from '@/lib/utils/toast';
 
 export default function MyCoursesPage() {
   const router = useRouter();
@@ -36,6 +38,11 @@ export default function MyCoursesPage() {
     }[]
   >([]);
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewCourse, setReviewCourse] = useState<Enrollment['course'] | null>(null);
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   useEffect(() => {
     fetchUpcoming();
@@ -145,6 +152,65 @@ export default function MyCoursesPage() {
     </div>
   );
 
+  const openReviewModal = async (enrollment: Enrollment, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setReviewCourse(enrollment.course || null);
+    setReviewComment('');
+    setMyReview(null);
+    setReviewModalOpen(true);
+    try {
+      const res = await reviewsApi.getMyReview(enrollment.courseId);
+      const review = res.data || null;
+      setMyReview(review);
+      setReviewComment(review?.comment || '');
+    } catch {
+      setMyReview(null);
+      setReviewComment('');
+    }
+  };
+
+  const closeReviewModal = () => {
+    if (reviewLoading) return;
+    setReviewModalOpen(false);
+    setReviewCourse(null);
+    setMyReview(null);
+    setReviewComment('');
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewCourse?.id) return;
+    try {
+      setReviewLoading(true);
+      const res = await reviewsApi.create({
+        courseId: reviewCourse.id,
+        rating: 5,
+        comment: reviewComment.trim() || undefined,
+      });
+      setMyReview(res.data || myReview);
+      showSuccess('Review submitted. It will appear after admin approval.');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to submit review');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!reviewCourse?.id) return;
+    if (!confirm('Delete your review?')) return;
+    try {
+      setReviewLoading(true);
+      await reviewsApi.delete(reviewCourse.id);
+      setMyReview(null);
+      setReviewComment('');
+      showSuccess('Review deleted');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Failed to delete review');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-[var(--foreground)] mb-8">My Courses</h1>
@@ -213,7 +279,13 @@ export default function MyCoursesPage() {
                       {accessInfo[enrollment.courseId] && (
                         <div className="mb-4">
                           {accessInfo[enrollment.courseId].accessStatus === 'FULL_ACCESS' ? (
-                            <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">Full Access</div>
+                            <button
+                              type="button"
+                              className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded hover:bg-green-100 transition-colors"
+                              onClick={(e) => openReviewModal(enrollment, e)}
+                            >
+                              Review
+                            </button>
                           ) : (
                             <div
                               className={`text-sm px-2 py-1 rounded ${
@@ -466,6 +538,54 @@ export default function MyCoursesPage() {
           </div>
         )}
       </section>
+
+      {reviewModalOpen && reviewCourse && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl bg-white rounded-lg border border-gray-200 shadow-xl p-4 md:p-6">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Your Course Review</h3>
+              <div className="flex items-center gap-2">
+                {myReview ? (
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${myReview.isApproved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {myReview.isApproved ? 'Approved' : 'Pending approval'}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                  onClick={closeReviewModal}
+                  disabled={reviewLoading}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <p className="text-sm text-[var(--muted-foreground)] mb-3">{reviewCourse.title}</p>
+            <div className="mb-2 flex items-center gap-2">
+              <div className="text-amber-400 text-lg leading-none" aria-label="5 out of 5 stars">
+                {'★★★★★'}
+              </div>
+            </div>
+            <textarea
+              rows={4}
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="Write your review..."
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)]"
+            />
+            <div className="mt-3 flex gap-2">
+              <Button size="sm" variant="primary" isLoading={reviewLoading} onClick={handleSubmitReview}>
+                {myReview ? 'Update Review' : 'Submit Review'}
+              </Button>
+              {myReview ? (
+                <Button size="sm" variant="outline" disabled={reviewLoading} onClick={handleDeleteReview}>
+                  Delete
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
