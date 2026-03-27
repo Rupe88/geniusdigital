@@ -103,6 +103,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
   const [selectedChapterId, setSelectedChapterId] = useState<string>('');
   const [scrollToLessonId, setScrollToLessonId] = useState<string | null>(null);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
+  const [selectedCorrectOptionByQuestion, setSelectedCorrectOptionByQuestion] = useState<
+    Record<number, number>
+  >({});
 
   // Form states
   const [chapterForm, setChapterForm] = useState<ChapterFormData>({
@@ -306,6 +309,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       },
     });
     setShowLessonModal(true);
+    setSelectedCorrectOptionByQuestion({});
   };
 
   const handleEditLesson = async (lesson: Lesson | LocalLesson) => {
@@ -428,6 +432,7 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       quizData: initialQuizData,
     });
     setShowLessonModal(true);
+    setSelectedCorrectOptionByQuestion({});
 
     if (isQuiz && lesson.id) {
       setLoadingQuiz(true);
@@ -592,6 +597,15 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
         questions: prev.quizData.questions.filter((_, i) => i !== index),
       },
     }));
+    setSelectedCorrectOptionByQuestion((prev) => {
+      const next: Record<number, number> = {};
+      Object.entries(prev).forEach(([key, value]) => {
+        const qIdx = Number(key);
+        if (qIdx < index) next[qIdx] = value;
+        if (qIdx > index) next[qIdx - 1] = value;
+      });
+      return next;
+    });
   };
 
   const updateQuizQuestion = (index: number, field: string, value: any) => {
@@ -1186,8 +1200,18 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                               <input
                                 type="radio"
                                 name={`correct-${qIndex}`}
-                                checked={q.correctAnswer === option && option !== ''}
-                                onChange={() => updateQuizQuestion(qIndex, 'correctAnswer', option)}
+                                checked={
+                                  selectedCorrectOptionByQuestion[qIndex] !== undefined
+                                    ? selectedCorrectOptionByQuestion[qIndex] === oIndex
+                                    : q.correctAnswer === option && option !== ''
+                                }
+                                onChange={() => {
+                                  setSelectedCorrectOptionByQuestion((prev) => ({
+                                    ...prev,
+                                    [qIndex]: oIndex,
+                                  }));
+                                  updateQuizQuestion(qIndex, 'correctAnswer', option);
+                                }}
                                 className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
                               />
                               <Input
