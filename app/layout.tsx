@@ -22,6 +22,10 @@ export default function RootLayout({
             <head>
                 <link rel="manifest" href="/manifest.webmanifest" />
                 <meta name="theme-color" content="#c01e2e" />
+                <meta name="mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-title" content="Sanskar Academy" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
                 <link rel="apple-touch-icon" href="/icons/icon-192.png" />
             </head>
             <body

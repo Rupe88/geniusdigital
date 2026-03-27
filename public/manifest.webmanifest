@@ -1,8 +1,11 @@
 {
   "name": "Sanskar Academy",
   "short_name": "Sanskar",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#ffffff",
   "theme_color": "#c01e2e",
   "orientation": "portrait-primary",
