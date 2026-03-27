@@ -6,6 +6,7 @@ export interface AdminQuizAttempt {
   id: string;
   userId: string;
   quizId: string;
+  answers?: Record<string, string | string[]>;
   score: number;
   isPassed: boolean;
   completedAt: string | null;
@@ -52,6 +53,27 @@ export interface GetAdminQuizAttemptsResponse {
   };
 }
 
+export interface AdminQuizAttemptDetailReportItem {
+  questionId: string;
+  question: string;
+  userAnswer: string | string[] | null;
+  correctAnswer: string | string[];
+  isCorrect: boolean;
+  points: number;
+}
+
+export interface AdminQuizAttemptDetails {
+  attempt: AdminQuizAttempt;
+  report: {
+    totalScore: number;
+    maxScore: number;
+    percentage: number;
+    isPassed: boolean;
+    passingScore: number;
+    results: AdminQuizAttemptDetailReportItem[];
+  };
+}
+
 export const getAdminQuizAttempts = async (
   params: GetAdminQuizAttemptsParams = {}
 ): Promise<GetAdminQuizAttemptsResponse> => {
@@ -87,6 +109,25 @@ export const getAdminQuizAttempts = async (
         pages: 1,
       },
     };
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const getAdminQuizAttemptDetails = async (
+  attemptId: string
+): Promise<AdminQuizAttemptDetails> => {
+  try {
+    const response = await apiClient.get<ApiResponse<AdminQuizAttemptDetails>>(
+      API_ENDPOINTS.QUIZZES.ADMIN_ATTEMPT_DETAILS(attemptId)
+    );
+    const responseData = response.data;
+
+    if (!responseData.success || !responseData.data) {
+      throw new Error(responseData.message || 'Failed to load quiz attempt details');
+    }
+
+    return responseData.data;
   } catch (error) {
     throw new Error(handleApiError(error));
   }

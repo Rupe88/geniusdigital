@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getReferralStats, getReferralLinks, deactivateReferralLink, reactivateReferralLink, ReferralStats, ReferralLink } from '@/lib/api/referrals';
 import { getApiBaseUrl } from '@/lib/api/axios';
 import { getStorageImageSrc } from '@/lib/utils/storage';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { Pagination } from '@/lib/types/api';
 import { FaLink, FaEye, FaUsers, FaDollarSign, FaToggleOn, FaToggleOff, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -284,12 +285,20 @@ export const ReferralDashboard: React.FC = () => {
                     <tr key={link.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <img
-                              className="h-10 w-10 rounded-none object-cover"
-                              src={link.course?.thumbnail ? (getStorageImageSrc(link.course.thumbnail, getApiBaseUrl()) || link.course.thumbnail) : '/placeholder-course.jpg'}
-                              alt={link.course?.title}
-                            />
+                          <div className="flex-shrink-0 h-10 w-10 rounded-none overflow-hidden bg-gray-100">
+                            {link.course?.thumbnail ? (
+                              <StorageImage
+                                className="h-10 w-10 object-cover"
+                                src={getStorageImageSrc(link.course.thumbnail, getApiBaseUrl()) || link.course.thumbnail}
+                                alt={link.course?.title || 'Course'}
+                                width={40}
+                                height={40}
+                              />
+                            ) : (
+                              <div className="h-10 w-10 flex items-center justify-center text-xs font-semibold text-gray-500">
+                                {link.course?.title?.charAt(0)?.toUpperCase() || 'C'}
+                              </div>
+                            )}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">

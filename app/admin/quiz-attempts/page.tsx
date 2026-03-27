@@ -4,7 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { getAdminQuizAttempts, AdminQuizAttempt } from '@/lib/api/quizAttempts';
+import {
+  getAdminQuizAttempts,
+  getAdminQuizAttemptDetails,
+  AdminQuizAttempt,
+  AdminQuizAttemptDetails,
+} from '@/lib/api/quizAttempts';
 import { updateQuizAttemptFeedback } from '@/lib/api/quizFeedback';
 import { Textarea } from '@/components/ui/Textarea';
 import { showSuccess, showError } from '@/lib/utils/toast';
@@ -22,6 +27,14 @@ export default function AdminQuizAttemptsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+  const [detailsData, setDetailsData] = useState<AdminQuizAttemptDetails | null>(null);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyAttemptId, setReplyAttemptId] = useState<string | null>(null);
+  const [replyNote, setReplyNote] = useState('');
+  const [replyVisible, setReplyVisible] = useState(true);
 
   const fetchAttempts = async (pageNumber = 1) => {
     try {
@@ -58,6 +71,73 @@ export default function AdminQuizAttemptsPage() {
       quizTitle.includes(term)
     );
   });
+
+  const formatAnswerValue = (value: string | string[] | null | undefined) => {
+    if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
+    if (value === null || value === undefined) return '—';
+    const text = String(value).trim();
+    return text || '—';
+  };
+
+  const openDetailsModal = async (attemptId: string) => {
+    try {
+      setDetailsOpen(true);
+      setDetailsLoading(true);
+      setDetailsError(null);
+      setDetailsData(null);
+
+      const details = await getAdminQuizAttemptDetails(attemptId);
+      setDetailsData(details);
+    } catch (err) {
+      setDetailsError(err instanceof Error ? err.message : 'Failed to load attempt details');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsOpen(false);
+    setDetailsError(null);
+    setDetailsData(null);
+  };
+
+  const openReplyModal = (attempt: AdminQuizAttempt) => {
+    setReplyAttemptId(attempt.id);
+    setReplyNote(attempt.adminNotes ?? '');
+    setReplyVisible(!!attempt.adminVisible);
+    setReplyOpen(true);
+  };
+
+  const closeReplyModal = () => {
+    setReplyOpen(false);
+    setReplyAttemptId(null);
+    setReplyNote('');
+    setReplyVisible(true);
+  };
+
+  const handleSaveReply = async () => {
+    if (!replyAttemptId) return;
+    try {
+      setSavingId(replyAttemptId);
+      await updateQuizAttemptFeedback(replyAttemptId, {
+        adminNotes: replyNote,
+        adminVisible: replyVisible,
+      });
+      setAttempts((prev) =>
+        prev.map((att) =>
+          att.id === replyAttemptId
+            ? { ...att, adminNotes: replyNote, adminVisible: replyVisible }
+            : att
+        )
+      );
+      showSuccess('Reply saved.');
+      closeReplyModal();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to save reply');
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -119,6 +199,7 @@ export default function AdminQuizAttemptsPage() {
                   'Email',
                   'Course',
                   'Quiz',
+                  'Submitted Answers',
                   'Score',
                   'Result',
                   'Completed At',
@@ -139,7 +220,7 @@ export default function AdminQuizAttemptsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
-                    {Array.from({ length: 8 }).map((__, j) => (
+                    {Array.from({ length: 9 }).map((__, j) => (
                       <td key={j} className="px-3 py-3">
                         <div className="h-4 bg-[var(--muted)] rounded w-24" />
                       </td>
@@ -149,7 +230,7 @@ export default function AdminQuizAttemptsPage() {
               ) : filteredAttempts.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-3 py-6 text-center text-sm text-[var(--muted-foreground)]"
                   >
                     No quiz attempts found for the current filters.
@@ -170,6 +251,30 @@ export default function AdminQuizAttemptsPage() {
                     <td className="px-3 py-3 text-sm text-[var(--muted-foreground)] whitespace-nowrap">
                       {a.quiz?.title || '—'}
                     </td>
+                    <td className="px-3 py-3 text-sm text-[var(--foreground)] min-w-[320px]">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openDetailsModal(a.id)}
+                          >
+                            View submitted answers
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => openReplyModal(a)}>
+                            Reply
+                          </Button>
+                        </div>
+                        <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/20 px-2.5 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+                            Admin Note
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--foreground)] whitespace-pre-wrap break-words line-clamp-3">
+                            {a.adminNotes?.trim() ? a.adminNotes : 'No admin note yet.'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-3 py-3 text-sm text-[var(--foreground)] whitespace-nowrap">
                       {a.score}
                     </td>
@@ -189,71 +294,16 @@ export default function AdminQuizAttemptsPage() {
                         ? new Date(a.completedAt).toLocaleString()
                         : '—'}
                     </td>
-                    <td className="px-3 py-3 text-sm text-[var(--foreground)] min-w-[260px]">
-                      {a.quiz?.isConsultation ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            label="Admin notes"
-                            value={a.adminNotes ?? ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setAttempts((prev) =>
-                                prev.map((att) =>
-                                  att.id === a.id ? { ...att, adminNotes: val } : att
-                                )
-                              );
-                            }}
-                            placeholder="Write personalized feedback for this attempt..."
-                            rows={3}
-                          />
-                          <label className="inline-flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
-                            <input
-                              type="checkbox"
-                              checked={!!a.adminVisible}
-                              onChange={(e) => {
-                                const val = e.target.checked;
-                                setAttempts((prev) =>
-                                  prev.map((att) =>
-                                    att.id === a.id ? { ...att, adminVisible: val } : att
-                                  )
-                                );
-                              }}
-                            />
-                            Visible to student in dashboard
-                          </label>
-                          <div className="flex justify-end">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={savingId === a.id}
-                              onClick={async () => {
-                                try {
-                                  setSavingId(a.id);
-                                  await updateQuizAttemptFeedback(a.id, {
-                                    adminNotes: a.adminNotes ?? '',
-                                    adminVisible: !!a.adminVisible,
-                                  });
-                                  showSuccess('Feedback saved.');
-                                } catch (err) {
-                                  showError(
-                                    err instanceof Error
-                                      ? err.message
-                                      : 'Failed to save feedback'
-                                  );
-                                } finally {
-                                  setSavingId(null);
-                                }
-                              }}
-                            >
-                              {savingId === a.id ? 'Saving…' : 'Save'}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-[var(--muted-foreground)]">
-                          Not a consultation quiz.
-                        </span>
-                      )}
+                    <td className="px-3 py-3 text-sm min-w-[180px]">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          a.adminVisible
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {a.adminVisible ? 'Reply visible to student' : 'Reply hidden'}
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -292,6 +342,157 @@ export default function AdminQuizAttemptsPage() {
           </div>
         </div>
       </Card>
+
+      {detailsOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closeDetailsModal} />
+          <div className="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-hidden bg-[var(--background)] border border-[var(--border)] rounded-xl shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                  Submitted Answers Detail
+                </h2>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                  Question-wise answer review with correctness and expected answer
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={closeDetailsModal}>
+                Close
+              </Button>
+            </div>
+
+            <div className="p-5 overflow-y-auto max-h-[calc(90vh-90px)]">
+              {detailsLoading ? (
+                <div className="text-sm text-[var(--muted-foreground)]">Loading attempt details...</div>
+              ) : detailsError ? (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                  {detailsError}
+                </div>
+              ) : detailsData ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--muted)]/20">
+                      <p className="text-xs text-[var(--muted-foreground)]">Student</p>
+                      <p className="text-sm font-medium text-[var(--foreground)] mt-1">
+                        {detailsData.attempt.user?.fullName || 'Unknown'}
+                      </p>
+                    </div>
+                    <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--muted)]/20">
+                      <p className="text-xs text-[var(--muted-foreground)]">Score</p>
+                      <p className="text-sm font-medium text-[var(--foreground)] mt-1">
+                        {detailsData.report.totalScore}/{detailsData.report.maxScore} ({detailsData.report.percentage}
+                        %)
+                      </p>
+                    </div>
+                    <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--muted)]/20">
+                      <p className="text-xs text-[var(--muted-foreground)]">Passing Score</p>
+                      <p className="text-sm font-medium text-[var(--foreground)] mt-1">
+                        {detailsData.report.passingScore}%
+                      </p>
+                    </div>
+                    <div className="border border-[var(--border)] rounded-lg p-3 bg-[var(--muted)]/20">
+                      <p className="text-xs text-[var(--muted-foreground)]">Result</p>
+                      <p
+                        className={`text-sm font-semibold mt-1 ${
+                          detailsData.report.isPassed ? 'text-green-700' : 'text-red-700'
+                        }`}
+                      >
+                        {detailsData.report.isPassed ? 'Passed' : 'Failed'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {detailsData.report.results.map((item, idx) => (
+                      <div key={item.questionId} className="border border-[var(--border)] rounded-lg p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-semibold text-[var(--foreground)]">
+                            Q{idx + 1}. {item.question}
+                          </p>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              item.isCorrect
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {item.isCorrect ? 'Correct' : 'Incorrect'}
+                          </span>
+                        </div>
+                        <div className="mt-3 space-y-2 text-sm">
+                          <div>
+                            <p className="text-xs text-[var(--muted-foreground)]">Student Answer</p>
+                            <p className="text-[var(--foreground)] whitespace-pre-wrap break-words mt-1">
+                              {formatAnswerValue(item.userAnswer)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-[var(--muted-foreground)]">Correct / Model Answer</p>
+                            <p className="text-[var(--foreground)] whitespace-pre-wrap break-words mt-1">
+                              {formatAnswerValue(item.correctAnswer)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-[var(--muted-foreground)]">No details available.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {replyOpen && (
+        <div className="fixed inset-0 z-[1010] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closeReplyModal} />
+          <div className="relative z-10 w-full max-w-2xl bg-[var(--background)] border border-[var(--border)] rounded-xl shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--foreground)]">Admin Reply</h2>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                  Write feedback for this quiz attempt
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={closeReplyModal}>
+                Close
+              </Button>
+            </div>
+            <div className="p-5 space-y-3">
+              <Textarea
+                label="Admin notes / reply"
+                value={replyNote}
+                onChange={(e) => setReplyNote(e.target.value)}
+                placeholder="Write personalized feedback for this attempt..."
+                rows={6}
+              />
+              <label className="inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+                <input
+                  type="checkbox"
+                  checked={replyVisible}
+                  onChange={(e) => setReplyVisible(e.target.checked)}
+                />
+                Visible to student in dashboard
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" size="sm" onClick={closeReplyModal}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!replyAttemptId || savingId === replyAttemptId}
+                  onClick={handleSaveReply}
+                >
+                  {savingId === replyAttemptId ? 'Saving…' : 'Save reply'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

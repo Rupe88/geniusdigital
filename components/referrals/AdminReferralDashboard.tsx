@@ -4,9 +4,13 @@ import React, { useState, useEffect } from 'react';
 import {
   getReferralAnalytics,
   getReferralConversions,
-  markCommissionsAsPaid,
+  prepareReferralPayout,
+  confirmReferralPayout,
+  getReferralSecurityReport,
   ReferralAnalytics,
-  ReferralConversion
+  ReferralConversion,
+  ReferralPayoutPreparation,
+  ReferralSecurityReport,
 } from '@/lib/api/referrals';
 import { Pagination } from '@/lib/types/api';
 import {
@@ -29,6 +33,15 @@ export const AdminReferralDashboard: React.FC = () => {
   const [selectedConversions, setSelectedConversions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [securityReport, setSecurityReport] = useState<ReferralSecurityReport | null>(null);
+  const [preparingPayout, setPreparingPayout] = useState(false);
+  const [confirmingPayout, setConfirmingPayout] = useState(false);
+  const [preparedPayout, setPreparedPayout] = useState<ReferralPayoutPreparation | null>(null);
+  const [confirmPayload, setConfirmPayload] = useState({
+    payoutBatchId: '',
+    confirmationToken: '',
+    idempotencyKey: '',
+  });
   const [filters, setFilters] = useState({
     status: '',
     isFraudulent: '',
@@ -59,6 +72,12 @@ export const AdminReferralDashboard: React.FC = () => {
       setAnalytics(analyticsResult);
       setConversions(conversionsResult.data);
       setPagination(conversionsResult.pagination);
+      try {
+        const report = await getReferralSecurityReport(24);
+        setSecurityReport(report);
+      } catch {
+        setSecurityReport(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
       showError('Failed to load referral data');
@@ -97,18 +116,54 @@ export const AdminReferralDashboard: React.FC = () => {
     }
   };
 
-  const handleMarkAsPaid = async () => {
+  const resetPreparedPayout = () => {
+    setPreparedPayout(null);
+    setConfirmPayload({
+      payoutBatchId: '',
+      confirmationToken: '',
+      idempotencyKey: '',
+    });
+  };
+
+  const handlePreparePayout = async () => {
     if (selectedConversions.length === 0) return;
 
     try {
-      const result = await markCommissionsAsPaid(selectedConversions);
-      showSuccess(`Marked ${result.conversionsUpdated} commissions as paid (NPR ${(result.totalAmount || 0).toFixed(2)})`);
-
-      // Refresh data
-      await loadData();
-      setSelectedConversions([]);
+      setPreparingPayout(true);
+      const prep = await prepareReferralPayout(selectedConversions);
+      setPreparedPayout(prep);
+      setConfirmPayload({
+        payoutBatchId: prep.payoutBatchId,
+        confirmationToken: prep.confirmationToken,
+        idempotencyKey:
+          (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+            ? crypto.randomUUID()
+            : `idemp-${Date.now()}`,
+      });
+      showSuccess('Payout batch prepared. Confirm payout after external transfer is done.');
     } catch (err) {
-      showError('Failed to mark commissions as paid');
+      showError(err instanceof Error ? err.message : 'Failed to prepare payout batch');
+    } finally {
+      setPreparingPayout(false);
+    }
+  };
+
+  const handleConfirmPayout = async () => {
+    if (!confirmPayload.payoutBatchId || !confirmPayload.confirmationToken || !confirmPayload.idempotencyKey) {
+      showError('Payout batch ID, confirmation token, and idempotency key are required');
+      return;
+    }
+    try {
+      setConfirmingPayout(true);
+      const result = await confirmReferralPayout(confirmPayload);
+      showSuccess(`Payout executed for ${result.conversionsUpdated} conversions (NPR ${(result.totalAmount || 0).toFixed(2)})`);
+      setSelectedConversions([]);
+      resetPreparedPayout();
+      await loadData();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to confirm payout batch');
+    } finally {
+      setConfirmingPayout(false);
     }
   };
 
@@ -266,18 +321,90 @@ export const AdminReferralDashboard: React.FC = () => {
         </div>
       )}
 
+      {securityReport && (
+        <Card>
+          <div className="p-5">
+            <h3 className="text-lg font-medium text-[var(--foreground)] mb-4">Referral Security (Last {securityReport.windowHours}h)</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="rounded border border-[var(--border)] p-3 bg-[var(--muted)]/20">
+                <p className="text-xs text-[var(--muted-foreground)]">Clicks</p>
+                <p className="text-xl font-semibold">{securityReport.clicksTotal}</p>
+              </div>
+              <div className="rounded border border-[var(--border)] p-3 bg-[var(--muted)]/20">
+                <p className="text-xs text-[var(--muted-foreground)]">Invalid Clicks</p>
+                <p className="text-xl font-semibold">{securityReport.invalidClicks}</p>
+              </div>
+              <div className="rounded border border-[var(--border)] p-3 bg-[var(--muted)]/20">
+                <p className="text-xs text-[var(--muted-foreground)]">Invalid Rate</p>
+                <p className="text-xl font-semibold">{(securityReport.invalidClickRate * 100).toFixed(2)}%</p>
+              </div>
+              <div className="rounded border border-[var(--border)] p-3 bg-[var(--muted)]/20">
+                <p className="text-xs text-[var(--muted-foreground)]">Flagged Events</p>
+                <p className="text-xl font-semibold">{securityReport.flaggedReferralAuditEvents}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Conversions Management */}
       <Card padding="none">
         <div className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
             <h3 className="text-lg font-medium text-[var(--foreground)]">Referral Conversions</h3>
             {selectedConversions.length > 0 && (
-              <Button onClick={handleMarkAsPaid} size="sm">
+              <Button onClick={handlePreparePayout} size="sm" disabled={preparingPayout || confirmingPayout}>
                 <FaCheck className="w-4 h-4 mr-2" />
-                Mark {selectedConversions.length} as Paid
+                {preparingPayout ? 'Preparing...' : `Prepare Payout (${selectedConversions.length})`}
               </Button>
             )}
           </div>
+
+          {(preparedPayout || confirmPayload.payoutBatchId) && (
+            <div className="mb-6 rounded border border-amber-300 bg-amber-50 p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-amber-900">Payout Confirmation</h4>
+              {preparedPayout && (
+                <p className="text-xs text-amber-800">
+                  Prepared {preparedPayout.conversionsCount} conversions for NPR {preparedPayout.totalAmount.toFixed(2)}.
+                  Expires at {new Date(preparedPayout.expiresAt).toLocaleString()}.
+                </p>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-amber-900">Payout Batch ID</label>
+                  <input
+                    value={confirmPayload.payoutBatchId}
+                    onChange={(e) => setConfirmPayload((prev) => ({ ...prev, payoutBatchId: e.target.value }))}
+                    className="w-full px-3 py-2 border border-amber-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-amber-900">Confirmation Token</label>
+                  <input
+                    value={confirmPayload.confirmationToken}
+                    onChange={(e) => setConfirmPayload((prev) => ({ ...prev, confirmationToken: e.target.value }))}
+                    className="w-full px-3 py-2 border border-amber-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-amber-900">Idempotency Key</label>
+                  <input
+                    value={confirmPayload.idempotencyKey}
+                    onChange={(e) => setConfirmPayload((prev) => ({ ...prev, idempotencyKey: e.target.value }))}
+                    className="w-full px-3 py-2 border border-amber-300 rounded text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={handleConfirmPayout} disabled={confirmingPayout || preparingPayout}>
+                  {confirmingPayout ? 'Confirming...' : 'Confirm Payout'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={resetPreparedPayout} disabled={confirmingPayout}>
+                  Clear
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Filters */}
           <div className="mb-4 flex flex-wrap gap-4">

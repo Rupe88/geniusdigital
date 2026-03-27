@@ -15,6 +15,8 @@ export interface ReferralLink {
   totalClicks: number;
   totalConversions: number;
   totalEarnings?: number;
+  paidEarnings?: number;
+  pendingEarnings?: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -81,6 +83,24 @@ export interface ReferralAnalytics {
   totalClicks: number;
   totalConversions: number;
   totalCommission: number;
+}
+
+export interface ReferralPayoutPreparation {
+  payoutBatchId: string;
+  confirmationToken: string;
+  expiresAt: string;
+  conversionsCount: number;
+  affiliatesAffected: number;
+  totalAmount: number;
+}
+
+export interface ReferralSecurityReport {
+  windowHours: number;
+  clicksTotal: number;
+  invalidClicks: number;
+  invalidClickRate: number;
+  fraudulentConversions: number;
+  flaggedReferralAuditEvents: number;
 }
 
 /**
@@ -225,6 +245,61 @@ export const markCommissionsAsPaid = async (conversionIds: string[]): Promise<{
       totalAmount: number;
       affiliatesAffected: number;
     }>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/**
+ * Step 1/2: Prepare referral payout batch.
+ */
+export const prepareReferralPayout = async (
+  conversionIds: string[]
+): Promise<ReferralPayoutPreparation> => {
+  try {
+    const response = await apiClient.post<ApiResponse<ReferralPayoutPreparation>>(
+      '/referrals/admin/commissions/prepare-payout',
+      { conversionIds }
+    );
+    return handleApiResponse<ReferralPayoutPreparation>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/**
+ * Step 2/2: Confirm referral payout batch.
+ */
+export const confirmReferralPayout = async (payload: {
+  payoutBatchId: string;
+  confirmationToken: string;
+  idempotencyKey: string;
+}): Promise<{
+  conversionsUpdated: number;
+  totalAmount: number;
+}> => {
+  try {
+    const response = await apiClient.post<ApiResponse<{
+      conversionsUpdated: number;
+      totalAmount: number;
+    }>>('/referrals/admin/commissions/confirm-payout', payload);
+    return handleApiResponse<{
+      conversionsUpdated: number;
+      totalAmount: number;
+    }>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const getReferralSecurityReport = async (
+  hours: number = 24
+): Promise<ReferralSecurityReport> => {
+  try {
+    const response = await apiClient.get<ApiResponse<ReferralSecurityReport>>(
+      `/referrals/admin/security-report?hours=${encodeURIComponent(String(hours))}`
+    );
+    return handleApiResponse<ReferralSecurityReport>(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }
