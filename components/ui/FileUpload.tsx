@@ -4,6 +4,30 @@ import React, { useRef, useState, useId, useMemo } from 'react';
 import { HiUpload, HiX, HiPhotograph, HiVideoCamera } from 'react-icons/hi';
 import { classNames } from '@/lib/utils/helpers';
 
+/** Validates file against HTML-like accept: comma-separated .ext and/or MIME types and/or type/* wildcards. */
+function fileMatchesAccept(file: File, accept: string): boolean {
+  const raw = accept.trim();
+  if (!raw) return true;
+  for (const token of raw.split(',').map((t) => t.trim()).filter(Boolean)) {
+    if (token.startsWith('.')) {
+      if (file.name.toLowerCase().endsWith(token.toLowerCase())) return true;
+    } else if (token.endsWith('/*')) {
+      const prefix = token.slice(0, -1);
+      if (file.type.startsWith(prefix)) return true;
+    } else if (token.includes('*')) {
+      const escaped = token.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+      try {
+        if (new RegExp(`^${escaped}$`, 'i').test(file.type)) return true;
+      } catch {
+        /* ignore */
+      }
+    } else if (file.type === token) {
+      return true;
+    }
+  }
+  return false;
+}
+
 interface FileUploadProps {
   label?: string;
   accept?: string;
@@ -50,12 +74,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         formatText: 'MP4, WebM, OGG, MOV',
         aspectRatio: ''
       };
-    } else if (acceptLower.includes('pdf') || acceptLower.includes('doc') || acceptLower.includes('document')) {
+    } else if (
+      acceptLower.includes('pdf') ||
+      acceptLower.includes('ppt') ||
+      acceptLower.includes('doc') ||
+      acceptLower.includes('document')
+    ) {
       return {
         type: 'document',
         icon: HiUpload,
         uploadText: 'Upload document',
-        formatText: 'PDF, DOC, DOCX',
+        formatText: 'PDF, Word, PowerPoint, TXT',
         aspectRatio: ''
       };
     } else {
@@ -70,9 +99,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   }, [accept]);
 
   const handleFile = (file: File) => {
-    // Validate file type
-    if (accept && !file.type.match(accept.replace('*', '.*'))) {
-      alert(`Invalid file type. Please upload ${accept}`);
+    if (accept && !fileMatchesAccept(file, accept)) {
+      alert(`Invalid file type. Please upload: ${accept}`);
       return;
     }
 

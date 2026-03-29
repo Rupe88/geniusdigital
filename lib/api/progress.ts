@@ -64,6 +64,7 @@ export interface CourseProgressResponse {
       order: number;
       chapterId?: string;
       lessonType: string;
+      attachmentUrl?: string | null;
       videoDuration?: number;
       progress?: Array<{ isCompleted: boolean; watchTime?: number }>;
     }>;

@@ -267,18 +267,18 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
               value={attachmentUrl}
               onChange={(e) => setAttachmentUrl(e.target.value)}
               placeholder="https://example.com/document.pdf"
-              helperText="Direct link to PDF or document. Supports: Google Drive (shared 'Anyone with the link'), Google Classroom, or any public URL."
+              helperText="Direct link to PDF, PowerPoint, or other document. Supports: Google Drive (shared 'Anyone with the link'), Google Classroom, or any public URL."
             />
 
             <div className="bg-[var(--muted)]/30 p-4 rounded-none border border-[var(--border)] border-dashed">
               <p className="text-sm font-medium text-[var(--foreground)] mb-3">Or Upload Document</p>
               <FileUpload
-                accept=".pdf,.doc,.docx,.txt"
+                accept=".pdf,.ppt,.pptx,.doc,.docx,.txt"
                 onChange={setAttachmentFile}
                 onRemove={() => setAttachmentFile(null)}
                 value={attachmentFile}
                 label="Select Document"
-                helperText="PDF, Word, TXT (Max 50MB)"
+                helperText="PDF, PowerPoint, Word, TXT (max 50MB)"
               />
               {attachmentFile && (
                 <p className="mt-2 text-xs text-green-600 font-medium flex items-center gap-1">

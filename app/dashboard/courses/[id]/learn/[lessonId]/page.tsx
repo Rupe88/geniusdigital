@@ -10,7 +10,9 @@ import { LessonPlayer } from '@/components/player/LessonPlayer';
 import { Button } from '@/components/ui/Button';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { showSuccess } from '@/lib/utils/toast';
+import { getLessonKindLabel } from '@/lib/utils/helpers';
 import { useLearn } from '@/lib/context/LearnContext';
+import { LessonTypeIcon } from '@/components/learn/LessonTypeIcon';
 
 export default function LessonPage({
   params: paramsPromise,
@@ -124,6 +126,13 @@ export default function LessonPage({
 
   return (
     <div className="animate-fadeIn">
+      <header className="mb-6 pb-4 border-b border-gray-200">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{lesson.title}</h1>
+        <p className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+          <LessonTypeIcon lesson={lesson} variant="dashboard" size="sm" />
+          <span>{getLessonKindLabel(lesson)}</span>
+        </p>
+      </header>
       <LessonPlayer lesson={lesson} onComplete={handleComplete} />
 
       <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">

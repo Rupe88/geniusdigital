@@ -199,6 +199,31 @@ export const getDocumentOpenUrl = (url: string): string => {
   return downloadUrl ?? url;
 };
 
+/** True when attachment URL points to PowerPoint (path ends with .ppt / .pptx). Used for lesson player UX. */
+export const isPresentationAttachmentUrl = (url: string | null | undefined): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  const path = url.split('?')[0].split('#')[0].toLowerCase();
+  return path.endsWith('.pptx') || path.endsWith('.ppt');
+};
+
+/** Short label for lesson header / UI (PDF vs Presentation). */
+export function getLessonKindLabel(lesson: {
+  lessonType: string;
+  attachmentUrl?: string | null;
+}): string {
+  if (lesson.lessonType === 'PDF' && isPresentationAttachmentUrl(lesson.attachmentUrl)) {
+    return 'Presentation';
+  }
+  const labels: Record<string, string> = {
+    VIDEO: 'Video',
+    TEXT: 'Reading',
+    PDF: 'PDF',
+    QUIZ: 'Quiz',
+    ASSIGNMENT: 'Assignment',
+  };
+  return labels[lesson.lessonType] ?? 'Lesson';
+}
+
 export const getVideoEmbedUrl = (
   url: string | null | undefined,
   options?: { autoplay?: boolean; hideToolbar?: boolean }

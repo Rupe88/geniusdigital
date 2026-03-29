@@ -8,7 +8,8 @@ import * as chapterApi from '@/lib/api/chapters';
 import * as lessonApi from '@/lib/api/lessons';
 import * as progressApi from '@/lib/api/progress';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { HiMenu, HiX, HiChevronLeft, HiChevronDown, HiVideoCamera, HiClipboardList, HiPencilAlt } from 'react-icons/hi';
+import { HiMenu, HiX, HiChevronLeft, HiChevronDown } from 'react-icons/hi';
+import { LessonTypeIcon } from '@/components/learn/LessonTypeIcon';
 import { useAuth } from '@/lib/context/AuthContext';
 import { showError } from '@/lib/utils/toast';
 import { LearnProvider, useLearn } from '@/lib/context/LearnContext';
@@ -74,29 +75,6 @@ function LearnLayoutInner({
   }, [chapters, lessons, currentLessonId, lessonsByChapter.byChapter]);
 
   if (!course) return null;
-
-  const getLessonTypeIcon = (lessonType: Lesson['lessonType']) => {
-    switch (lessonType) {
-      case 'VIDEO':
-        return <HiVideoCamera className="w-4 h-4 flex-shrink-0" />;
-      case 'QUIZ':
-        return <HiClipboardList className="w-4 h-4 flex-shrink-0" />;
-      case 'PDF':
-        return (
-          <img
-            src="/pdf.png"
-            alt=""
-            width={16}
-            height={16}
-            className="w-4 h-4 flex-shrink-0 object-contain"
-          />
-        );
-      case 'TEXT':
-      case 'ASSIGNMENT':
-      default:
-        return <HiPencilAlt className="w-4 h-4 flex-shrink-0" />;
-    }
-  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[var(--muted)]">
@@ -205,7 +183,7 @@ function LearnLayoutInner({
                               >
                                 <span className="flex items-start gap-2 min-w-0">
                                   <span className="text-[var(--muted-foreground)] mt-0.5">
-                                    {getLessonTypeIcon(lesson.lessonType)}
+                                    <LessonTypeIcon lesson={lesson} variant="dashboard" size="sm" />
                                   </span>
                                   <span className="line-clamp-2 min-w-0">{lesson.title}</span>
                                 </span>
@@ -238,7 +216,7 @@ function LearnLayoutInner({
                           >
                             <span className="flex items-start gap-2 min-w-0">
                               <span className="text-[var(--muted-foreground)] mt-0.5">
-                                {getLessonTypeIcon(lesson.lessonType)}
+                                <LessonTypeIcon lesson={lesson} variant="dashboard" size="sm" />
                               </span>
                               <span className="line-clamp-2 min-w-0">{lesson.title}</span>
                             </span>

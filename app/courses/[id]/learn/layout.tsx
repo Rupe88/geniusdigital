@@ -8,7 +8,8 @@ import * as chapterApi from '@/lib/api/chapters';
 import * as lessonApi from '@/lib/api/lessons';
 import * as progressApi from '@/lib/api/progress';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { HiMenu, HiX, HiPlay, HiDocument, HiClipboardCheck, HiChevronLeft, HiCheckCircle } from 'react-icons/hi';
+import { HiMenu, HiX, HiChevronLeft, HiCheckCircle } from 'react-icons/hi';
+import { LessonTypeIcon } from '@/components/learn/LessonTypeIcon';
 import { useAuth } from '@/lib/context/AuthContext';
 import { showError } from '@/lib/utils/toast';
 import { LearnProvider, useLearn } from '@/lib/context/LearnContext';
@@ -20,39 +21,15 @@ function LearnLayoutInner({
   children: React.ReactNode;
   params: { id?: string; lessonId?: string };
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const {
     course,
     chapters,
     lessons,
     completedLessonIds,
     progressPercent,
-    getNextLesson,
-    getPrevLesson,
   } = useLearn();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const currentLessonId = resolvedParams.lessonId as string;
-
-  const getLessonIcon = (type: string) => {
-    switch (type) {
-      case 'VIDEO': return <HiPlay className="w-4 h-4" />;
-      case 'PDF':
-        return (
-          <img
-            src="/pdf.png"
-            alt=""
-            width={16}
-            height={16}
-            className="w-4 h-4 object-contain"
-          />
-        );
-      case 'QUIZ':
-      case 'ASSIGNMENT': return <HiClipboardCheck className="w-4 h-4" />;
-      default: return <HiDocument className="w-4 h-4" />;
-    }
-  };
 
   // Flat playlist: lessons in order (by chapter then lesson order)
   const playlistLessons = useMemo(() => {
@@ -156,7 +133,7 @@ function LearnLayoutInner({
                         {index + 1}
                       </span>
                       <span className="flex-shrink-0 text-gray-400">
-                        {getLessonIcon(lesson.lessonType)}
+                        <LessonTypeIcon lesson={lesson} variant="marketing" size="sm" />
                       </span>
                       <span className="flex-1 min-w-0 truncate text-sm font-medium">
                         {lesson.title}

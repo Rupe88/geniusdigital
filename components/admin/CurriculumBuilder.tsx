@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
-import { classNames } from '@/lib/utils/helpers';
+import { classNames, isPresentationAttachmentUrl } from '@/lib/utils/helpers';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -53,6 +53,7 @@ import {
   HiClipboard,
   HiChevronDown,
   HiChevronUp,
+  HiPresentationChartBar,
 } from 'react-icons/hi2';
 import { HiX } from 'react-icons/hi';
 
@@ -864,7 +865,12 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                             <div className="flex items-center gap-3 flex-1">
                               {lesson.lessonType === 'VIDEO' && <HiPlay className="w-5 h-5 text-blue-500" />}
                               {lesson.lessonType === 'TEXT' && <HiDocument className="w-5 h-5 text-green-500" />}
-                              {lesson.lessonType === 'PDF' && <HiDocument className="w-5 h-5 text-red-500" />}
+                              {lesson.lessonType === 'PDF' &&
+                                (isPresentationAttachmentUrl((lesson as Lesson).attachmentUrl) ? (
+                                  <HiPresentationChartBar className="w-5 h-5 text-amber-600" aria-hidden />
+                                ) : (
+                                  <HiDocument className="w-5 h-5 text-red-500" />
+                                ))}
                               {lesson.lessonType === 'QUIZ' && <HiClipboard className="w-5 h-5 text-purple-500" />}
                               {lesson.lessonType === 'ASSIGNMENT' && <HiClipboard className="w-5 h-5 text-orange-500" />}
                               <div className="flex flex-col">
@@ -1072,12 +1078,12 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
 
           {lessonForm.lessonType === 'PDF' && (
             <FileUpload
-              label="Upload PDF File"
-              accept=".pdf"
+              label="Upload document"
+              accept=".pdf,.ppt,.pptx"
               maxSize={50}
               value={lessonForm.attachmentFile}
               onChange={(file) => setLessonForm(prev => ({ ...prev, attachmentFile: file }))}
-              helperText="Upload PDF file (max 50MB)"
+              helperText="PDF or PowerPoint (.pdf, .ppt, .pptx — max 50MB)"
             />
           )}
 

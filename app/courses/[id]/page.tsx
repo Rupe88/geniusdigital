@@ -23,7 +23,8 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { ROUTES } from '@/lib/utils/constants';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiClipboardCheck, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
+import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
+import { LessonTypeIcon } from '@/components/learn/LessonTypeIcon';
 import {
   FaFacebook,
   FaTwitter,
@@ -477,20 +478,6 @@ export default function CourseDetailPage({
     return minutes > 0 ? `${minutes} min` : 'N/A';
   };
 
-  const getLessonIcon = (type: string) => {
-    switch (type) {
-      case 'VIDEO':
-        return <HiPlay className="w-5 h-5" />;
-      case 'PDF':
-        return <HiDocument className="w-5 h-5" />;
-      case 'QUIZ':
-      case 'ASSIGNMENT':
-        return <HiClipboardCheck className="w-5 h-5" />;
-      default:
-        return <HiDocument className="w-5 h-5" />;
-    }
-  };
-
   // Safe lesson grouping
   const groupedLessons = (lessons || []).reduce((acc, lesson) => {
     if (!lesson || !lesson.title) return acc;
@@ -794,7 +781,7 @@ export default function CourseDetailPage({
                                 <div key={lesson.id} className="flex items-center justify-between p-3">
                                   <div className="flex items-center gap-3 flex-1">
                                     <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-50 text-[var(--primary-700)] flex items-center justify-center">
-                                      {getLessonIcon(lesson.lessonType)}
+                                      <LessonTypeIcon lesson={lesson} variant="marketing" size="md" />
                                     </div>
                                     <div>
                                       <h4 className="font-medium text-gray-900 text-sm">

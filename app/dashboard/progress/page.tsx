@@ -19,9 +19,8 @@ import {
   HiChevronUp,
   HiRefresh,
   HiBookOpen,
-  HiDocumentText,
-  HiClipboardCheck,
 } from 'react-icons/hi';
+import { LessonTypeIcon } from '@/components/learn/LessonTypeIcon';
 
 type FilterStatus = 'ALL' | 'ACTIVE' | 'COMPLETED';
 
@@ -38,18 +37,6 @@ const STATUS_STYLES: Record<string, string> = {
   PENDING: 'bg-amber-600 text-white border-0',
   CANCELLED: 'bg-gray-500 text-white border-0',
 };
-
-function getLessonIcon(type: string) {
-  switch (type) {
-    case 'VIDEO':
-      return <HiPlay className="w-4 h-4 text-gray-500 flex-shrink-0" />;
-    case 'QUIZ':
-    case 'ASSIGNMENT':
-      return <HiClipboardCheck className="w-4 h-4 text-gray-500 flex-shrink-0" />;
-    default:
-      return <HiDocumentText className="w-4 h-4 text-gray-500 flex-shrink-0" />;
-  }
-}
 
 function ProgressSkeleton() {
   return (
@@ -204,7 +191,16 @@ function CourseProgressCard({
                       ) : (
                         <span className="w-5 h-5 rounded-full border-2 border-[var(--border)] flex-shrink-0" />
                       )}
-                      {getLessonIcon(lesson.lessonType ?? 'TEXT')}
+                      <span className="text-gray-500 [&_svg]:text-gray-500">
+                        <LessonTypeIcon
+                          lesson={{
+                            lessonType: (lesson.lessonType ?? 'TEXT') as 'VIDEO' | 'TEXT' | 'PDF' | 'QUIZ' | 'ASSIGNMENT',
+                            attachmentUrl: lesson.attachmentUrl ?? undefined,
+                          }}
+                          variant="dashboard"
+                          size="sm"
+                        />
+                      </span>
                       <span className="text-sm text-[var(--foreground)] truncate flex-1 min-w-0">
                         {lesson.title}
                       </span>

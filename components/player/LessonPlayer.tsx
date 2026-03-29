@@ -5,7 +5,13 @@ import { Lesson, Quiz } from '@/lib/types/course';
 import { QuizPlayer } from './QuizPlayer';
 import { HiDocumentText, HiVideoCamera, HiClipboardList, HiDownload, HiRefresh } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
-import { getVideoEmbedUrl, getDocumentOpenUrl, isGoogleClassroomUrl, getGoogleDriveEmbedUrl } from '@/lib/utils/helpers';
+import {
+    getVideoEmbedUrl,
+    getDocumentOpenUrl,
+    isGoogleClassroomUrl,
+    getGoogleDriveEmbedUrl,
+    isPresentationAttachmentUrl,
+} from '@/lib/utils/helpers';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { getQuizByLesson } from '@/lib/api/quizzes';
 import { getMyAttemptsForQuiz, type UserQuizAttempt } from '@/lib/api/userQuizAttempts';
@@ -250,6 +256,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                 const docDownloadUrl = pdfUrl ? getDocumentOpenUrl(pdfUrl) : '';
                 const isDrive = pdfUrl && /drive\.google\.com\/file\/d\//.test(pdfUrl);
                 const isClassroom = pdfUrl && isGoogleClassroomUrl(pdfUrl);
+                const isPresentation = isPresentationAttachmentUrl(pdfUrl);
                 const embedPdfUrl = isDrive ? getGoogleDriveEmbedUrl(pdfUrl, true) : null;
 
                 return (
@@ -260,11 +267,15 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     <HiDocumentText className="w-8 h-8" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-gray-900 mb-1">PDF Document</h3>
+                                    <h3 className="text-xl font-black text-gray-900 mb-1">
+                                        {isPresentation ? 'Presentation' : 'PDF Document'}
+                                    </h3>
                                     <p className="text-gray-500 font-medium text-sm">
                                         {isClassroom
                                             ? 'Open the document in Google Classroom to view or download'
-                                            : 'View, download, or open the course materials below'}
+                                            : isPresentation && !isDrive
+                                              ? 'Slides open in PowerPoint or compatible apps. Use download below.'
+                                              : 'View, download, or open the course materials below'}
                                     </p>
                                 </div>
                             </div>
@@ -273,7 +284,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                     <iframe
                                         src={embedPdfUrl}
                                         className="w-full h-full"
-                                        title="PDF Document"
+                                        title={isPresentation ? 'Presentation preview' : 'PDF Document'}
                                         sandbox="allow-scripts allow-same-origin allow-popups"
                                     />
                                     {/* Overlay to block Pop-out button */}
@@ -305,7 +316,7 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({ lesson, onComplete }
                                                 className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors"
                                             >
                                                 <HiDownload className="w-5 h-5" />
-                                                Download PDF
+                                                {isPresentation ? 'Download presentation' : 'Download PDF'}
                                             </a>
                                             {isDrive && (
                                                 <a
