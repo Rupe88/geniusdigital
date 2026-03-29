@@ -38,7 +38,16 @@ function LearnLayoutInner({
   const getLessonIcon = (type: string) => {
     switch (type) {
       case 'VIDEO': return <HiPlay className="w-4 h-4" />;
-      case 'PDF': return <HiDocument className="w-4 h-4" />;
+      case 'PDF':
+        return (
+          <img
+            src="/pdf.png"
+            alt=""
+            width={16}
+            height={16}
+            className="w-4 h-4 object-contain"
+          />
+        );
       case 'QUIZ':
       case 'ASSIGNMENT': return <HiClipboardCheck className="w-4 h-4" />;
       default: return <HiDocument className="w-4 h-4" />;

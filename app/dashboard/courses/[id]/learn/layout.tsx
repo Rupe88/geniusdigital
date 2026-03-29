@@ -8,7 +8,7 @@ import * as chapterApi from '@/lib/api/chapters';
 import * as lessonApi from '@/lib/api/lessons';
 import * as progressApi from '@/lib/api/progress';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { HiMenu, HiX, HiChevronLeft, HiChevronDown, HiVideoCamera, HiClipboardList, HiDocumentText, HiPencilAlt } from 'react-icons/hi';
+import { HiMenu, HiX, HiChevronLeft, HiChevronDown, HiVideoCamera, HiClipboardList, HiPencilAlt } from 'react-icons/hi';
 import { useAuth } from '@/lib/context/AuthContext';
 import { showError } from '@/lib/utils/toast';
 import { LearnProvider, useLearn } from '@/lib/context/LearnContext';
@@ -82,7 +82,15 @@ function LearnLayoutInner({
       case 'QUIZ':
         return <HiClipboardList className="w-4 h-4 flex-shrink-0" />;
       case 'PDF':
-        return <HiDocumentText className="w-4 h-4 flex-shrink-0" />;
+        return (
+          <img
+            src="/pdf.png"
+            alt=""
+            width={16}
+            height={16}
+            className="w-4 h-4 flex-shrink-0 object-contain"
+          />
+        );
       case 'TEXT':
       case 'ASSIGNMENT':
       default:
