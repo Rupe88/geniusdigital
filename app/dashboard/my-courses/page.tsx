@@ -298,14 +298,31 @@ export default function MyCoursesPage() {
                                   : 'bg-blue-100 text-blue-700'
                               }`}
                             >
-                              <div className="flex justify-between items-center">
-                                <span>
-                                  {accessInfo[enrollment.courseId].accessStatus === 'EXPIRED'
-                                    ? 'Access Expired'
-                                    : accessInfo[enrollment.courseId].accessStatus === 'EXPIRING_SOON'
-                                    ? 'Expires Soon'
-                                    : 'Partial Access'}
-                                </span>
+                              <div className="flex flex-col gap-0.5">
+                                <div className="flex justify-between items-center">
+                                  <span>
+                                    {accessInfo[enrollment.courseId].accessStatus === 'EXPIRED'
+                                      ? 'Access expired'
+                                      : accessInfo[enrollment.courseId].accessStatus === 'EXPIRING_SOON'
+                                      ? 'Access expiring soon'
+                                      : 'Partial access'}
+                                  </span>
+                                </div>
+                                {typeof accessInfo[enrollment.courseId].daysRemaining === 'number' &&
+                                  accessInfo[enrollment.courseId].daysRemaining >= 0 && (
+                                    <span className="text-xs opacity-90">
+                                      {accessInfo[enrollment.courseId].daysRemaining === 0
+                                        ? 'Last day of access'
+                                        : `${accessInfo[enrollment.courseId].daysRemaining} day${
+                                            accessInfo[enrollment.courseId].daysRemaining === 1 ? '' : 's'
+                                          } left`}
+                                    </span>
+                                  )}
+                                {accessInfo[enrollment.courseId].enrollment?.accessExpiresAt && (
+                                  <span className="text-[11px] opacity-80">
+                                    Until {formatDate(accessInfo[enrollment.courseId].enrollment.accessExpiresAt)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )}
