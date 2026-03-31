@@ -48,6 +48,16 @@ export default function AdminEnrollmentsPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const studentSearchRef = useRef<HTMLDivElement>(null);
 
+  const selectedCourseForGrant = availableCourses.find((c) => c.id === grantCourseId) || null;
+  const existingEnrollmentForGrant =
+    enrollments.find((e) => e.userId === grantUserId && e.courseId === grantCourseId) || null;
+  const baseCoursePrice = selectedCourseForGrant?.price ?? 0;
+  const alreadyPaidForGrant = existingEnrollmentForGrant?.pricePaid ?? 0;
+  const partialPaymentAmount = partialAccessPrice ? Number(partialAccessPrice) : 0;
+  const newTotalPaidForGrant = alreadyPaidForGrant + (Number.isFinite(partialPaymentAmount) ? partialPaymentAmount : 0);
+  const remainingAfterGrant =
+    baseCoursePrice > 0 ? Math.max(0, baseCoursePrice - newTotalPaidForGrant) : 0;
+
   useEffect(() => {
     fetchEnrollments();
   }, [pagination.page, status, courseId]);
@@ -635,7 +645,8 @@ export default function AdminEnrollmentsPage() {
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Status</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Access Type</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Expires At</th>
-                <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Price Paid</th>
+                <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Course Price</th>
+                <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Paid / Remaining</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)] text-right">Actions</th>
               </tr>
             </thead>
@@ -698,8 +709,44 @@ export default function AdminEnrollmentsPage() {
                         <span className="text-gray-400 text-xs">No expiration</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-medium">
-                      Rs. {(enrollment.pricePaid || 0).toLocaleString()}
+                    <td className="px-6 py-4">
+                      {enrollment.course ? (
+                        <div className="text-sm">
+                          {typeof enrollment.course.originalPrice === 'number' ? (
+                            <>
+                              <span className="line-through text-xs text-gray-400 mr-1">
+                                Rs. {enrollment.course.originalPrice.toLocaleString()}
+                              </span>
+                              <span className="font-medium">
+                                Rs. {enrollment.course.price.toLocaleString()}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="font-medium">
+                              Rs. {enrollment.course.price.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div>
+                          Paid:{' '}
+                          <span className="font-medium">
+                            Rs. {(enrollment.pricePaid || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        {enrollment.course && typeof enrollment.course.price === 'number' && (
+                          <div className="text-xs text-[var(--muted-foreground)]">
+                            Remaining:{' '}
+                            Rs. {Math.max(0, enrollment.course.price - (enrollment.pricePaid || 0)).toLocaleString()}
+                            {enrollment.accessType === 'PARTIAL' && ' (partial access)'}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Button
@@ -787,6 +834,48 @@ export default function AdminEnrollmentsPage() {
                   value={partialAccessPrice}
                   onChange={(e) => setPartialAccessPrice(e.target.value)}
                 />
+              </div>
+
+              <div className="rounded border border-dashed border-[var(--border)] bg-[var(--muted)]/20 px-3 py-2 text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-foreground)]">Course price</span>
+                  <span className="font-semibold text-[var(--foreground)]">
+                    {baseCoursePrice
+                      ? `Rs. ${baseCoursePrice.toLocaleString()}`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-foreground)]">Already paid</span>
+                  <span className="font-semibold text-[var(--foreground)]">
+                    Rs. {alreadyPaidForGrant.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-foreground)]">This payment</span>
+                  <span className="font-semibold text-[var(--foreground)]">
+                    Rs. {(Number.isFinite(partialPaymentAmount) ? partialPaymentAmount : 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-1 border-t border-[var(--border)]/60 mt-1">
+                  <span className="text-[var(--muted-foreground)]">Total paid after grant</span>
+                  <span className="font-semibold text-[var(--foreground)]">
+                    Rs. {newTotalPaidForGrant.toLocaleString()}
+                  </span>
+                </div>
+                {baseCoursePrice > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-foreground)]">Remaining</span>
+                    <span className="font-semibold text-[var(--foreground)]">
+                      Rs. {remainingAfterGrant.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {existingEnrollmentForGrant?.accessType === 'PARTIAL' && (
+                  <div className="text-[11px] text-blue-700 mt-0.5">
+                    Existing enrollment is already on partial access; this will extend duration and update totals.
+                  </div>
+                )}
               </div>
 
               <div>
