@@ -93,6 +93,7 @@ const adminMenuCategories: MenuCategory[] = [
       { href: `${ROUTES.ADMIN}/quiz-attempts`, label: 'Quiz Attempts', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/certificates`, label: 'Certificates', icon: HiDocumentText },
       { href: `${ROUTES.ADMIN}/numerology`, label: 'Numerology', icon: HiSparkles },
+      { href: `${ROUTES.ADMIN}/strong-limiting-belief`, label: 'Strong Limiting Belief', icon: HiSparkles },
       { href: `${ROUTES.ADMIN}/compass`, label: 'Compass', icon: HiLocationMarker },
     ],
   },

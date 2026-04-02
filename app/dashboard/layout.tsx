@@ -19,6 +19,7 @@ import {
   HiLogout,
   HiCalendar,
   HiDocumentText,
+  HiSparkles,
 } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 import { getMyAffiliate } from '@/lib/api/affiliate';
@@ -33,6 +34,7 @@ const baseMenuItems = [
   { href: `${ROUTES.DASHBOARD}/payments`, label: 'Payments', icon: HiCreditCard },
   { href: `${ROUTES.DASHBOARD}/installments`, label: 'Installments', icon: HiCalendar },
   { href: `${ROUTES.DASHBOARD}/settings`, label: 'Settings', icon: HiCog },
+  { href: `${ROUTES.DASHBOARD}/limiting-belief`, label: 'Limiting Belief', icon: HiSparkles },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
