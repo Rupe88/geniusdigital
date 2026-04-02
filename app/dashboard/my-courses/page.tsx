@@ -14,6 +14,79 @@ import { Enrollment } from '@/lib/types/course';
 import { formatDate } from '@/lib/utils/helpers';
 import { showError, showSuccess } from '@/lib/utils/toast';
 
+const fmtRs = (n: number) => `Rs. ${Math.max(0, n).toLocaleString()}`;
+
+/** List / discount / net / paid / remaining for dashboard cards (uses API-enriched enrollment fields). */
+function EnrollmentPricingAside({
+  enrollment,
+  borderClassName,
+}: {
+  enrollment: Enrollment;
+  borderClassName: string;
+}) {
+  const list = enrollment.listPrice ?? enrollment.course?.price ?? 0;
+  if (!Number.isFinite(list) || list <= 0) return null;
+
+  const net =
+    enrollment.netPayableAfterDiscount != null
+      ? Number(enrollment.netPayableAfterDiscount)
+      : list;
+  const discountAmt =
+    enrollment.adminDiscountAmount != null ? Number(enrollment.adminDiscountAmount) : 0;
+  const paid = Number(enrollment.pricePaid ?? 0);
+  const remaining =
+    enrollment.remainingBalance != null
+      ? Math.max(0, Number(enrollment.remainingBalance))
+      : Math.max(0, net - paid);
+
+  const hasAdjustedNet =
+    enrollment.coupon?.code ||
+    discountAmt > 0 ||
+    (enrollment.netPayableAfterDiscount != null && Math.abs(net - list) > 0.01);
+
+  return (
+    <div
+      className={`shrink-0 text-right text-[11px] leading-snug space-y-0.5 min-w-[6.75rem] sm:min-w-[7.5rem] border-l pl-2.5 ml-0.5 tabular-nums ${borderClassName}`}
+    >
+      {enrollment.coupon?.code && (
+        <div className="font-medium text-[10px] uppercase tracking-wide opacity-90 mb-0.5">
+          {enrollment.coupon.code}
+        </div>
+      )}
+      {hasAdjustedNet && (
+        <>
+          <div className="flex justify-between gap-2">
+            <span className="opacity-75 text-left">List</span>
+            <span>{fmtRs(list)}</span>
+          </div>
+          {discountAmt > 0 && (
+            <div className="flex justify-between gap-2 text-emerald-800">
+              <span className="opacity-75 text-left">Off</span>
+              <span>−{fmtRs(discountAmt)}</span>
+            </div>
+          )}
+          <div className="flex justify-between gap-2 font-semibold">
+            <span className="opacity-75 text-left font-normal">Net</span>
+            <span>{fmtRs(net)}</span>
+          </div>
+        </>
+      )}
+      <div
+        className={`flex justify-between gap-2 pt-0.5 ${hasAdjustedNet ? 'border-t border-black/10 mt-0.5' : ''}`}
+      >
+        <span className="opacity-75 text-left">Paid</span>
+        <span>{fmtRs(paid)}</span>
+      </div>
+      <div className="flex justify-between gap-2 font-semibold">
+        <span className="opacity-75 text-left font-normal">Due</span>
+        <span className={remaining > 0 ? 'text-amber-900' : 'text-emerald-800'}>
+          {remaining > 0 ? fmtRs(remaining) : remaining === 0 && paid > 0 ? 'Paid' : fmtRs(0)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function MyCoursesPage() {
   const router = useRouter();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -300,7 +373,7 @@ export default function MyCoursesPage() {
                             >
                               <div className="flex flex-col gap-0.5">
                                 <div className="flex justify-between items-center">
-                                  <span>
+                                  <span className="font-medium">
                                     {accessInfo[enrollment.courseId].accessStatus === 'EXPIRED'
                                       ? 'Access expired'
                                       : accessInfo[enrollment.courseId].accessStatus === 'EXPIRING_SOON'
@@ -328,9 +401,9 @@ export default function MyCoursesPage() {
                           )}
                         </div>
                       )}
-                      <div className="flex items-center justify-between mt-1">
+                      <div className="flex flex-wrap items-end justify-between gap-2 mt-1">
                         <div
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium shrink-0 ${
                             enrollment.accessType === 'PARTIAL'
                               ? 'bg-blue-100 text-blue-800'
                               : enrollment.accessType === 'FULL'
@@ -340,11 +413,21 @@ export default function MyCoursesPage() {
                         >
                           {enrollment.accessType || 'FULL'}
                         </div>
-                        <Link href={`/dashboard/courses/${enrollment.courseId}/learn`} onClick={(e) => e.stopPropagation()}>
-                          <Button variant="primary" size="sm">
-                            {enrollment.status === 'COMPLETED' ? 'Review' : 'Continue'}
-                          </Button>
-                        </Link>
+                        <div className="flex items-end gap-2 ml-auto">
+                          <EnrollmentPricingAside
+                            enrollment={enrollment}
+                            borderClassName="border-gray-300/80 text-gray-800"
+                          />
+                          <Link
+                            href={`/dashboard/courses/${enrollment.courseId}/learn`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="shrink-0"
+                          >
+                            <Button variant="primary" size="sm">
+                              {enrollment.status === 'COMPLETED' ? 'Review' : 'Continue'}
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>

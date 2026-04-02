@@ -128,11 +128,16 @@ export const deleteEnrollment = async (id: string): Promise<void> => {
   }
 };
 
-export const grantCourseAccess = async (userId: string, courseId: string): Promise<void> => {
+export const grantCourseAccess = async (
+  userId: string,
+  courseId: string,
+  options?: { couponCode?: string }
+): Promise<void> => {
   try {
     const response = await apiClient.post<ApiResponse<Enrollment>>(API_ENDPOINTS.ENROLLMENTS.ADMIN_GRANT, {
       userId,
       courseId,
+      ...(options?.couponCode?.trim() ? { couponCode: options.couponCode.trim().toUpperCase() } : {}),
     });
     const payload = response.data;
     if (!payload.success) {
@@ -151,14 +156,21 @@ export const grantPartialAccess = async (data: {
   durationDays: number;
   pricePaid?: number;
   adminNotes?: string;
+  couponCode?: string;
 }): Promise<Enrollment> => {
   try {
-    const response = await apiClient.post<ApiResponse<Enrollment>>(API_ENDPOINTS.ENROLLMENTS.ADMIN_GRANT_PARTIAL, data);
-    const payload = response.data;
-    if (!payload.success || !payload.data) {
-      throw new Error(payload.message || 'Failed to grant partial access');
+    const body = {
+      ...data,
+      ...(data.couponCode?.trim()
+        ? { couponCode: data.couponCode.trim().toUpperCase() }
+        : { couponCode: undefined }),
+    };
+    const response = await apiClient.post<ApiResponse<Enrollment>>(API_ENDPOINTS.ENROLLMENTS.ADMIN_GRANT_PARTIAL, body);
+    const resPayload = response.data;
+    if (!resPayload.success || !resPayload.data) {
+      throw new Error(resPayload.message || 'Failed to grant partial access');
     }
-    return payload.data;
+    return resPayload.data;
   } catch (error) {
     throw new Error(handleApiError(error));
   }

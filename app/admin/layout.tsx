@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiCalendar, HiVideoCamera, HiChartBar, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiOfficeBuilding, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout, HiQuestionMarkCircle, HiSparkles, HiLocationMarker } from 'react-icons/hi';
@@ -101,6 +101,7 @@ const adminMenuCategories: MenuCategory[] = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, loading, logout } = useAuth();
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['Dashboard']));
 
@@ -111,13 +112,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isCategoryActive = (category: MenuCategory) =>
     category.items.some((item) => pathname === item.href || pathname?.startsWith(item.href + '/'));
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (pathname === `${ROUTES.ADMIN}/login`) {
+      router.replace('/login');
+      return;
+    }
+    if (loading) return;
+    if (!isAuthenticated || user?.role !== 'ADMIN') {
+      router.replace('/login');
+    }
+  }, [pathname, loading, isAuthenticated, user?.role, router]);
+
+  useEffect(() => {
     const activeCategory = adminMenuCategories.find((c) => isCategoryActive(c));
     setOpenCategories(activeCategory ? new Set([activeCategory.label]) : new Set());
   }, [pathname]);
 
   if (pathname === `${ROUTES.ADMIN}/login`) {
-    if (typeof window !== 'undefined') window.location.href = '/login';
     return null;
   }
 
@@ -133,7 +144,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!isAuthenticated || user?.role !== 'ADMIN') {
-    window.location.href = '/login';
     return null;
   }
 

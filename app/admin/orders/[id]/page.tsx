@@ -40,7 +40,7 @@ export default function OrderDetailPage({
       const orderData = await ordersApi.getById(orderId);
       
       // Parse JSON addresses if they're strings
-      let parsedOrder = { ...orderData };
+      const parsedOrder = { ...orderData };
       if (typeof orderData.shippingAddress === 'string') {
         try {
           parsedOrder.shippingAddress = JSON.parse(orderData.shippingAddress);
@@ -79,7 +79,7 @@ export default function OrderDetailPage({
       });
       
       // Parse JSON addresses if they're strings
-      let parsedOrder = { ...updatedOrder };
+      const parsedOrder = { ...updatedOrder };
       if (typeof updatedOrder.shippingAddress === 'string') {
         try {
           parsedOrder.shippingAddress = JSON.parse(updatedOrder.shippingAddress);

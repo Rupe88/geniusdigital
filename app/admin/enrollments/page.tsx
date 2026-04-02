@@ -16,8 +16,21 @@ import type { User } from '@/lib/types/auth';
 import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiDownload, HiFilter, HiTrash, HiSearch, HiUpload } from 'react-icons/hi';
+import { getAllCoupons, validateCoupon, type Coupon } from '@/lib/api/coupon';
 
 type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+
+function couponAppliesToCourse(c: Coupon, courseId: string): boolean {
+  if (!courseId) return true;
+  const arr = c.applicableCourses;
+  if (!arr || !Array.isArray(arr) || arr.length === 0) return true;
+  return arr.includes(courseId);
+}
+
+type GrantCouponPreview =
+  | null
+  | { valid: true; discountAmount: number; finalAmount: number; code: string }
+  | { valid: false; message: string };
 
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -48,6 +61,10 @@ export default function AdminEnrollmentsPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const studentSearchRef = useRef<HTMLDivElement>(null);
 
+  const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
+  const [grantCouponId, setGrantCouponId] = useState('');
+  const [grantCouponPreview, setGrantCouponPreview] = useState<GrantCouponPreview>(null);
+
   const selectedCourseForGrant = availableCourses.find((c) => c.id === grantCourseId) || null;
   const existingEnrollmentForGrant =
     enrollments.find((e) => e.userId === grantUserId && e.courseId === grantCourseId) || null;
@@ -55,8 +72,19 @@ export default function AdminEnrollmentsPage() {
   const alreadyPaidForGrant = existingEnrollmentForGrant?.pricePaid ?? 0;
   const partialPaymentAmount = partialAccessPrice ? Number(partialAccessPrice) : 0;
   const newTotalPaidForGrant = alreadyPaidForGrant + (Number.isFinite(partialPaymentAmount) ? partialPaymentAmount : 0);
+
+  const effectiveNetCap =
+    existingEnrollmentForGrant?.netPayableAfterDiscount != null
+      ? Number(existingEnrollmentForGrant.netPayableAfterDiscount)
+      : grantCouponPreview && grantCouponPreview.valid
+        ? grantCouponPreview.finalAmount
+        : baseCoursePrice;
+
   const remainingAfterGrant =
-    baseCoursePrice > 0 ? Math.max(0, baseCoursePrice - newTotalPaidForGrant) : 0;
+    effectiveNetCap > 0 ? Math.max(0, effectiveNetCap - newTotalPaidForGrant) : 0;
+
+  const couponsForSelectedCourse = activeCoupons.filter((c) => couponAppliesToCourse(c, grantCourseId));
+  const enrollmentHasCoupon = Boolean(existingEnrollmentForGrant?.couponId);
 
   useEffect(() => {
     fetchEnrollments();
@@ -74,6 +102,64 @@ export default function AdminEnrollmentsPage() {
     };
     loadCourses();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getAllCoupons({ status: 'ACTIVE', page: 1, limit: 500 });
+        if (!cancelled) setActiveCoupons(res.data || []);
+      } catch {
+        if (!cancelled) setActiveCoupons([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!grantCourseId || !grantCouponId || enrollmentHasCoupon || !baseCoursePrice) {
+        setGrantCouponPreview(null);
+        return;
+      }
+      const c = activeCoupons.find((x) => x.id === grantCouponId);
+      if (!c) {
+        setGrantCouponPreview(null);
+        return;
+      }
+      const res = await validateCoupon({
+        code: c.code,
+        amount: baseCoursePrice,
+        courseId: grantCourseId,
+      });
+      if (cancelled) return;
+      if (res.valid) {
+        setGrantCouponPreview({
+          valid: true,
+          discountAmount: res.discountAmount,
+          finalAmount: res.finalAmount,
+          code: res.coupon.code,
+        });
+      } else {
+        setGrantCouponPreview({ valid: false, message: res.message });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [grantCourseId, grantCouponId, baseCoursePrice, enrollmentHasCoupon, activeCoupons]);
+
+  useEffect(() => {
+    if (!grantCouponId) return;
+    const stillApplies = couponsForSelectedCourse.some((c) => c.id === grantCouponId);
+    if (!stillApplies) {
+      setGrantCouponId('');
+      setGrantCouponPreview(null);
+    }
+  }, [grantCourseId, couponsForSelectedCourse, grantCouponId]);
 
   // Debounced search for students by email/name
   useEffect(() => {
@@ -177,14 +263,32 @@ export default function AdminEnrollmentsPage() {
       return;
     }
 
+    if (grantCouponId && baseCoursePrice > 0) {
+      if (grantCouponPreview?.valid === false) {
+        showError(grantCouponPreview.message || 'Invalid coupon for this course');
+        return;
+      }
+      if (!grantCouponPreview?.valid) {
+        showError('Validating coupon… try again in a moment.');
+        return;
+      }
+    }
+
     try {
       setGrantLoading(true);
-      await enrollmentApi.grantCourseAccess(userId, grantCourseId);
+      const selectedCoupon = grantCouponId ? activeCoupons.find((c) => c.id === grantCouponId) : null;
+      const sendCoupon =
+        baseCoursePrice > 0 && selectedCoupon && grantCouponPreview?.valid === true;
+      await enrollmentApi.grantCourseAccess(userId, grantCourseId, {
+        ...(sendCoupon ? { couponCode: selectedCoupon.code } : {}),
+      });
       showSuccess('Course access granted successfully');
 
       setGrantEmail('');
       setGrantUserId(null);
       setGrantCourseId('');
+      setGrantCouponId('');
+      setGrantCouponPreview(null);
       setStudentResults([]);
       setShowStudentDropdown(false);
       fetchEnrollments();
@@ -225,8 +329,26 @@ export default function AdminEnrollmentsPage() {
       return;
     }
 
+    if (!enrollmentHasCoupon && grantCouponId && baseCoursePrice > 0) {
+      if (grantCouponPreview?.valid === false) {
+        showError(grantCouponPreview.message || 'Invalid coupon for this course');
+        return;
+      }
+      if (!grantCouponPreview?.valid) {
+        showError('Validating coupon… try again in a moment.');
+        return;
+      }
+    }
+
     try {
       setGrantLoading(true);
+      const selectedCoupon = grantCouponId ? activeCoupons.find((c) => c.id === grantCouponId) : null;
+      const canSendCoupon =
+        baseCoursePrice > 0 &&
+        !enrollmentHasCoupon &&
+        selectedCoupon &&
+        grantCouponPreview?.valid === true;
+
       await enrollmentApi.grantPartialAccess({
         userId,
         courseId: grantCourseId,
@@ -234,6 +356,7 @@ export default function AdminEnrollmentsPage() {
         durationDays: partialAccessDuration,
         pricePaid: partialAccessPrice ? parseFloat(partialAccessPrice) : undefined,
         adminNotes: partialAccessNotes,
+        ...(canSendCoupon ? { couponCode: selectedCoupon.code } : {}),
       });
       showSuccess(`Partial access granted successfully for ${partialAccessDuration} days`);
 
@@ -241,6 +364,8 @@ export default function AdminEnrollmentsPage() {
       setGrantEmail('');
       setGrantUserId(null);
       setGrantCourseId('');
+      setGrantCouponId('');
+      setGrantCouponPreview(null);
       setStudentResults([]);
       setShowStudentDropdown(false);
       setShowPartialAccessModal(false);
@@ -430,7 +555,7 @@ export default function AdminEnrollmentsPage() {
           Search by student email or name, select from the list, then choose a course.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div ref={studentSearchRef} className="relative">
+          <div ref={studentSearchRef} className="relative md:col-span-1">
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
               Student
             </label>
@@ -490,7 +615,7 @@ export default function AdminEnrollmentsPage() {
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 md:col-span-1">
             <Button
               variant="primary"
               onClick={handleGrantAccess}
@@ -507,6 +632,54 @@ export default function AdminEnrollmentsPage() {
             >
               Grant Partial Access
             </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[var(--border)]">
+          <div>
+            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+              Coupon (optional)
+            </label>
+            <select
+              className="block w-full rounded-none border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] disabled:opacity-60"
+              value={grantCouponId}
+              onChange={(e) => setGrantCouponId(e.target.value)}
+              disabled={
+                !grantCourseId ||
+                enrollmentHasCoupon ||
+                !baseCoursePrice ||
+                Boolean(selectedCourseForGrant?.isFree)
+              }
+            >
+              <option value="">No coupon</option>
+              {couponsForSelectedCourse.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code}
+                  {c.couponType === 'PERCENTAGE' ? ` (${c.discountValue}%)` : ` (Rs. ${c.discountValue})`}
+                </option>
+              ))}
+            </select>
+            {(!baseCoursePrice || selectedCourseForGrant?.isFree) && grantCourseId && (
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                Coupons apply to paid courses only.
+              </p>
+            )}
+            {enrollmentHasCoupon && (
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                This enrollment already has coupon{' '}
+                {existingEnrollmentForGrant?.coupon?.code ? `(${existingEnrollmentForGrant.coupon.code})` : ''}. Use
+                partial access to add payments only.
+              </p>
+            )}
+            {grantCouponId && grantCouponPreview?.valid === false && (
+              <p className="text-xs text-red-600 mt-1">{grantCouponPreview.message}</p>
+            )}
+            {grantCouponPreview?.valid === true && (
+              <p className="text-xs text-green-700 mt-1">
+                Discount Rs. {grantCouponPreview.discountAmount.toLocaleString()} → Net Rs.{' '}
+                {grantCouponPreview.finalAmount.toLocaleString()} (list Rs. {baseCoursePrice.toLocaleString()})
+              </p>
+            )}
           </div>
         </div>
       </Card>
@@ -646,6 +819,7 @@ export default function AdminEnrollmentsPage() {
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Access Type</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Expires At</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Course Price</th>
+                <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Coupon / Net</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)]">Paid / Remaining</th>
                 <th className="px-6 py-4 font-semibold text-[var(--foreground)] text-right">Actions</th>
               </tr>
@@ -654,14 +828,14 @@ export default function AdminEnrollmentsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={8} className="px-6 py-4">
+                    <td colSpan={10} className="px-6 py-4">
                       <div className="h-4 bg-[var(--muted)] rounded-none w-full"></div>
                     </td>
                   </tr>
                 ))
               ) : enrollments.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={10} className="px-6 py-12 text-center text-[var(--muted-foreground)]">
                     No enrollments found matching your criteria.
                   </td>
                 </tr>
@@ -732,6 +906,30 @@ export default function AdminEnrollmentsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
+                      {enrollment.coupon?.code ||
+                      enrollment.netPayableAfterDiscount != null ||
+                      (enrollment.adminDiscountAmount ?? 0) > 0 ? (
+                        <div className="text-sm space-y-0.5">
+                          {enrollment.coupon?.code && (
+                            <div className="font-medium text-[var(--foreground)]">{enrollment.coupon.code}</div>
+                          )}
+                          {(enrollment.adminDiscountAmount ?? 0) > 0 && (
+                            <div className="text-xs text-amber-700">
+                              Discount −Rs. {(enrollment.adminDiscountAmount ?? 0).toLocaleString()}
+                            </div>
+                          )}
+                          {enrollment.netPayableAfterDiscount != null &&
+                            Number(enrollment.netPayableAfterDiscount) >= 0 && (
+                              <div className="text-xs text-[var(--muted-foreground)]">
+                                Net due Rs. {Number(enrollment.netPayableAfterDiscount).toLocaleString()}
+                              </div>
+                            )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="text-sm">
                         <div>
                           Paid:{' '}
@@ -739,12 +937,24 @@ export default function AdminEnrollmentsPage() {
                             Rs. {(enrollment.pricePaid || 0).toLocaleString()}
                           </span>
                         </div>
-                        {enrollment.course && typeof enrollment.course.price === 'number' && (
+                        {typeof enrollment.remainingBalance === 'number' ? (
                           <div className="text-xs text-[var(--muted-foreground)]">
-                            Remaining:{' '}
-                            Rs. {Math.max(0, enrollment.course.price - (enrollment.pricePaid || 0)).toLocaleString()}
+                            Remaining: Rs. {Math.max(0, enrollment.remainingBalance).toLocaleString()}
                             {enrollment.accessType === 'PARTIAL' && ' (partial access)'}
                           </div>
+                        ) : (
+                          enrollment.course &&
+                          typeof enrollment.course.price === 'number' && (
+                            <div className="text-xs text-[var(--muted-foreground)]">
+                              Remaining:{' '}
+                              Rs.{' '}
+                              {Math.max(
+                                0,
+                                enrollment.course.price - (enrollment.pricePaid || 0),
+                              ).toLocaleString()}
+                              {enrollment.accessType === 'PARTIAL' && ' (partial access)'}
+                            </div>
+                          )
                         )}
                       </div>
                     </td>
@@ -838,13 +1048,51 @@ export default function AdminEnrollmentsPage() {
 
               <div className="rounded border border-dashed border-[var(--border)] bg-[var(--muted)]/20 px-3 py-2 text-xs space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-[var(--muted-foreground)]">Course price</span>
+                  <span className="text-[var(--muted-foreground)]">Course price (list)</span>
                   <span className="font-semibold text-[var(--foreground)]">
                     {baseCoursePrice
                       ? `Rs. ${baseCoursePrice.toLocaleString()}`
                       : 'N/A'}
                   </span>
                 </div>
+                {enrollmentHasCoupon &&
+                  (existingEnrollmentForGrant?.adminDiscountAmount ?? 0) > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--muted-foreground)]">
+                          Coupon ({existingEnrollmentForGrant?.coupon?.code ?? '—'})
+                        </span>
+                        <span className="text-amber-700">
+                          −Rs. {(existingEnrollmentForGrant?.adminDiscountAmount ?? 0).toLocaleString()}
+                        </span>
+                      </div>
+                      {existingEnrollmentForGrant?.netPayableAfterDiscount != null && (
+                        <div className="flex justify-between">
+                          <span className="text-[var(--muted-foreground)]">Net due (enrollment)</span>
+                          <span className="font-semibold text-[var(--foreground)]">
+                            Rs.{' '}
+                            {Number(existingEnrollmentForGrant.netPayableAfterDiscount).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                {!enrollmentHasCoupon && grantCouponPreview?.valid === true && baseCoursePrice > 0 && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-[var(--muted-foreground)]">Coupon ({grantCouponPreview.code})</span>
+                      <span className="text-amber-700">
+                        −Rs. {grantCouponPreview.discountAmount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[var(--muted-foreground)]">Net due (after coupon)</span>
+                      <span className="font-semibold text-[var(--foreground)]">
+                        Rs. {grantCouponPreview.finalAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between">
                   <span className="text-[var(--muted-foreground)]">Already paid</span>
                   <span className="font-semibold text-[var(--foreground)]">

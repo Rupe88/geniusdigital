@@ -157,7 +157,11 @@ export const updateCoupon = async (id: string, data: UpdateCouponRequest): Promi
 export const deleteCoupon = async (id: string): Promise<void> => {
   try {
     const response = await apiClient.delete<ApiResponse<void>>(API_ENDPOINTS.COUPONS.BY_ID(id));
-    handleApiResponse<void>(response);
+    const payload = response.data;
+    // DELETE often returns { success, message } with no `data`; handleApiResponse would throw incorrectly.
+    if (!payload?.success) {
+      throw new Error(payload?.message || 'Failed to delete coupon');
+    }
   } catch (error) {
     throw new Error(handleApiError(error));
   }

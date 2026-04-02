@@ -143,6 +143,15 @@ export interface Enrollment {
   pricePaid: number;
   grantedByAdmin?: boolean;
   adminNotes?: string;
+
+  /** Admin-applied coupon (list price stays on course) */
+  couponId?: string | null;
+  coupon?: { id: string; code: string };
+  adminDiscountAmount?: number | null;
+  netPayableAfterDiscount?: number | null;
+  /** Populated on admin list API for display */
+  listPrice?: number;
+  remainingBalance?: number;
   
   course?: Course;
   user?: {
