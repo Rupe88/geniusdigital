@@ -79,6 +79,7 @@ export const API_ENDPOINTS = {
     ADMIN_GRANT: '/enrollments/admin/grant', // Admin: manually grant course access
     ADMIN_GRANT_PARTIAL: '/enrollments/admin/grant-partial', // Admin: grant partial access
     ADMIN_EXTEND_ACCESS: '/enrollments/admin/extend-access', // Admin: extend access
+    ADMIN_EXPORT_DETAIL: '/enrollments/admin/export-detail', // Admin: full CSV (filters: status, courseId, search)
     CHECK_EXPIRY: (courseId: string) => `/enrollments/check-expiry/${courseId}`, // Check access expiry
   },
   // Payments
