@@ -219,6 +219,18 @@ export const API_ENDPOINTS = {
     LIST: '/faqs',
     BY_ID: (id: string) => `/faqs/${id}`,
   },
+  LIMITING_BELIEF: {
+    CATALOG: '/limiting-belief/catalog',
+    ATTEMPTS: '/limiting-belief/attempts',
+    ADMIN_CATALOG: '/limiting-belief/admin/catalog',
+    ADMIN_ATTEMPTS: '/limiting-belief/admin/attempts',
+    ADMIN_SECTIONS: '/limiting-belief/admin/sections',
+    ADMIN_SECTION: (id: string) => `/limiting-belief/admin/sections/${id}`,
+    ADMIN_QUESTIONS: '/limiting-belief/admin/questions',
+    ADMIN_QUESTION: (id: string) => `/limiting-belief/admin/questions/${id}`,
+    ADMIN_SCORE_BANDS: '/limiting-belief/admin/score-bands',
+    ADMIN_SCORE_BAND: (id: string) => `/limiting-belief/admin/score-bands/${id}`,
+  },
   // Certificates
   CERTIFICATES: {
     LIST: '/certificates',

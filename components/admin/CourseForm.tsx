@@ -18,11 +18,12 @@ import { CurriculumBuilder } from './CurriculumBuilder';
 import { Course, Category, Instructor } from '@/lib/types/course';
 import { CreateCourseData } from '@/lib/api/courses';
 import { generateSlug } from '@/lib/utils/helpers';
+import { normalizeThumbnailUrl } from '@/lib/utils/thumbnailUrl';
 import { showError } from '@/lib/utils/toast';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 
 const courseSchema = z.object({
-  // Step 1 – only title required; thumbnail validated on submit
+  // Step 1 – title required; thumbnail optional (can add later when storage is stable)
   title: z.string().min(1, 'Title is required').max(255, 'Title must be less than 255 characters'),
   slug: z.string().optional(),
   instructorId: z.string().uuid().optional().or(z.literal('')),
@@ -63,6 +64,20 @@ const courseSchema = z.object({
   videoUrl: z
     .string()
     .optional(),
+  /** External thumbnail when not uploading a file (e.g. S3 down — Google Drive or any https image URL) */
+  thumbnailUrl: z
+    .string()
+    .max(2048)
+    .optional()
+    .refine(
+      (val) => {
+        if (val == null || val === '') return true;
+        const t = val.trim();
+        if (!t) return true;
+        return /^https?:\/\//i.test(t) || t.startsWith('/');
+      },
+      { message: 'Use https:// (or http://) or a path starting with /' }
+    ),
 });
 
 type CourseFormData = z.infer<typeof courseSchema> & {
@@ -177,6 +192,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         startDate: course.startDate ? course.startDate.split('T')[0] : '',
         endDate: course.endDate ? course.endDate.split('T')[0] : '',
         videoUrl: course.videoUrl || '',
+        thumbnailUrl: course.thumbnail || '',
       }
       : {
         title: '',
@@ -190,6 +206,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         isFree: false,
         featured: false,
         isOngoing: false,
+        thumbnailUrl: '',
       },
     mode: 'onChange', // Changed to onChange to enable real-time slug generation
   });
@@ -201,6 +218,18 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const watchTags = watch('tags');
   const watchSkills = watch('skills');
   const watchLearningOutcomes = watch('learningOutcomes');
+  const thumbnailUrlVal = watch('thumbnailUrl');
+
+  // Live preview for thumbnail link (no file selected)
+  useEffect(() => {
+    if (thumbnailFile) return;
+    const t = thumbnailUrlVal?.trim();
+    if (!t) {
+      setThumbnailPreview(course?.thumbnail ?? null);
+      return;
+    }
+    setThumbnailPreview(normalizeThumbnailUrl(t));
+  }, [thumbnailUrlVal, thumbnailFile, course?.thumbnail]);
 
   // Auto-generate slug from title when creating a new course (backup via useEffect)
   useEffect(() => {
@@ -243,6 +272,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const handleFileChange = useCallback((file: File | null) => {
     setThumbnailFile(file);
     if (file) {
+      setValue('thumbnailUrl', '', { shouldValidate: false, shouldDirty: true });
       // Check file size before processing (limit to 10MB)
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
@@ -258,14 +288,11 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         setThumbnailPreview(null);
       };
       reader.readAsDataURL(file);
-    } else {
-      setThumbnailPreview(course?.thumbnail || null);
     }
-  }, [course?.thumbnail]);
+  }, [setValue]);
 
   const handleFileRemove = () => {
     setThumbnailFile(null);
-    setThumbnailPreview(course?.thumbnail || null);
   };
 
   const validateStep = async (step: number): Promise<boolean> => {
@@ -319,12 +346,8 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
       const learningOutcomes = data.learningOutcomes;
       const skills = data.skills;
 
-      // Required: title and thumbnail (for new course)
       if (!data.title || !data.title.trim()) {
         throw new Error('Title is required');
-      }
-      if (!course && !thumbnailFile) {
-        throw new Error('Thumbnail is required');
       }
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (data.instructorId && data.instructorId.trim() && !uuidRegex.test(data.instructorId.trim())) {
@@ -357,9 +380,13 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
           requestAnimationFrame(() => setUploadProgress(progress));
         },
       };
-      // Backend requires thumbnail on update too; if admin didn't pick a new file,
-      // send the existing thumbnail URL (S3/signed URL) so validation passes.
-      if (course && !thumbnailFile && course.thumbnail) {
+      const urlTrim = data.thumbnailUrl?.trim();
+      const normalizedLink = urlTrim ? normalizeThumbnailUrl(urlTrim) : null;
+      if (thumbnailFile) {
+        // S3 upload only; link field cleared when file chosen
+      } else if (normalizedLink) {
+        submitData.thumbnail = normalizedLink;
+      } else if (course?.thumbnail) {
         submitData.thumbnail = course.thumbnail;
       }
 
@@ -610,14 +637,22 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
             />
 
             <FileUpload
-              label="Thumbnail *"
+              label="Thumbnail (optional)"
               accept="image/*"
               maxSize={10}
               value={thumbnailPreview || thumbnailFile}
               onChange={handleFileChange}
               onRemove={handleFileRemove}
               error={errors.thumbnailFile?.message as string}
-              helperText="Upload a course thumbnail image (max 10MB)"
+              helperText="Upload to storage (max 10MB), or use a link below if uploads fail."
+            />
+
+            <Input
+              label="Thumbnail link (optional)"
+              {...register('thumbnailUrl')}
+              error={errors.thumbnailUrl?.message}
+              helperText="Public image URL or Google Drive file link (set sharing to Anyone with the link). Shown the same as an uploaded thumbnail."
+              placeholder="https://… or https://drive.google.com/file/d/…/view"
             />
           </div>
         </Card>

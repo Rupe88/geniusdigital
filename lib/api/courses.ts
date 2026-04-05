@@ -158,7 +158,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
   try {
     data.onProgress?.(0);
 
-    // Validate required fields (title and thumbnail are required; thumbnail is validated via backend)
+    // Title required; thumbnail is optional (URL or file via backend)
     if (!data.title || !data.title.trim()) {
       throw new Error('Title is required');
     }
@@ -287,6 +287,9 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
         const errorMessage = handleApiError(error);
         throw new Error(errorMessage);
       }
+      if (error.response?.status === 503) {
+        throw new Error(handleApiError(error));
+      }
       if (!error.response) {
         throw new Error('Network error. Please check your internet connection and try again.');
       }
@@ -391,6 +394,9 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
         }).join('\n');
         throw new Error(`Validation failed:\n${errorMessages}`);
       }
+    }
+    if (axios.isAxiosError(error) && error.response?.status === 503) {
+      throw new Error(handleApiError(error));
     }
     throw new Error(handleApiError(error));
   }

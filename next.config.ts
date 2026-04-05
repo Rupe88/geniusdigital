@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 's3-np1.datahub.com.np',
       },
+      // Thumbnail links pasted by admins (Google Drive direct view, etc.)
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
       // Legacy Cloudinary (if any old URLs still in DB)
       {
         protocol: 'https',

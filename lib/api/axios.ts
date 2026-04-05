@@ -280,6 +280,13 @@ export const handleApiError = (error: unknown): string => {
       return 'Invalid request. Please check your input and try again.';
     }
 
+    if (error.response.status === 503) {
+      return (
+        apiError?.message ||
+        'File storage or the server is temporarily unavailable. Try again shortly, or continue without uploads and add media from the edit page.'
+      );
+    }
+
     if (apiError?.message) {
       return apiError.message;
     }
