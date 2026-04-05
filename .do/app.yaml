@@ -1,0 +1,31 @@
+# DigitalOcean App Platform – https://github.com/Rupe88/sanskarvastu-frontend
+# Repo root = Next.js app (Dockerfile and package.json at root).
+#
+# Deploy: doctl apps create --spec .do/app.yaml
+# Or: DO → Create App → GitHub → Rupe88/sanskarvastu-frontend → Edit spec → paste this file.
+#
+# Domains: App → Settings → Domains. Point DNS CNAME to the app hostname.
+# Backend CORS / FRONTEND_URL: include your production site URL after cutover.
+#
+name: sanskarvastu-frontend
+region: sgp
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    github:
+      repo: Rupe88/sanskarvastu-frontend
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    build_environment_variables:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://stingray-app-2-iy8as.ondigitalocean.app/api
+    envs:
+      - key: NODE_ENV
+        value: production
+    health_check:
+      http_path: /
+    routes:
+      - path: /

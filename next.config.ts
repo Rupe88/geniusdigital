@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Production Docker / smaller deploy bundle (DigitalOcean App Platform, etc.)
+  output: "standalone",
   turbopack: { root: process.cwd() },
   images: {
     remotePatterns: [
