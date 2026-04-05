@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN: {
     USERS: '/admin/users',
+    USERS_EXPORT_ENROLLMENTS_DETAIL: '/admin/users/export-enrollments-detail',
     CREATE_USER: '/admin/users',
     USER_BY_ID: (id: string) => `/admin/users/${id}`,
     DELETE_USER: (id: string) => `/admin/users/${id}`,

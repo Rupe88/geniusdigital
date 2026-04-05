@@ -134,6 +134,43 @@ export const getAllUsers = async (params?: {
   }
 };
 
+/** Download CSV: users × enrollments, payments, installments, access expiry (admin only). */
+export const exportUsersEnrollmentsDetail = async (params?: { search?: string }): Promise<void> => {
+  try {
+    const response = await apiClient.get(API_ENDPOINTS.ADMIN.USERS_EXPORT_ENROLLMENTS_DETAIL, {
+      params: params?.search?.trim() ? { search: params.search.trim() } : undefined,
+      responseType: 'blob',
+      timeout: 300000,
+    });
+    const ct = (response.headers['content-type'] || '').toLowerCase();
+    const blob = response.data as Blob;
+    if (ct.includes('application/json')) {
+      const text = await blob.text();
+      let msg = 'Export failed';
+      try {
+        const j = JSON.parse(text) as { message?: string };
+        if (j?.message) msg = j.message;
+      } catch {
+        if (text) msg = text.slice(0, 500);
+      }
+      throw new Error(msg);
+    }
+    const disposition = String(response.headers['content-disposition'] || '');
+    const match = /filename="?([^";\n]+)"?/i.exec(disposition);
+    const filename = match?.[1]?.trim() || `user-enrollments-detail-${new Date().toISOString().slice(0, 10)}.csv`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 export const createUser = async (data: {
   fullName: string;
   email: string;

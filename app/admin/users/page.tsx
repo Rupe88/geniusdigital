@@ -19,6 +19,7 @@ export default function AdminUsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
   const [exportLoading, setExportLoading] = useState(false);
+  const [exportDetailLoading, setExportDetailLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [newFullName, setNewFullName] = useState('');
@@ -104,7 +105,7 @@ export default function AdminUsersPage() {
         const data = await adminApi.getAllUsers({
           page,
           limit: 100, // Backend validation allows limit only up to 100
-          search: search || undefined,
+          search: debouncedSearch || undefined,
         });
         allUsers.push(...(data?.data || []));
         hasMore = page < (data?.pagination?.pages ?? 1);
@@ -133,6 +134,20 @@ export default function AdminUsersPage() {
       showError(Object(error).message || 'Failed to export users');
     } finally {
       setExportLoading(false);
+    }
+  };
+
+  const handleExportFullReport = async () => {
+    try {
+      setExportDetailLoading(true);
+      await adminApi.exportUsersEnrollmentsDetail({
+        search: debouncedSearch || undefined,
+      });
+      showSuccess('Full report downloaded (enrollments, payments, installments)');
+    } catch (error) {
+      showError(Object(error).message || 'Failed to export full report');
+    } finally {
+      setExportDetailLoading(false);
     }
   };
 
@@ -188,11 +203,21 @@ export default function AdminUsersPage() {
             <Button
               variant="outline"
               onClick={handleExportUsers}
-              disabled={exportLoading}
+              disabled={exportLoading || exportDetailLoading}
               className="shrink-0"
             >
               <HiDownload className="w-4 h-4 mr-2" />
-              {exportLoading ? 'Exporting…' : 'Export Users'}
+              {exportLoading ? 'Exporting…' : 'Export users (summary)'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportFullReport}
+              disabled={exportDetailLoading || exportLoading}
+              className="shrink-0"
+              title="CSV: one row per course enrollment with payments, installments, access expiry, discounts"
+            >
+              <HiDownload className="w-4 h-4 mr-2" />
+              {exportDetailLoading ? 'Preparing…' : 'Export full report'}
             </Button>
           </div>
         </div>
@@ -261,6 +286,7 @@ export default function AdminUsersPage() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[var(--foreground)] uppercase">Joined</th>
@@ -270,13 +296,16 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-[var(--border)]">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center">Loading...</td>
+                  <td colSpan={7} className="px-6 py-4 text-center">Loading...</td>
                 </tr>
               ) : users && users.length > 0 ? (
                 users.map((user) => (
                   <tr key={user.id} className="hover:bg-[var(--muted)]">
                     <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted-foreground)]">
+                      {user.phone || '—'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded-none text-xs ${
                         user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
@@ -322,7 +351,7 @@ export default function AdminUsersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-[var(--muted-foreground)]">
+                  <td colSpan={7} className="px-6 py-4 text-center text-[var(--muted-foreground)]">
                     No users found
                   </td>
                 </tr>
