@@ -1,10 +1,7 @@
 name: CI / CD
 
-# Fast path: Docker image is built on GitHub Actions (BuildKit + GHA cache), pushed to GHCR.
-# The droplet only pulls + restarts (~1–2 min). No npm/next build on the VPS.
-#
-# Secrets/Variables: DEPLOY_*, DEPLOY_SSH_KEY, NEXT_PUBLIC_* (see deploy/DROPLET.md).
-# Optional: GHCR_READ_TOKEN (+ GHCR_USERNAME) if the GHCR package is private.
+# Fast path: image built on GitHub Actions → GHCR; droplet pull + restart only.
+# Deploy uses SSH retries + keepalives to survive transient "Connection reset" from busy sshd / network.
 
 on:
   pull_request:
@@ -39,7 +36,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Full Next build on PRs only — pushes to main rely on the Docker build (faster CI + no duplicate work).
       - name: Production build (PR verification)
         if: github.event_name == 'pull_request'
         run: npm run build
@@ -117,66 +113,105 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure SSH
+      - name: Configure SSH and deploy (retries; no fragile heredocs on the runner)
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
         run: |
           set -euo pipefail
+
           KEY_CONTENT="${DEPLOY_SSH_KEY:-}"
           if [ -z "$KEY_CONTENT" ]; then KEY_CONTENT="${SSH_PRIVATE_KEY:-}"; fi
           if [ -z "$KEY_CONTENT" ]; then
             echo "::error::Set repository secret DEPLOY_SSH_KEY (or SSH_PRIVATE_KEY)"
             exit 1
           fi
-          if [ -z "${DEPLOY_HOST:-}" ]; then
-            echo "::error::Set DEPLOY_HOST"
+          if [ -z "${DEPLOY_HOST:-}" ] || [ -z "${DEPLOY_PATH:-}" ]; then
+            echo "::error::Set DEPLOY_HOST and DEPLOY_PATH"
             exit 1
           fi
+
           mkdir -p ~/.ssh
           echo "$KEY_CONTENT" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+
           PORT="${DEPLOY_SSH_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Sync compose files to droplet
-        run: |
-          set -euo pipefail
-          if [ -z "${DEPLOY_PATH:-}" ]; then
-            echo "::error::Set DEPLOY_PATH"
-            exit 1
-          fi
-          PORT="${DEPLOY_SSH_PORT:-22}"
-          RSYNC_SSH="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p $PORT"
-          rsync -avz -e "$RSYNC_SSH" docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
-          rsync -avz -e "$RSYNC_SSH" docker-compose.build.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/" || true
+          RSYNC_RSH="ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=30 \
+            -o ConnectionAttempts=5 \
+            -o TCPKeepAlive=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=8 \
+            -p $PORT"
 
-      - name: Write .env.deploy on droplet
-        run: |
-          set -euo pipefail
-          PORT="${DEPLOY_SSH_PORT:-22}"
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p "$PORT" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "set -euo pipefail; umask 077; mkdir -p \"${DEPLOY_PATH}\"; tee \"${DEPLOY_PATH}/.env.deploy\" > /dev/null" <<EOF
-          FRONTEND_IMAGE=${FRONTEND_IMAGE}
-          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-          NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
-          EOF
+          SSH_BASE=(ssh -i ~/.ssh/deploy_key
+            -o StrictHostKeyChecking=accept-new
+            -o ConnectTimeout=30
+            -o ConnectionAttempts=5
+            -o TCPKeepAlive=yes
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=8
+            -p "$PORT"
+            "${DEPLOY_USER}@${DEPLOY_HOST}")
 
-      - name: Pull image and restart containers
-        env:
-          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-        run: |
-          set -euo pipefail
-          PORT="${DEPLOY_SSH_PORT:-22}"
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p "$PORT" \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" bash -s <<REMOTE_SCRIPT
-          set -euo pipefail
+          retry() {
+            local attempt=1 max=6 delay=6
+            while [ "$attempt" -le "$max" ]; do
+              if "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -eq "$max" ]; then
+                echo "::error::Command failed after $max attempts: $*"
+                return 1
+              fi
+              echo "::warning::Attempt $attempt/$max failed; retrying in ${delay}s..."
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay + 5))
+            done
+          }
+
+          printf '%s\n' \
+            "FRONTEND_IMAGE=${FRONTEND_IMAGE}" \
+            "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" \
+            "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" \
+            > /tmp/frontend.env.deploy
+
+          echo "Ensure deploy directory exists..."
+          retry "${SSH_BASE[@]}" "mkdir -p '${DEPLOY_PATH}'"
+
+          echo "Rsync compose + env + script..."
+          retry rsync -avz --timeout=120 -e "$RSYNC_RSH" docker-compose.prod.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+          retry rsync -avz --timeout=120 -e "$RSYNC_RSH" docker-compose.build.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/" || true
+          retry rsync -avz --timeout=120 -e "$RSYNC_RSH" /tmp/frontend.env.deploy "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/.env.deploy"
+          retry rsync -avz --timeout=120 -e "$RSYNC_RSH" deploy/scripts/droplet-compose-up.sh "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/droplet-compose-up.sh"
+          retry "${SSH_BASE[@]}" "chmod +x '${DEPLOY_PATH}/droplet-compose-up.sh'"
+
           if [ -n "${GHCR_READ_TOKEN:-}" ]; then
-            echo "${GHCR_READ_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME:-${GITHUB_OWNER}}" --password-stdin
+            echo "GHCR login (private package)..."
+            U="${GHCR_USERNAME:-${GITHUB_OWNER}}"
+            attempt=1
+            max=6
+            delay=6
+            while [ "$attempt" -le "$max" ]; do
+              if printf '%s' "$GHCR_READ_TOKEN" | "${SSH_BASE[@]}" docker login ghcr.io -u "$U" --password-stdin; then
+                break
+              fi
+              if [ "$attempt" -eq "$max" ]; then
+                echo "::error::docker login failed after $max attempts"
+                exit 1
+              fi
+              echo "::warning::docker login attempt $attempt/$max failed; retrying in ${delay}s..."
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay + 5))
+            done
           fi
-          cd "${DEPLOY_PATH}"
-          docker compose -f docker-compose.prod.yml --env-file .env.deploy pull
-          docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --remove-orphans
-          REMOTE_SCRIPT
+
+          echo "docker compose pull + up..."
+          retry "${SSH_BASE[@]}" "DEPLOY_PATH='${DEPLOY_PATH}' bash '${DEPLOY_PATH}/droplet-compose-up.sh'"

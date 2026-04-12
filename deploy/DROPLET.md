@@ -125,6 +125,21 @@ Do **not** commit private keys; keep `github_actions_deploy` out of git (add to 
 
 Push to `main` runs deploy after CI; use **Actions → CI / CD → Run workflow** for manual runs.
 
+## SSH: `Connection reset by peer` / `kex_exchange_identification`
+
+GitHub Actions uses a **new outbound IP every run**. If the droplet runs **fail2ban**, **ufw rate limits**, or **sshd** drops bursts (`MaxStartups`), the first SSH/rsync can be reset.
+
+On the **droplet** (as root), consider:
+
+```text
+# /etc/ssh/sshd_config — allow more parallel unauthenticated connections during CI
+MaxStartups 30:50:100
+```
+
+Then: `sudo systemctl reload sshd`
+
+If you use **fail2ban** for `sshd`, whitelist GitHub Actions IP ranges (they change) **or** use a **VPN / fixed bastion** for deploys. The workflow already **retries** rsync/SSH up to 6 times with backoff.
+
 ## Firewall (optional)
 
 ```bash
