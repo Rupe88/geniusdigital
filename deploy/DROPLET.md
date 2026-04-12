@@ -1,6 +1,8 @@
 # Droplet setup (Docker + nginx + TLS)
 
-**Default deploy path (recommended):** GitHub Actions **does not SSH** into the server. It pushes a container to **GHCR**; the droplet **pulls `:latest` on a cron**. See **[PULL-DEPLOY.md](./PULL-DEPLOY.md)** first.
+**Fast path:** **[ONE-COMMAND.md](./ONE-COMMAND.md)** (bootstrap + DNS + nginx).
+
+**Default deploy path (recommended):** GitHub Actions **does not SSH** into the server. It pushes a container to **GHCR**; the droplet **pulls `:latest` on a cron**. See **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**. **DNS:** **[DNS.md](./DNS.md)**.
 
 This page covers directory layout, nginx, and optional SSH troubleshooting.
 

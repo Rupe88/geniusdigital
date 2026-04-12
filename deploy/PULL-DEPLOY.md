@@ -4,6 +4,8 @@ GitHub-hosted runners often **cannot complete SSH** to a droplet (banner timeout
 
 **Reliable pattern:** CI **only builds and pushes** the image to **GHCR**. The droplet **pulls** that image on a timer. Nothing connects **inbound** from GitHub to SSH.
 
+**Automated setup:** run **`deploy/scripts/bootstrap-droplet.sh`** on the server (see **[ONE-COMMAND.md](./ONE-COMMAND.md)**). The section below is the manual equivalent.
+
 ## 1. One-time on the droplet
 
 Install Docker if needed. Create the app directory:
