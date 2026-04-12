@@ -3,8 +3,8 @@
 // - Never applies cache-first to cross-origin requests (API on another host)
 // - Admin/dashboard navigations are network-only (no broken offline fallback)
 
-const CACHE_NAME = 'sanskar-academy-cache-v3';
-const CORE_ASSETS = ['/', '/manifest.webmanifest'];
+const CACHE_NAME = 'genius-digital-cache-v6';
+const CORE_ASSETS = ['/', '/manifest.webmanifest?v=4', '/favicon.png?v=4', '/logo.png?v=4'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));

@@ -11,9 +11,12 @@ export interface InitiatePaymentResponse {
   discount: number;
   paymentMethod: string;
   paymentDetails: {
-    paymentUrl: string;
+    paymentUrl?: string;
     formData?: Record<string, string>;
-    [key: string]: any;
+    qrImageUrl?: string;
+    instructions?: string;
+    method?: string;
+    [key: string]: unknown;
   };
 }
 
@@ -50,7 +53,7 @@ export const verifyPayment = async (transactionId: string, paymentMethod: string
   }
 };
 
-/** Verify payment with eSewa callback data (for success page) – uses public endpoint, no auth required */
+/** Legacy verify callback (public endpoint). Manual QR payments are approved in admin, not here. */
 export const verifyPaymentCallback = async (
   transactionId: string,
   paymentMethod: string,
@@ -101,6 +104,22 @@ export const getPaymentById = async (id: string): Promise<Payment> => {
   try {
     const response = await apiClient.get<ApiResponse<Payment>>(API_ENDPOINTS.PAYMENTS.BY_ID(id));
     return handleApiResponse<Payment>(response);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/** After paying via QR, upload proof screenshot (multipart). */
+export const submitPaymentProof = async (paymentId: string, file: File): Promise<{ proofImageUrl: string }> => {
+  const form = new FormData();
+  form.append('paymentId', paymentId);
+  form.append('proof', file);
+  try {
+    const response = await apiClient.post<ApiResponse<{ proofImageUrl: string }>>(
+      API_ENDPOINTS.PAYMENTS.SUBMIT_PROOF,
+      form
+    );
+    return handleApiResponse(response);
   } catch (error) {
     throw new Error(handleApiError(error));
   }

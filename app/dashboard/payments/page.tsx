@@ -38,7 +38,8 @@ function formatCurrency(amount: number, currency: string = 'NPR'): string {
 
 function paymentMethodLabel(method: string): string {
   const labels: Record<string, string> = {
-    ESEWA: 'eSewa',
+    MANUAL_QR: 'QR / manual',
+    ESEWA: 'QR / manual',
     MOBILE_BANKING: 'Mobile Banking',
     VISA_CARD: 'Visa Card',
     MASTERCARD: 'Mastercard',

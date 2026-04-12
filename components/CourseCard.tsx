@@ -9,6 +9,8 @@ interface CourseCardProps {
   thumbnail?: string | null;
   price?: string;
   oldPrice?: string;
+  rating?: number;
+  metaText?: string;
   slug?: string;
   href?: string;
   className?: string;
@@ -20,15 +22,18 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   thumbnail,
   price,
   oldPrice,
+  rating = 4,
+  metaText,
   slug,
   href,
   className = '',
 }) => {
   const linkHref = href || (slug ? `/courses/${slug}` : `/courses/${id}`);
+  const safeRating = Math.max(1, Math.min(5, Math.round(rating || 4)));
 
   return (
     <div
-      className={`bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden hover:-translate-y-1 transition-all duration-200 rounded-lg ${className}`}
+      className={`bg-white border border-gray-200 shadow-[0_4px_10px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_35px_rgba(0,0,0,0.10)] overflow-hidden transition-all duration-200 rounded-lg ${className}`}
     >
       <Link href={linkHref}>
         {/* Thumbnail */}
@@ -49,20 +54,29 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {/* Content */}
-        <div className="px-5 pt-0 pb-1">
-          <h3 className="text-base font-[550] md:text-lg leading-6 antialiased tracking-[0.05em] text-gray-900 mb-1 line-clamp-2 ">
-            {title}
-          </h3>
-          <div className="flex items-baseline space-x-2">
+        <div className="px-5 pt-0 pb-3">
+          <div className="text-[#f4b400] text-[14px] leading-none tracking-tight">
+            {'★'.repeat(safeRating)}
+            <span className="text-gray-300">{'★'.repeat(5 - safeRating)}</span>
+          </div>
+          <div className="mt-1.5 flex items-start justify-between gap-3">
+            <h3 className="text-base md:text-lg font-lg tracking-wide text-gray-900 line-clamp-2">
+              {title}
+            </h3>
             {price && (
-              <span className="text-lg font-bold text-[var(--primary-700)]">
+              <span className="whitespace-nowrap text-xl font-semibold text-[var(--primary-700)]">
                 {price}
               </span>
             )}
+          </div>
+          <div className="mt-1 flex items-center gap-2">
             {oldPrice && (
-              <span className="text-sm text-gray-500 line-through">
+              <span className="text-xs text-gray-400 line-through">
                 {oldPrice}
               </span>
+            )}
+            {metaText && (
+              <span className="text-sm text-gray-500">{metaText}</span>
             )}
           </div>
         </div>

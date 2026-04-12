@@ -9,6 +9,7 @@ import { getMyInstallments, type MyInstallmentItem } from '@/lib/api/installment
 import { createPayment } from '@/lib/api/payments';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiCalendar, HiBookOpen } from 'react-icons/hi';
+import { ManualPaymentFlow } from '@/components/payments/ManualPaymentFlow';
 
 function formatDate(iso: string): string {
   try {
@@ -22,31 +23,17 @@ function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 }).format(amount);
 }
 
-function submitEsewaForm(paymentDetails: { paymentUrl?: string; formData?: Record<string, string> }) {
-  const url = paymentDetails.paymentUrl;
-  const formData = paymentDetails.formData || {};
-  if (!url || typeof url !== 'string') {
-    showError('Invalid payment redirect URL');
-    return;
-  }
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = url;
-  for (const key of Object.keys(formData)) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = String(formData[key] ?? '');
-    form.appendChild(input);
-  }
-  document.body.appendChild(form);
-  form.submit();
-}
-
 export default function InstallmentsPage() {
   const [list, setList] = useState<MyInstallmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [manualInstallment, setManualInstallment] = useState<{
+    installmentId: string;
+    paymentId: string;
+    qrImageUrl: string;
+    instructions?: string;
+    amountLabel: string;
+  } | null>(null);
 
   const fetchList = async () => {
     setLoading(true);
@@ -71,19 +58,24 @@ export default function InstallmentsPage() {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const res = await createPayment({
         amount: item.amount,
-        paymentMethod: 'ESEWA',
+        paymentMethod: 'MANUAL_QR',
         installmentId: item.id,
         successUrl: `${origin}/payment/success?type=installment`,
         failureUrl: `${origin}/payment/failure`,
       });
-      if (res?.paymentDetails?.paymentUrl) {
-        showSuccess('Redirecting to eSewa...');
-        submitEsewaForm(res.paymentDetails);
-      } else if (res?.paymentDetails) {
-        submitEsewaForm(res.paymentDetails);
-      } else {
-        throw new Error('Payment gateway did not return redirect details');
+      const pd = res?.paymentDetails;
+      if (pd?.qrImageUrl && res?.paymentId) {
+        setManualInstallment({
+          installmentId: item.id,
+          paymentId: res.paymentId,
+          qrImageUrl: pd.qrImageUrl,
+          instructions: typeof pd.instructions === 'string' ? pd.instructions : undefined,
+          amountLabel: formatCurrency(Number(res.amount ?? item.amount)),
+        });
+        showSuccess('Scan the QR to pay, then upload your proof.');
+        return;
       }
+      throw new Error('Payment could not be started. Ask an admin to configure the payment QR.');
     } catch (e) {
       showError(e instanceof Error ? e.message : 'Payment could not be started');
     } finally {
@@ -175,6 +167,22 @@ export default function InstallmentsPage() {
                   </li>
                 ))}
               </ul>
+            </Card>
+          )}
+
+          {manualInstallment && (
+            <Card padding="lg">
+              <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Complete payment</h2>
+              <ManualPaymentFlow
+                paymentId={manualInstallment.paymentId}
+                qrImageUrl={manualInstallment.qrImageUrl}
+                instructions={manualInstallment.instructions}
+                amountLabel={manualInstallment.amountLabel}
+                onDone={() => {
+                  setManualInstallment(null);
+                  fetchList();
+                }}
+              />
             </Card>
           )}
 

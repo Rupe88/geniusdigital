@@ -15,8 +15,9 @@ import type { Course } from '@/lib/types/course';
 import type { User } from '@/lib/types/auth';
 import { formatDate } from '@/lib/utils/helpers';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiDownload, HiFilter, HiTrash, HiSearch, HiUpload } from 'react-icons/hi';
+import { HiDownload, HiFilter, HiTrash, HiSearch, HiUpload, HiCheck, HiX } from 'react-icons/hi';
 import { getAllCoupons, validateCoupon, type Coupon } from '@/lib/api/coupon';
+import { apiClient } from '@/lib/api/axios';
 
 type EnrollmentStatus = 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 
@@ -31,6 +32,17 @@ type GrantCouponPreview =
   | null
   | { valid: true; discountAmount: number; finalAmount: number; code: string }
   | { valid: false; message: string };
+
+type PendingManualPayment = {
+  id: string;
+  transactionId: string;
+  createdAt: string;
+  finalAmount?: number;
+  paymentMethod?: string;
+  proofImageUrl?: string | null;
+  user?: { fullName?: string | null; email?: string | null };
+  course?: { title?: string | null };
+};
 
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -64,6 +76,9 @@ export default function AdminEnrollmentsPage() {
   const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
   const [grantCouponId, setGrantCouponId] = useState('');
   const [grantCouponPreview, setGrantCouponPreview] = useState<GrantCouponPreview>(null);
+  const [pendingManualPayments, setPendingManualPayments] = useState<PendingManualPayment[]>([]);
+  const [pendingManualLoading, setPendingManualLoading] = useState(false);
+  const [manualActionId, setManualActionId] = useState<string | null>(null);
 
   const selectedCourseForGrant = availableCourses.find((c) => c.id === grantCourseId) || null;
   const existingEnrollmentForGrant =
@@ -89,6 +104,30 @@ export default function AdminEnrollmentsPage() {
   useEffect(() => {
     fetchEnrollments();
   }, [pagination.page, status, courseId]);
+
+  const fetchPendingManualPayments = useCallback(async () => {
+    try {
+      setPendingManualLoading(true);
+      const r = await apiClient.get('/payments/admin', {
+        params: { page: 1, limit: 50, status: 'PENDING' },
+      });
+      if (r.data?.success) {
+        const all: PendingManualPayment[] = r.data.data || [];
+        const pendingProofs = all.filter((p) => p.proofImageUrl);
+        setPendingManualPayments(pendingProofs);
+      } else {
+        setPendingManualPayments([]);
+      }
+    } catch {
+      setPendingManualPayments([]);
+    } finally {
+      setPendingManualLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPendingManualPayments();
+  }, [fetchPendingManualPayments]);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -391,6 +430,42 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
+  const handleApproveManual = async (paymentId: string) => {
+    if (!confirm('Approve this payment and complete enrollment/order?')) return;
+    try {
+      setManualActionId(paymentId);
+      const response = await apiClient.post(`/payments/admin/${paymentId}/approve-manual`);
+      if (response.data?.success) {
+        showSuccess('Manual payment approved');
+        fetchPendingManualPayments();
+        fetchEnrollments();
+      }
+    } catch (error) {
+      showError(Object(error).message || 'Failed to approve payment');
+    } finally {
+      setManualActionId(null);
+    }
+  };
+
+  const handleRejectManual = async (paymentId: string) => {
+    const reason = window.prompt('Optional rejection reason:') ?? '';
+    if (!confirm('Reject this manual payment proof?')) return;
+    try {
+      setManualActionId(paymentId);
+      const response = await apiClient.post(`/payments/admin/${paymentId}/reject-manual`, {
+        reason: reason.trim() || undefined,
+      });
+      if (response.data?.success) {
+        showSuccess('Manual payment rejected');
+        fetchPendingManualPayments();
+      }
+    } catch (error) {
+      showError(Object(error).message || 'Failed to reject payment');
+    } finally {
+      setManualActionId(null);
+    }
+  };
+
   const getStatusColor = (status: string): 'success' | 'warning' | 'info' | 'danger' | 'default' => {
     switch (status) {
       case 'ACTIVE': return 'success';
@@ -519,6 +594,100 @@ export default function AdminEnrollmentsPage() {
         <h1 className="text-3xl font-bold text-[var(--foreground)]">Enrollment Management</h1>
         <p className="text-[var(--muted-foreground)] mt-2">View and manage student course enrollments</p>
       </div>
+
+      <Card padding="md" className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">Pending Manual Payment Proofs</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={fetchPendingManualPayments}
+            disabled={pendingManualLoading}
+          >
+            {pendingManualLoading ? 'Refreshing…' : 'Refresh'}
+          </Button>
+        </div>
+        {pendingManualPayments.length === 0 ? (
+          <p className="text-sm text-[var(--muted-foreground)]">
+            {pendingManualLoading ? 'Loading pending proofs…' : 'No pending manual payment proofs yet.'}
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded border border-[var(--border)]">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead className="bg-[var(--muted)]/50 border-b border-[var(--border)]">
+                <tr>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)]">Student</th>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)]">Course</th>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)]">Txn ID</th>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)]">Amount</th>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)]">Submitted</th>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)]">Screenshot</th>
+                  <th className="px-4 py-3 font-semibold text-[var(--foreground)] text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {pendingManualPayments.slice(0, 20).map((p) => (
+                  <tr key={p.id} className="hover:bg-[var(--muted)]/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-[var(--foreground)]">
+                        {p.user?.fullName || 'Unknown Student'}
+                      </div>
+                      <div className="text-xs text-[var(--muted-foreground)]">
+                        {p.user?.email || 'No email'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--foreground)]">{p.course?.title || 'Unknown Course'}</td>
+                    <td className="px-4 py-3 text-xs text-[var(--muted-foreground)]">{p.transactionId}</td>
+                    <td className="px-4 py-3 text-[var(--foreground)]">
+                      Rs. {Number(p.finalAmount || 0).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--muted-foreground)]">{formatDate(p.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      {p.proofImageUrl ? (
+                        <a
+                          href={p.proofImageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[var(--primary-700)] underline"
+                        >
+                          View screenshot
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[var(--muted-foreground)]">No screenshot</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleApproveManual(p.id)}
+                          disabled={manualActionId === p.id}
+                        >
+                          <HiCheck className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRejectManual(p.id)}
+                          disabled={manualActionId === p.id}
+                        >
+                          <HiX className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       <Card padding="md" className="space-y-4">
         <h2 className="text-lg font-semibold text-[var(--foreground)]">Grant Course Access Manually</h2>

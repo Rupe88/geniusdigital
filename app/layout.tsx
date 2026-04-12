@@ -8,8 +8,13 @@ import ContentProtection from "@/components/ContentProtection";
 import { PwaInit } from "@/components/PwaInit";
 
 export const metadata: Metadata = {
-    title: "Sanskar Academy - Master in Scientific Vastu & Modern Numerology",
-    description: "Unlock your hidden potential to become your best version. Master in Scientific Vastu & Modern Numerology.",
+    title: "Genius Digital",
+    description: "Unlock your hidden potential to become your best version with Genius Digital.",
+    icons: {
+        icon: "/favicon.png?v=4",
+        shortcut: "/favicon.png?v=4",
+        apple: "/logo.png?v=4",
+    },
 };
 
 export default function RootLayout({
@@ -20,13 +25,15 @@ export default function RootLayout({
     return (
         <html lang="en" data-scroll-behavior="smooth">
             <head>
-                <link rel="manifest" href="/manifest.webmanifest" />
-                <meta name="theme-color" content="#c01e2e" />
+                <link rel="manifest" href="/manifest.webmanifest?v=4" />
+                <meta name="theme-color" content="#1877f2" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-title" content="Sanskar Academy" />
+                <meta name="apple-mobile-web-app-title" content="Genius Digi" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-                <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+                <link rel="apple-touch-icon" href="/logo.png?v=4" />
+                <link rel="icon" href="/favicon.png?v=4" type="image/png" />
+                <link rel="shortcut icon" href="/favicon.png?v=4" type="image/png" />
             </head>
             <body
                 className="antialiased min-h-screen flex flex-col"

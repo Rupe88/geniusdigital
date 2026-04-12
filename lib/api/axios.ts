@@ -8,16 +8,24 @@ import { storageClearTokens, storageGet, storageSetTokens } from '@/lib/utils/sa
 const PRODUCTION_API_URL = 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
 const DEFAULT_DEV_API = 'http://localhost:4000/api';
 
-// Use env first; then in browser any non-localhost = production backend so data shows correctly.
+// Use env first; then auto-detect local/LAN hosts to use local backend.
 const getApiUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL.trim()) {
     return process.env.NEXT_PUBLIC_API_URL.trim().replace(/\/$/, '');
   }
   if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      return PRODUCTION_API_URL;
+    const { hostname, protocol } = window.location;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    const isPrivateIpv4 =
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+    if (isLocalhost || isPrivateIpv4) {
+      return `${protocol}//${hostname}:4000/api`;
     }
+
+    return PRODUCTION_API_URL;
   }
   return DEFAULT_DEV_API;
 };

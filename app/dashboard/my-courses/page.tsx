@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/Button';
 import * as enrollmentApi from '@/lib/api/enrollments';
 import { getUpcomingEvents } from '@/lib/api/events';
 import { getUpcomingEventCourses } from '@/lib/api/courses';
+import { getMyInstructorCourses } from '@/lib/api/instructors';
 import { reviewsApi, type Review } from '@/lib/api/reviews';
 import { Enrollment } from '@/lib/types/course';
 import { formatDate } from '@/lib/utils/helpers';
 import { showError, showSuccess } from '@/lib/utils/toast';
+import { useAuth } from '@/lib/context/AuthContext';
 
 const fmtRs = (n: number) => `Rs. ${Math.max(0, n).toLocaleString()}`;
 
@@ -89,7 +91,14 @@ function EnrollmentPricingAside({
 
 export default function MyCoursesPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [instructorCourses, setInstructorCourses] = useState<Array<{
+    id: string;
+    title: string;
+    thumbnail?: string | null;
+    status?: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const pageLimit = 100; // backend max for this endpoint is 100
@@ -124,6 +133,26 @@ export default function MyCoursesPage() {
   const fetchEnrollments = async () => {
     try {
       setLoading(true);
+      if (user?.role === 'INSTRUCTOR') {
+        const assigned = await getMyInstructorCourses();
+        setInstructorCourses(
+          (assigned || []).map((c) => ({
+            id: c.id,
+            title: c.title,
+            thumbnail: c.thumbnail || null,
+            status: c.status,
+          }))
+        );
+        setPagination({
+          page: 1,
+          limit: assigned.length || pageLimit,
+          total: assigned.length || 0,
+          pages: 1,
+        });
+        setEnrollments([]);
+        return;
+      }
+
       const data = await enrollmentApi.getUserEnrollments({ page, limit: pageLimit });
       setEnrollments(data.data);
       setPagination(data.pagination);
@@ -151,7 +180,7 @@ export default function MyCoursesPage() {
 
   useEffect(() => {
     fetchEnrollments();
-  }, [page]);
+  }, [page, user?.role]);
 
   const fetchUpcoming = async () => {
     try {
@@ -283,6 +312,61 @@ export default function MyCoursesPage() {
       setReviewLoading(false);
     }
   };
+
+  if (user?.role === 'INSTRUCTOR') {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold text-[var(--foreground)] mb-8">My Instructor Courses</h1>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <CourseCardShimmer key={`instructor-course-shimmer-${idx}`} />
+            ))}
+          </div>
+        ) : instructorCourses.length === 0 ? (
+          <Card className="p-6 text-[var(--muted-foreground)]">
+            No courses are assigned to your instructor profile yet.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {instructorCourses.map((course) => (
+              <div
+                key={course.id}
+                className="bg-white border border-gray-200 shadow-sm hover:shadow-md overflow-hidden transition-all duration-200 rounded-lg cursor-pointer"
+                onClick={() => router.push(`/dashboard/courses/${course.id}/manage`)}
+              >
+                <div className="relative w-full aspect-video bg-black/5">
+                  {course.thumbnail ? (
+                    <StorageImage
+                      src={course.thumbnail}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[var(--primary-100)] to-[var(--primary-200)] flex items-center justify-center">
+                      <span className="text-[var(--primary-700)] font-semibold text-lg uppercase">
+                        {course.title?.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="px-3 py-3">
+                  <h3 className="text-sm md:text-[15px] font-semibold leading-5 text-gray-900 line-clamp-2">
+                    {course.title}
+                  </h3>
+                  <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                    Status: {course.status || '—'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

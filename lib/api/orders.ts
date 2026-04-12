@@ -26,7 +26,7 @@ export interface Order {
   discount: number;
   total: number;
   status: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
-  paymentMethod: 'ESEWA' | 'MOBILE_BANKING' | 'VISA_CARD' | 'MASTERCARD' | 'OTHER';
+  paymentMethod: 'MANUAL_QR' | 'ESEWA' | 'MOBILE_BANKING' | 'VISA_CARD' | 'MASTERCARD' | 'OTHER';
   paymentId?: string;
   shippingAddress: {
     fullName: string;

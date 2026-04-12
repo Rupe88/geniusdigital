@@ -35,7 +35,6 @@ interface LocalLesson {
   isLocked: boolean;
   quiz?: QuizData;
 }
-import { FileUpload } from '@/components/ui/FileUpload';
 import * as lessonApi from '@/lib/api/lessons';
 import * as chapterApi from '@/lib/api/chapters';
 import * as quizApi from '@/lib/api/quizzes';
@@ -77,10 +76,9 @@ interface LessonFormData {
   content: string;
   lessonType: 'VIDEO' | 'TEXT' | 'PDF' | 'QUIZ' | 'ASSIGNMENT';
   videoUrl: string;
+  attachmentUrl: string;
   isPreview: boolean;
   isLocked: boolean;
-  videoFile: File | null;
-  attachmentFile: File | null;
   quizData: QuizData;
 }
 
@@ -122,10 +120,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
     content: '',
     lessonType: 'VIDEO',
     videoUrl: '',
+    attachmentUrl: '',
     isPreview: false,
     isLocked: false,
-    videoFile: null,
-    attachmentFile: null,
     quizData: {
       title: '',
       timeLimit: undefined as number | undefined,
@@ -298,10 +295,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       content: '',
       lessonType: 'VIDEO',
       videoUrl: '',
+      attachmentUrl: '',
       isPreview: false,
       isLocked: false,
-      videoFile: null,
-      attachmentFile: null,
       quizData: {
         title: '',
         timeLimit: undefined,
@@ -426,10 +422,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
       content: lesson.content || '',
       lessonType,
       videoUrl: lesson.videoUrl || '',
+      attachmentUrl: (lesson as Lesson).attachmentUrl || '',
       isPreview: lesson.isPreview || false,
       isLocked: lesson.isLocked || false,
-      videoFile: null,
-      attachmentFile: null,
       quizData: initialQuizData,
     });
     setShowLessonModal(true);
@@ -507,10 +502,9 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
           content: lessonForm.content.trim() || undefined,
           lessonType: lessonForm.lessonType,
           videoUrl: lessonForm.videoUrl || undefined,
+          attachmentUrl: lessonForm.attachmentUrl || undefined,
           isPreview: lessonForm.isPreview,
           isLocked: lessonForm.isLocked,
-          videoFile: lessonForm.videoFile || undefined,
-          attachmentFile: lessonForm.attachmentFile || undefined,
           quizData: sanitizedQuizData,
           onProgress: (progress: number) => {
             requestAnimationFrame(() => setUploadProgress(progress));
@@ -1056,34 +1050,21 @@ export const CurriculumBuilder: React.FC<CurriculumBuilderProps> = ({
                 <Input
                   label="Paste video link (easiest – no upload)"
                   value={lessonForm.videoUrl}
-                  onChange={(e) => setLessonForm(prev => ({ ...prev, videoUrl: e.target.value, videoFile: e.target.value ? null : prev.videoFile }))}
+                  onChange={(e) => setLessonForm(prev => ({ ...prev, videoUrl: e.target.value }))}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/... or classroom link"
                   helperText="Copy & paste YouTube, Vimeo, Google Drive, or any video URL. Users will watch it embedded."
                 />
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Or upload a video file</label>
-                  <FileUpload
-                    accept="video/*"
-                    maxSize={3072}
-                    value={lessonForm.videoFile}
-                    onChange={(file) => setLessonForm(prev => ({ ...prev, videoFile: file || null, videoUrl: file ? '' : prev.videoUrl }))}
-                    helperText="MP4, WebM, etc. Up to 3GB. Upload and link are alternatives."
-                    isUploading={isUploading}
-                    uploadProgress={uploadProgress}
-                  />
-                </div>
               </div>
             </>
           )}
 
           {lessonForm.lessonType === 'PDF' && (
-            <FileUpload
-              label="Upload document"
-              accept=".pdf,.ppt,.pptx"
-              maxSize={50}
-              value={lessonForm.attachmentFile}
-              onChange={(file) => setLessonForm(prev => ({ ...prev, attachmentFile: file }))}
-              helperText="PDF or PowerPoint (.pdf, .ppt, .pptx — max 50MB)"
+            <Input
+              label="Document URL"
+              value={lessonForm.attachmentUrl}
+              onChange={(e) => setLessonForm(prev => ({ ...prev, attachmentUrl: e.target.value }))}
+              placeholder="https://drive.google.com/file/d/.../view or public PDF/PPT link"
+              helperText="Use Google Drive/public document URL. File upload is disabled."
             />
           )}
 

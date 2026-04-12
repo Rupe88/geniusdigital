@@ -146,7 +146,7 @@ export default function VastuProductPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea]">
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f8ff] to-[#e8f1ff]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-8">
           {/* Header skeleton (matches final layout) */}
           <div className="mb-8 text-center">
@@ -194,17 +194,16 @@ export default function VastuProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea]">
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f8ff] to-[#e8f1ff]">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         {/* Header (match Consultation page typography) */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 sm:text-3xl">
-            Vastu Products
+            Products
           </h1>
           <p className="mt-2 text-gray-600 max-w-3xl mx-auto">
-            Discover our collection of authentic Vastu products designed to bring positive energy,
-            harmony, and prosperity to your space. Each item is carefully selected and energized
-            according to ancient Vastu principles.
+            Discover our curated collection of products to support your learning journey and daily growth.
+            Find quality items handpicked for students and professionals.
           </p>
         </div>
 
@@ -216,10 +215,10 @@ export default function VastuProductPage() {
               <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search Vastu products..."
+                placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-lg"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-none focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent text-lg"
               />
             </div>
 
@@ -274,7 +273,7 @@ export default function VastuProductPage() {
           <div className="text-center py-16">
             <div className="text-gray-500 text-lg">
               {products.length === 0
-                ? 'No Vastu products available at the moment. Please check back later.'
+                ? 'No products available at the moment. Please check back later.'
                 : 'No products match your current filters. Try adjusting your search criteria.'
               }
             </div>
@@ -312,7 +311,7 @@ export default function VastuProductPage() {
                   </h3>
 
                   {product.vastuPurpose && (
-                    <p className="text-[11px] uppercase tracking-wide text-red-600 font-semibold">
+                    <p className="text-[11px] uppercase tracking-wide text-[var(--primary-700)] font-semibold">
                       {product.vastuPurpose}
                     </p>
                   )}
@@ -332,7 +331,7 @@ export default function VastuProductPage() {
                   {/* Price */}
                   <div className="mt-auto flex items-center justify-between mb-3">
                     <div className="flex items-baseline space-x-2">
-                      <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                      <span className="text-xl sm:text-2xl font-bold text-[var(--primary-700)]">
                         {formatPrice(product.price)}
                       </span>
                       {product.originalPrice && product.originalPrice > product.price && (
@@ -355,14 +354,14 @@ export default function VastuProductPage() {
                   {/* Action Buttons */}
                   <div className="mt-1 flex space-x-2">
                     <Link href={`/vastu-product/${product.slug}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full flex items-center justify-center">
+                      <Button variant="outline" size="sm" className="w-full flex items-center justify-center border-[var(--primary-300)] text-[var(--primary-700)] hover:bg-[var(--primary-50)]">
                         <HiEye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
                     </Link>
                     <Button
                       size="sm"
-                      className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center"
+                      className="flex-1 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] flex items-center justify-center"
                       disabled={product.stockQuantity <= 0}
                       onClick={() => handleAddToCart(product.id)}
                     >

@@ -12,27 +12,7 @@ import { applyCoupon } from '@/lib/api/cart';
 import { useCart } from '@/lib/context/CartContext';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { HiShoppingCart, HiArrowLeft } from 'react-icons/hi';
-
-function submitEsewaForm(paymentDetails: { paymentUrl?: string; formData?: Record<string, string> }) {
-  const url = paymentDetails.paymentUrl;
-  const formData = paymentDetails.formData || {};
-  if (!url || typeof url !== 'string') {
-    showError('Invalid payment redirect URL');
-    return;
-  }
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = url;
-  for (const key of Object.keys(formData)) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = String(formData[key] ?? '');
-    form.appendChild(input);
-  }
-  document.body.appendChild(form);
-  form.submit();
-}
+import { ManualPaymentFlow } from '@/components/payments/ManualPaymentFlow';
 
 const defaultShipping = {
   fullName: '',
@@ -53,6 +33,12 @@ export default function CheckoutPage() {
   const [shipping, setShipping] = useState(defaultShipping);
   const [couponCode, setCouponCode] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [manualPayment, setManualPayment] = useState<{
+    paymentId: string;
+    qrImageUrl: string;
+    instructions?: string;
+    amountLabel: string;
+  } | null>(null);
 
   const fetchCart = useCallback(async () => {
     setLoading(true);
@@ -115,19 +101,23 @@ export default function CheckoutPage() {
       const paymentResponse = await createPayment({
         orderId: order.id,
         amount: Number(order.total),
-        paymentMethod: 'ESEWA',
+        paymentMethod: 'MANUAL_QR',
         successUrl: `${origin}/payment/success?type=order`,
         failureUrl: `${origin}/payment/failure`,
       });
-      if (paymentResponse?.paymentDetails?.paymentUrl) {
-        showSuccess('Redirecting to eSewa...');
-        submitEsewaForm(paymentResponse.paymentDetails);
-      } else if (paymentResponse?.paymentDetails) {
-        submitEsewaForm(paymentResponse.paymentDetails);
-      } else {
-        throw new Error('Payment gateway did not return redirect details');
+      const pd = paymentResponse?.paymentDetails;
+      if (pd?.qrImageUrl && paymentResponse?.paymentId) {
+        setManualPayment({
+          paymentId: paymentResponse.paymentId,
+          qrImageUrl: pd.qrImageUrl,
+          instructions: typeof pd.instructions === 'string' ? pd.instructions : undefined,
+          amountLabel: `NPR ${Number(paymentResponse.amount ?? order.total).toLocaleString()}`,
+        });
+        showSuccess('Scan the QR to pay, then upload your proof below.');
+        refreshCart?.();
+        return;
       }
-      refreshCart?.();
+      throw new Error('Payment could not be started. Ask an admin to configure the payment QR.');
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Checkout failed');
     } finally {
@@ -314,10 +304,25 @@ export default function CheckoutPage() {
               type="submit"
               variant="primary"
               className="w-full mt-6"
-              disabled={submitting}
+              disabled={submitting || !!manualPayment}
             >
-              {submitting ? 'Processing...' : 'Pay with eSewa'}
+              {submitting ? 'Processing...' : manualPayment ? 'Complete payment below' : 'Pay with QR'}
             </Button>
+            {manualPayment && (
+              <div className="mt-6">
+                <ManualPaymentFlow
+                  paymentId={manualPayment.paymentId}
+                  qrImageUrl={manualPayment.qrImageUrl}
+                  instructions={manualPayment.instructions}
+                  amountLabel={manualPayment.amountLabel}
+                  onDone={() => {
+                    setManualPayment(null);
+                    refreshCart?.();
+                    router.push('/dashboard/orders');
+                  }}
+                />
+              </div>
+            )}
           </Card>
         </div>
       </form>

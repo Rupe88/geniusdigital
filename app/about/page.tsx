@@ -29,8 +29,8 @@ export default function AboutPage() {
           <div className="inline-flex items-center justify-center mb-6">
             <div className="relative h-24 w-24 sm:h-28 sm:w-28">
               <Image
-                src="/sanskar-academy-logo.jpeg"
-                alt="Sanskar Academy"
+                src="/logo.png"
+                alt="Genius Digi"
                 fill
                 className="object-contain"
                 sizes="112px"

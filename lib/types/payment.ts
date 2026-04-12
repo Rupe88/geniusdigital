@@ -1,4 +1,12 @@
-export type PaymentMethod = 'ESEWA' | 'MOBILE_BANKING' | 'VISA_CARD' | 'MASTERCARD' | 'KHALTI' | 'RAZORPAY';
+export type PaymentMethod =
+  | 'MANUAL_QR'
+  | 'ESEWA'
+  | 'MOBILE_BANKING'
+  | 'VISA_CARD'
+  | 'MASTERCARD'
+  | 'OTHER'
+  | 'KHALTI'
+  | 'RAZORPAY';
 
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 

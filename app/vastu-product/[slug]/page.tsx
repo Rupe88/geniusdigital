@@ -57,7 +57,7 @@ export default function VastuProductDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f8ff] to-[#e8f1ff] flex items-center justify-center">
         <p className="text-gray-600">Loading product...</p>
       </div>
     );
@@ -65,24 +65,24 @@ export default function VastuProductDetailPage({
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea] flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f8ff] to-[#e8f1ff] flex flex-col items-center justify-center space-y-4">
         <p className="text-xl font-semibold text-gray-800">Product not found</p>
         <Button variant="outline" onClick={() => router.push('/vastu-product')}>
-          Go back to Vastu Products
+          Go back to Products
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#fff5f6] to-[#fde8ea]">
+    <div className="min-h-screen bg-gradient-to-b from-white via-[#f3f8ff] to-[#e8f1ff]">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <button
           onClick={() => router.push('/vastu-product')}
           className="mb-6 inline-flex items-center text-sm font-medium text-[var(--primary-700)] hover:text-[var(--primary-900)]"
         >
           <HiArrowLeft className="mr-2" />
-          Back to Vastu Products
+          Back to Products
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -123,11 +123,11 @@ export default function VastuProductDetailPage({
                     {product.name}
                   </h1>
                   {product.vastuPurpose && (
-                    <p className="text-sm font-medium text-red-600">{product.vastuPurpose}</p>
+                    <p className="text-sm font-medium text-[var(--primary-700)]">{product.vastuPurpose}</p>
                   )}
                 </div>
                 {product.featured && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-none bg-red-600 text-white text-xs font-semibold">
+                  <span className="inline-flex items-center px-3 py-1 rounded-none bg-[var(--primary-700)] text-white text-xs font-semibold">
                     <HiCheckCircle className="w-4 h-4 mr-1" />
                     Featured
                   </span>
@@ -164,7 +164,7 @@ export default function VastuProductDetailPage({
 
               <div className="pt-4 flex flex-col sm:flex-row gap-3">
                 <Button
-                  className="flex-1 bg-red-600 hover:bg-red-700 flex items-center justify-center"
+                  className="flex-1 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] flex items-center justify-center"
                   disabled={product.stockQuantity <= 0}
                 >
                   <HiShoppingCart className="h-5 w-5 mr-2" />

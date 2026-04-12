@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/context/AuthContext';
 import * as enrollmentApi from '@/lib/api/enrollments';
+import { getMyInstructorCourses } from '@/lib/api/instructors';
 import { getPaymentHistory } from '@/lib/api/payments';
 import { getMyInstallments } from '@/lib/api/installments';
 import { getReferralStats } from '@/lib/api/referrals';
@@ -49,6 +50,25 @@ const DASHBOARD_SECTIONS = [
   },
 ];
 
+const INSTRUCTOR_DASHBOARD_SECTIONS = [
+  {
+    href: `${ROUTES.DASHBOARD}/my-courses`,
+    label: 'Assigned Courses',
+    description: 'Open your assigned courses and build chapters/lessons curriculum',
+  },
+  {
+    href: `${ROUTES.DASHBOARD}/my-courses`,
+    label: 'Curriculum Work',
+    description: 'Continue working on course content for your assigned courses',
+  },
+  {
+    href: `${ROUTES.DASHBOARD}/settings`,
+    label: 'Settings',
+    description: 'Update your profile and account preferences',
+  },
+];
+
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -63,6 +83,7 @@ function formatCurrency(amount: number, currency: string = 'NPR'): string {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const isInstructor = user?.role === 'INSTRUCTOR';
   const [stats, setStats] = useState({
     enrolledCourses: 0,
     completedCourses: 0,
@@ -70,6 +91,13 @@ export default function DashboardPage() {
     referralConversions: 0,
   });
   const [recentEnrollments, setRecentEnrollments] = useState<Enrollment[]>([]);
+  const [instructorRecentCourses, setInstructorRecentCourses] = useState<Array<{
+    id: string;
+    title: string;
+    status: string;
+    chapters: number;
+    lessons: number;
+  }>>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [upcomingInstallments, setUpcomingInstallments] = useState<import('@/lib/api/installments').MyInstallmentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +107,43 @@ export default function DashboardPage() {
     setLoading(true);
     setLoadError(null);
     try {
+      if (isInstructor) {
+        const courses = await getMyInstructorCourses();
+        const assigned = courses.length;
+        const readyToPublish = courses.filter(
+          (c) =>
+            c.status === 'DRAFT' &&
+            (c._count?.chapters || 0) > 0 &&
+            (c._count?.lessons || 0) > 0
+        ).length;
+        const needsCurriculum = courses.filter(
+          (c) => (c._count?.chapters || 0) === 0 || (c._count?.lessons || 0) === 0
+        ).length;
+        const completionScore = assigned > 0
+          ? Math.round(((assigned - needsCurriculum) / assigned) * 100)
+          : 0;
+
+        setStats({
+          enrolledCourses: assigned,
+          completedCourses: readyToPublish,
+          paymentCount: needsCurriculum,
+          referralConversions: completionScore,
+        });
+        setInstructorRecentCourses(
+          courses.slice(0, 5).map((c) => ({
+            id: c.id,
+            title: c.title,
+            status: c.status,
+            chapters: c._count?.chapters || 0,
+            lessons: c._count?.lessons || 0,
+          }))
+        );
+        setRecentEnrollments([]);
+        setRecentPayments([]);
+        setUpcomingInstallments([]);
+        return;
+      }
+
       const [enrollmentsRes, paymentsRes, installmentsRes, referralRes] = await Promise.allSettled([
         enrollmentApi.getUserEnrollments(),
         getPaymentHistory({ page: 1, limit: 5 }),
@@ -116,7 +181,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isInstructor]);
 
   useEffect(() => {
     fetchDashboard();
@@ -130,7 +195,9 @@ export default function DashboardPage() {
             Welcome back, {user?.fullName ?? 'Learner'}!
           </h1>
           <p className="text-[var(--muted-foreground)] text-sm sm:text-base">
-            Continue your courses and track your progress from this simple overview.
+            {isInstructor
+              ? 'View assigned courses and continue building curriculum.'
+              : 'Continue your courses and track your progress from this simple overview.'}
           </p>
         </div>
         <Button
@@ -157,10 +224,10 @@ export default function DashboardPage() {
       {/* Overview stats (without large icons, clean numeric summary) */}
       <section aria-label="Overview statistics">
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Overview</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`grid gap-4 ${isInstructor ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4'}`}>
           <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
-              Enrolled courses
+              {isInstructor ? 'Assigned courses' : 'Enrolled courses'}
             </p>
             <p className="text-2xl font-bold text-[var(--foreground)]">
               {loading ? '—' : stats.enrolledCourses}
@@ -168,7 +235,7 @@ export default function DashboardPage() {
           </Card>
           <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
-              Completed courses
+              {isInstructor ? 'Ready to publish' : 'Completed courses'}
             </p>
             <p className="text-2xl font-bold text-[var(--foreground)]">
               {loading ? '—' : stats.completedCourses}
@@ -176,30 +243,37 @@ export default function DashboardPage() {
           </Card>
           <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
-              Total payments
+              {isInstructor ? 'Needs curriculum' : 'Total payments'}
             </p>
             <p className="text-2xl font-bold text-[var(--foreground)]">
               {loading ? '—' : stats.paymentCount}
             </p>
           </Card>
-          <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
-              Referral conversions
-            </p>
-            <p className="text-2xl font-bold text-[var(--foreground)]">
-              {loading ? '—' : stats.referralConversions}
-            </p>
-          </Card>
+          {!isInstructor && (
+            <Card padding="md" className="flex flex-col justify-between gap-1 hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+                Referral conversions
+              </p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">
+                {loading ? '—' : stats.referralConversions}
+              </p>
+            </Card>
+          )}
         </div>
+        {isInstructor && (
+          <p className="text-xs text-[var(--muted-foreground)] mt-2">
+            Curriculum completion score: <span className="font-semibold text-[var(--foreground)]">{loading ? '—' : `${stats.referralConversions}%`}</span>
+          </p>
+        )}
       </section>
 
       {/* All sections – quick access */}
       <section aria-label="Dashboard sections">
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">All sections</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {DASHBOARD_SECTIONS.map((section) => {
+          {(isInstructor ? INSTRUCTOR_DASHBOARD_SECTIONS : DASHBOARD_SECTIONS).map((section) => {
             return (
-              <Link key={section.href} href={section.href}>
+              <Link key={`${section.href}-${section.label}`} href={section.href}>
                 <Card padding="md" className="h-full border border-[var(--border)] hover:border-[var(--primary-300)] hover:shadow-md transition-all group">
                   <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0">
@@ -224,7 +298,7 @@ export default function DashboardPage() {
       {/* Recent activity */}
       <section aria-label="Recent activity" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card padding="lg">
-          <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Recent courses</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">{isInstructor ? 'Assigned courses' : 'Recent courses'}</h2>
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -238,6 +312,28 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          ) : isInstructor ? (
+            instructorRecentCourses.length === 0 ? (
+              <p className="text-[var(--muted-foreground)] text-sm">No assigned courses yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {instructorRecentCourses.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-[var(--muted)]/50 transition-colors">
+                    <div className="min-w-0">
+                      <p className="font-medium text-[var(--foreground)] truncate">{c.title}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        {c.status} · {c.chapters} chapters · {c.lessons} lessons
+                      </p>
+                    </div>
+                    <Link href={`${ROUTES.DASHBOARD}/courses/${c.id}/manage`}>
+                      <Button variant="ghost" size="sm" className="gap-1">
+                        Manage <HiChevronRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )
           ) : recentEnrollments.length === 0 ? (
             <p className="text-[var(--muted-foreground)] text-sm">No enrollments yet.</p>
           ) : (
@@ -279,6 +375,7 @@ export default function DashboardPage() {
           </Link>
         </Card>
 
+        {!isInstructor && (
         <Card padding="lg">
           <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Recent payments</h2>
           {loading ? (
@@ -314,7 +411,9 @@ export default function DashboardPage() {
             View all payments →
           </Link>
         </Card>
+        )}
 
+        {!isInstructor && (
         <Card padding="lg">
           <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">Upcoming installments</h2>
           {loading ? (
@@ -356,6 +455,7 @@ export default function DashboardPage() {
             View all installments →
           </Link>
         </Card>
+        )}
       </section>
     </div>
   );

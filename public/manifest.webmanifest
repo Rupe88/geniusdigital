@@ -1,23 +1,23 @@
 {
-  "name": "Sanskar Academy",
-  "short_name": "Sanskar",
+  "name": "Genius Digi",
+  "short_name": "Genius Digi",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#ffffff",
-  "theme_color": "#c01e2e",
+  "theme_color": "#1877f2",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/logo.png?v=4",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/logo.png?v=4",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

@@ -7,16 +7,16 @@ import { PwaInstall } from '@/components/PwaInstall';
 import { ROUTES } from '@/lib/utils/constants';
 
 const categories = [
-  'Vastu',
-  'Numerology',
-  'Money and Wealth',
-  'NLP',
-  'Law of Attraction',
-  'SWAR VIGYAN',
-  'Graphology',
-  'Astrology',
-  'Navaratri Shakti Sadhana',
-  'BUSINESS GROWTH',
+  'Academic Counseling',
+  'Career Guidance',
+  'Exam Preparation',
+  'Skill Development',
+  'Higher Study Guidance',
+  'Mental Wellness',
+  'Parent/Teacher Counseling',
+  'Scholarship & Fees',
+  'Communication Skills',
+  'General Inquiry',
 ];
 
 const usefulLinks = [
@@ -39,8 +39,8 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col items-start gap-6">
             <div className="relative h-28 w-28">
               <Image
-                src="/sanskar-academy-logo.jpeg"
-                alt="Sanskar Academy logo"
+                src="/logo.png"
+                alt="Genius Digi logo"
                 fill
                 className="object-contain"
                 sizes="112px"
@@ -151,7 +151,7 @@ export const Footer: React.FC = () => {
               <span className="mt-2 block h-0.5 w-16 bg-white/60" />
             </h4>
             <p className="text-gray-100/80">
-              Install Sanskar Academy on your phone or computer for quick access.
+              Install Genius Digi on your phone or computer for quick access.
             </p>
             <PwaInstall />
           </div>
@@ -162,7 +162,7 @@ export const Footer: React.FC = () => {
       <div className="border-t border-white/10 bg-[#0a111d]">
         <div className="mx-auto max-w-7xl px-4 py-4 text-center text-[18px] text-gray-300 sm:px-6 lg:px-8">
           <p>
-            &copy; {year} Sanskar Academy. All rights reserved
+            &copy; {year} Genius Digi. All rights reserved
           </p>
         </div>
       </div>

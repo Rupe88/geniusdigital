@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
-import LimitingBeliefCheck from '@/components/LimitingBeliefCheck';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LimitingBeliefPage() {
-  return (
-    <LimitingBeliefCheck
-      title="Limiting Belief Check Test"
-      subtitle="Answer each statement with 1–5. Total score will classify your limiting-belief system."
-    />
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/dashboard');
+  }, [router]);
+
+  return null;
 }
 

@@ -4,11 +4,8 @@ import React, { use, useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { HiCheckCircle, HiXCircle, HiRefresh } from 'react-icons/hi';
-import * as paymentApi from '@/lib/api/payments';
+import { HiCheckCircle, HiXCircle, HiRefresh, HiInformationCircle } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
-import { formatCurrency } from '@/lib/utils/helpers';
-
 type SearchParamsLike = Record<string, string | string[] | undefined>;
 function getParam(sp: SearchParamsLike | null, key: string): string | null {
     if (!sp || !(key in sp)) return null;
@@ -19,7 +16,7 @@ function getParam(sp: SearchParamsLike | null, key: string): string | null {
 function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLike }) {
     const router = useRouter();
     const [verifying, setVerifying] = useState(true);
-    const [status, setStatus] = useState<'success' | 'failed' | 'error'>('success');
+    const [status, setStatus] = useState<'success' | 'failed' | 'error' | 'info'>('info');
     const [message, setMessage] = useState('Verifying your payment...');
     const [paymentData, setPaymentData] = useState<any>(null);
 
@@ -29,44 +26,20 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
 
     useEffect(() => {
         const data = getParam(searchParams, 'data');
-        const installment = getParam(searchParams, 'type') === 'installment';
         if (data) {
-            verifyPayment(data, installment);
-        } else {
             setVerifying(false);
             setStatus('error');
-            setMessage('No payment data received from eSewa');
-        }
-    }, [searchParams]);
-
-    const verifyPayment = async (encodedData: string, isInstallmentPayment: boolean) => {
-        try {
-            setVerifying(true);
-            const decodedData = JSON.parse(atob(encodedData));
-            const transactionId = decodedData.transaction_uuid || decodedData.transactionId;
-
-            if (!transactionId) {
-                setStatus('failed');
-                setMessage('Invalid callback: missing transaction ID');
-                return;
-            }
-
-            const result = await paymentApi.verifyPaymentCallback(transactionId, 'ESEWA', decodedData);
-            setPaymentData(result);
-            setStatus('success');
             setMessage(
-                isInstallmentPayment
-                    ? 'Your installment has been paid successfully.'
-                    : 'Your payment has been successfully verified! You are now enrolled.'
+                'eSewa redirects are disabled. Pay using the QR on the course or checkout page, then upload your payment screenshot.'
             );
-        } catch (error) {
-            console.error('Verification error:', error);
-            setStatus('failed');
-            setMessage(Object(error).message || 'Payment verification failed');
-        } finally {
-            setVerifying(false);
+            return;
         }
-    };
+        setVerifying(false);
+        setStatus('info');
+        setMessage(
+            'Payments use QR + screenshot upload. Complete payment from the course, cart checkout, or installments page, then wait for admin approval.'
+        );
+    }, [searchParams]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -76,6 +49,32 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
                         <HiRefresh className="w-16 h-16 text-[var(--primary-700)] animate-spin mx-auto" />
                         <h1 className="text-2xl font-bold text-gray-900">Verifying Payment</h1>
                         <p className="text-gray-600">{message}</p>
+                    </div>
+                ) : status === 'info' ? (
+                    <div className="space-y-6">
+                        <div className="bg-[var(--primary-50)] w-24 h-24 rounded-none flex items-center justify-center mx-auto">
+                            <HiInformationCircle className="w-16 h-16 text-[var(--primary-700)]" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-gray-900">Pay with QR</h1>
+                        <p className="text-gray-600 leading-relaxed">{message}</p>
+                        <div className="flex flex-col gap-3">
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                className="w-full h-12 text-lg"
+                                onClick={() => router.push(ROUTES.COURSES)}
+                            >
+                                Browse courses
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                className="w-full h-12 text-lg"
+                                onClick={() => router.push(`${ROUTES.DASHBOARD}/orders`)}
+                            >
+                                Orders & checkout
+                            </Button>
+                        </div>
                     </div>
                 ) : status === 'success' ? (
                     <div className="space-y-6">
@@ -97,7 +96,7 @@ function PaymentSuccessContent({ searchParams }: { searchParams: SearchParamsLik
                                 )}
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Transaction ID:</span>
-                                    <span className="font-semibold text-gray-900">{(paymentData as any).transactionId ?? (paymentData as any).esewaRefId ?? '—'}</span>
+                                    <span className="font-semibold text-gray-900">{(paymentData as any).transactionId ?? '—'}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">Amount Paid:</span>

@@ -34,6 +34,7 @@ import {
   FaChevronUp
 } from 'react-icons/fa';
 import { ShareButton } from '@/components/referrals/ShareButton';
+import { ManualPaymentFlow } from '@/components/payments/ManualPaymentFlow';
 
 type TabType = 'overview' | 'chapters' | 'instructors' | 'reviews' | 'comments';
 
@@ -62,6 +63,14 @@ export default function CourseDetailPage({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
+  const [checkingPending, setCheckingPending] = useState(false);
+  const [manualPayment, setManualPayment] = useState<{
+    paymentId: string;
+    qrImageUrl: string;
+    instructions?: string;
+    amountLabel: string;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [demoVideoPlaying, setDemoVideoPlaying] = useState(false);
@@ -116,6 +125,14 @@ export default function CourseDetailPage({
       fetchLessons(params.id as string);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !course?.id || course.isEnrolled) {
+      setPendingApproval(false);
+      return;
+    }
+    checkPendingManualPayment(course.id);
+  }, [isAuthenticated, course?.id, course?.isEnrolled]);
 
   useEffect(() => {
     if (activeTab === 'comments' && course?.id) {
@@ -189,11 +206,32 @@ export default function CourseDetailPage({
       if (data.categoryId) {
         fetchRelatedCourses(data.categoryId, id);
       }
+      if (data.isEnrolled) {
+        setPendingApproval(false);
+      }
     } catch (error) {
       console.error('Error fetching course:', error);
       showError('Failed to load course');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkPendingManualPayment = async (courseId: string) => {
+    try {
+      setCheckingPending(true);
+      const history = await paymentApi.getPaymentHistory({ page: 1, limit: 100 });
+      const hasPending = (history.data || []).some(
+        (p) =>
+          p.courseId === courseId &&
+          p.paymentMethod === 'MANUAL_QR' &&
+          p.status === 'PENDING'
+      );
+      setPendingApproval(hasPending);
+    } catch {
+      setPendingApproval(false);
+    } finally {
+      setCheckingPending(false);
     }
   };
 
@@ -299,27 +337,6 @@ export default function CourseDetailPage({
     }
   };
 
-  const submitEsewaForm = (paymentDetails: { paymentUrl?: string; formData?: Record<string, string> }) => {
-    const url = paymentDetails.paymentUrl;
-    const formData = paymentDetails.formData || {};
-    if (!url || typeof url !== 'string') {
-      showError('Invalid payment redirect URL');
-      return;
-    }
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = url;
-    for (const key of Object.keys(formData)) {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = String(formData[key] ?? '');
-      form.appendChild(input);
-    }
-    document.body.appendChild(form);
-    form.submit();
-  };
-
   /* --------------------------------------------------------------------------------
    * REFERRAL TRACKING LOGIC
    * -------------------------------------------------------------------------------- */
@@ -395,6 +412,10 @@ export default function CourseDetailPage({
       router.push(`/dashboard/courses/${course.id}/learn`);
       return;
     }
+    if (pendingApproval) {
+      showError('Your payment proof is pending admin approval.');
+      return;
+    }
 
     const priceNum = Number(course.price);
     const isFreeCourse = course.isFree === true || course.price == null || priceNum === 0 || Number.isNaN(priceNum);
@@ -428,7 +449,7 @@ export default function CourseDetailPage({
       const paymentResponse = await paymentApi.createPayment({
         courseId: course.id,
         amount,
-        paymentMethod: 'ESEWA',
+        paymentMethod: 'MANUAL_QR',
         couponCode: appliedPromo?.code || undefined,
         referralClickId: referralClickId || undefined,
         successUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/success`,
@@ -436,14 +457,18 @@ export default function CourseDetailPage({
         installmentId,
       });
 
-      if (paymentResponse?.paymentDetails?.paymentUrl) {
-        showSuccess('Redirecting to eSewa...');
-        submitEsewaForm(paymentResponse.paymentDetails);
-      } else if (paymentResponse?.paymentDetails) {
-        submitEsewaForm(paymentResponse.paymentDetails);
-      } else {
-        throw new Error('Payment gateway did not return redirect details');
+      const pd = paymentResponse?.paymentDetails;
+      if (pd?.qrImageUrl && paymentResponse?.paymentId) {
+        setManualPayment({
+          paymentId: paymentResponse.paymentId,
+          qrImageUrl: pd.qrImageUrl,
+          instructions: typeof pd.instructions === 'string' ? pd.instructions : undefined,
+          amountLabel: `Rs. ${Number(paymentResponse.amount ?? amount).toLocaleString()}`,
+        });
+        showSuccess('Scan the QR to pay, then upload your proof below.');
+        return;
       }
+      throw new Error('Payment could not be started. Ask an admin to configure the payment QR in Admin settings.');
     } catch (error: unknown) {
       const msg = Object(error).message || 'Enrollment failed';
       if (typeof msg === 'string' && msg.toLowerCase().includes('already enrolled')) {
@@ -1128,10 +1153,14 @@ export default function CourseDetailPage({
                     className="w-full h-12 text-base font-semibold rounded-lg"
                     onClick={handleEnroll}
                     isLoading={enrolling}
-                    disabled={enrolling}
+                    disabled={enrolling || pendingApproval || checkingPending}
                   >
-                    {enrolling && !course.isFree
-                      ? 'Redirecting to eSewa...'
+                    {checkingPending
+                      ? 'Checking payment status…'
+                      : pendingApproval
+                        ? 'Payment Pending Approval'
+                    : enrolling && !course.isFree
+                      ? 'Starting payment…'
                       : course.isEnrolled
                         ? 'Continue Learning'
                         : course.isFree
@@ -1149,6 +1178,20 @@ export default function CourseDetailPage({
                     className="h-11 w-full rounded-lg font-medium"
                   />
                 </div>
+
+                {manualPayment && (
+                  <ManualPaymentFlow
+                    paymentId={manualPayment.paymentId}
+                    qrImageUrl={manualPayment.qrImageUrl}
+                    instructions={manualPayment.instructions}
+                    amountLabel={manualPayment.amountLabel}
+                    onDone={() => {
+                      setManualPayment(null);
+                      setPendingApproval(true);
+                      fetchCourse(course.id);
+                    }}
+                  />
+                )}
 
                 {/* Course Facts */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">

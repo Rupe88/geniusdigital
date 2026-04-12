@@ -87,6 +87,7 @@ export const API_ENDPOINTS = {
     CREATE: '/payments/initiate',
     VERIFY: '/payments/verify',
     VERIFY_CALLBACK: '/payments/verify-callback',
+    SUBMIT_PROOF: '/payments/submit-proof',
     HISTORY: '/payments', // GET list (backend uses GET /)
     BY_ID: (id: string) => `/payments/${id}`,
   },

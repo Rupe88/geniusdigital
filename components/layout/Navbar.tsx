@@ -33,20 +33,20 @@ export const Navbar: React.FC = () => {
     { label: 'Home', href: ROUTES.HOME },
     { label: 'Consultation', href: ROUTES.CONSULTATION },
     { label: 'Courses', href: ROUTES.COURSES },
-    { label: 'Vastu Product', href: ROUTES.VASTU_PRODUCT },
+    { label: 'Products', href: ROUTES.VASTU_PRODUCT },
   ];
 
   const moreMenuItems = [
     { label: 'Events', href: ROUTES.EVENTS },
     { label: 'Blogs', href: ROUTES.BLOGS },
     { label: 'Gallery', href: ROUTES.GALLERY },
+    { label: 'Become A Affiliate', href: ROUTES.AFFILIATE },
   ];
 
   const handleNumerologyClick = () => {
     const target = '/numerology/basic';
     if (!isAuthenticated) {
-      const redirectPath = target;
-      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirectPath)}`);
+      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent(target)}`);
       return;
     }
     router.push(target);
@@ -145,14 +145,14 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-    <nav className="bg-white sticky top-0 z-50 border-b border-gray-100">
+    <nav className="bg-white sticky top-0 z-50 border-b border-gray-100 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-14 lg:h-20">
           {/* Logo - Left (on mobile smaller, no hamburger) */}
           <Link href={ROUTES.HOME} className="flex items-center flex-shrink-0">
             <div className="relative w-10 h-10 lg:w-16 lg:h-16">
               <Image
-                src="/sanskar-academy-logo.jpeg"
+                src="/logo.png"
                 alt="Sanskar Academy"
                 fill
                 className="object-contain rounded-none"
@@ -180,43 +180,6 @@ export const Navbar: React.FC = () => {
                 </Link>
               );
             })}
-
-            {/* Calculator dropdown (hover) */}
-            <div className="relative group">
-              <button
-                type="button"
-                className={`flex items-center gap-1 transition-colors font-normal text-base whitespace-nowrap ${
-                  pathname === '/numerology' ||
-                  pathname?.startsWith('/numerology/') ||
-                  pathname === '/vaastu' ||
-                  pathname?.startsWith('/vaastu/')
-                    ? 'text-[var(--primary-700)]'
-                    : 'text-gray-700 hover:text-[var(--primary-700)]'
-                }`}
-              >
-                <span>Calculator</span>
-                <HiChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
-              </button>
-
-              {/* Keep menu open while moving mouse (no hover gap) */}
-              <div className="absolute left-0 top-full w-44 pt-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
-                <div className="bg-white rounded-none shadow-lg py-1 border border-gray-200">
-                <button
-                  type="button"
-                  onClick={handleNumerologyClick}
-                  className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50`}
-                >
-                  Numerology
-                </button>
-                <Link
-                  href="/vaastu"
-                  className="block px-4 py-2 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-50"
-                >
-                  Vastu
-                </Link>
-                </div>
-              </div>
-            </div>
 
             {/* More dropdown */}
             <div className="relative" ref={moreMenuRef}>
@@ -297,14 +260,8 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {/* Desktop: Right Section - Become A Affiliate + Auth */}
+          {/* Desktop: Right Section - Auth */}
           <div className="hidden lg:flex lg:items-center lg:gap-4 lg:ml-auto flex-shrink-0">
-            <Link
-              href={ROUTES.AFFILIATE}
-              className="px-4 py-2 text-base font-medium whitespace-nowrap bg-white border border-[var(--primary-700)] text-[var(--primary-700)] hover:bg-[var(--primary-50)] rounded transition-colors"
-            >
-              Become A Affiliate
-            </Link>
             {/* Cart icon */}
             <button
               type="button"

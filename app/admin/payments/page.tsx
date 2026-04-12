@@ -20,6 +20,8 @@ interface Payment {
   paymentMethod: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
   metadata?: any;
+  proofImageUrl?: string | null;
+  proofSubmittedAt?: string | null;
   createdAt: string;
   completedAt?: string;
   user?: {
@@ -76,6 +78,7 @@ export default function AdminPaymentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [refundingId, setRefundingId] = useState<string | null>(null);
+  const [manualActionId, setManualActionId] = useState<string | null>(null);
 
   const fetchPayments = useCallback(async () => {
     try {
@@ -129,6 +132,43 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
+
+  const handleApproveManual = async (paymentId: string) => {
+    if (!confirm('Approve this payment and complete enrollment / order?')) return;
+    try {
+      setManualActionId(paymentId);
+      const response = await apiClient.post(`/payments/admin/${paymentId}/approve-manual`);
+      if (response.data.success) {
+        toast.success('Payment approved');
+        fetchPayments();
+        fetchAnalytics();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to approve');
+    } finally {
+      setManualActionId(null);
+    }
+  };
+
+  const handleRejectManual = async (paymentId: string) => {
+    if (!confirm('Reject this payment?')) return;
+    const reason = window.prompt('Optional reason (stored for admin records):') ?? '';
+    try {
+      setManualActionId(paymentId);
+      const response = await apiClient.post(`/payments/admin/${paymentId}/reject-manual`, {
+        reason: reason.trim() || undefined,
+      });
+      if (response.data.success) {
+        toast.success('Payment rejected');
+        fetchPayments();
+        fetchAnalytics();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to reject');
+    } finally {
+      setManualActionId(null);
+    }
+  };
 
   const handleRefund = async (paymentId: string) => {
     if (!confirm('Are you sure you want to refund this payment?')) return;
@@ -307,6 +347,9 @@ export default function AdminPaymentsPage() {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Proof
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -317,19 +360,23 @@ export default function AdminPaymentsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                     Loading payments...
                   </td>
                 </tr>
               ) : payments.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                     No payments found
                   </td>
                 </tr>
               ) : (
                 payments.map((payment) => {
                   const StatusIcon = statusIcons[payment.status];
+                  const showManualActions =
+                    payment.paymentMethod === 'MANUAL_QR' &&
+                    payment.status === 'PENDING';
+                  const canApproveManual = showManualActions && !!payment.proofImageUrl;
                   return (
                     <tr key={payment.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -375,20 +422,56 @@ export default function AdminPaymentsPage() {
                           {payment.status}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-sm">
+                        {payment.proofImageUrl ? (
+                          <a
+                            href={payment.proofImageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--primary-700)] font-medium hover:underline"
+                          >
+                            View screenshot
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(payment.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {payment.status === 'COMPLETED' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRefund(payment.id)}
-                            disabled={refundingId === payment.id}
-                          >
-                            {refundingId === payment.id ? 'Processing...' : 'Refund'}
-                          </Button>
-                        )}
+                        <div className="flex flex-col gap-1 items-start">
+                          {showManualActions && (
+                            <>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleApproveManual(payment.id)}
+                                disabled={!canApproveManual || manualActionId === payment.id}
+                              >
+                                {manualActionId === payment.id ? '…' : 'Approve'}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRejectManual(payment.id)}
+                                disabled={manualActionId === payment.id}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {payment.status === 'COMPLETED' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRefund(payment.id)}
+                              disabled={refundingId === payment.id}
+                            >
+                              {refundingId === payment.id ? 'Processing...' : 'Refund'}
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

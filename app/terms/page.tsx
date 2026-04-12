@@ -59,8 +59,8 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-xl font-semibold text-gray-900">4. Payments and refunds</h2>
             <p className="text-sm text-gray-600">
-              Payments for courses, events, and consultations are processed via secure third‑party
-              gateways such as eSewa and banking partners. By making a payment, you confirm that:
+              Payments for courses, events, and consultations may use QR or bank transfers and other
+              methods we support from time to time. By making a payment, you confirm that:
             </p>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
               <li>You are authorized to use the payment method</li>

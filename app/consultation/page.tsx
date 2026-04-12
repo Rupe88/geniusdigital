@@ -18,8 +18,35 @@ export default function ConsultationPage() {
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateConsultationRequest>();
 
-  // Define specific category order (same as courses page)
-  const categoryOrder = ['Vastu', 'Numerology', 'Money and Wealth', 'NLP'];
+  // Show student-friendly consultation labels on user side.
+  const categoryLabelMap: Record<string, string> = {
+    'Vastu': 'Academic Counseling',
+    'Numerology': 'Career Guidance',
+    'Astrology': 'Exam Preparation',
+    'Business': 'Skill Development',
+    'Career': 'Higher Study Guidance',
+    'Health & Wellness': 'Mental Wellness',
+    'Relationship': 'Parent/Teacher Counseling',
+    'Money and Wealth': 'Scholarship & Fees',
+    'NLP': 'Communication Skills',
+    'Other': 'General Inquiry',
+  };
+
+  const getCategoryLabel = (name: string) => categoryLabelMap[name] || name;
+
+  // Define specific category order for student-facing options.
+  const categoryOrder = [
+    'Vastu',
+    'Numerology',
+    'Astrology',
+    'Business',
+    'Career',
+    'Health & Wellness',
+    'Relationship',
+    'Money and Wealth',
+    'NLP',
+    'Other',
+  ];
   
   // Sort categories according to the defined order, then alphabetically for others
   const sortedCategories = [...categories].sort((a, b) => {
@@ -70,7 +97,7 @@ export default function ConsultationPage() {
       const categoryId = rawCategoryId && !String(rawCategoryId).startsWith('fallback-') ? rawCategoryId : undefined;
       const payload: CreateConsultationRequest = {
         ...data,
-        message: `${topic}${data.message}`,
+        message: `${topic}${selectedCategory ? `Consultation Type: ${getCategoryLabel(selectedCategory.name)}\n` : ''}${data.message}`,
         consultationType: isOnline ? 'ONLINE' : 'OFFLINE',
         categoryId,
       };
@@ -145,11 +172,11 @@ export default function ConsultationPage() {
                         >
                           <div className="w-8 h-8 rounded-full bg-[var(--primary-100)] flex items-center justify-center flex-shrink-0">
                             <span className="text-[var(--primary-700)] font-semibold text-sm">
-                              {cat.name.charAt(0)}
+                              {getCategoryLabel(cat.name).charAt(0)}
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="font-semibold text-gray-900">{cat.name}</span>
+                            <span className="font-semibold text-gray-900">{getCategoryLabel(cat.name)}</span>
                           </div>
                           <HiChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[var(--primary-600)] flex-shrink-0" />
                         </button>
@@ -177,7 +204,7 @@ export default function ConsultationPage() {
                   )}
                   <div>
                     <p className="text-xs font-medium text-[var(--primary-700)] uppercase tracking-wide">Selected</p>
-                    <p className="font-semibold text-gray-900">{selectedCategory.name} Consultation</p>
+                    <p className="font-semibold text-gray-900">{getCategoryLabel(selectedCategory.name)} Consultation</p>
                   </div>
                 </div>
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">Book a Consultation</h2>

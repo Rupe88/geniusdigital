@@ -34,6 +34,33 @@ export const getInstructorById = async (id: string): Promise<Instructor> => {
   }
 };
 
+export interface MyInstructorCourse {
+  id: string;
+  title: string;
+  slug: string;
+  thumbnail?: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'ONGOING' | 'UPCOMING_EVENTS';
+  _count?: {
+    chapters: number;
+    lessons: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getMyInstructorCourses = async (): Promise<MyInstructorCourse[]> => {
+  try {
+    const response = await apiClient.get<ApiResponse<MyInstructorCourse[]>>('/instructors/my/courses');
+    const responseData = response.data;
+    if (responseData.success && Array.isArray(responseData.data)) {
+      return responseData.data;
+    }
+    return [];
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
 export interface CreateInstructorData {
   name: string;
   slug?: string;

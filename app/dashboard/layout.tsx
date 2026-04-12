@@ -19,7 +19,6 @@ import {
   HiLogout,
   HiCalendar,
   HiDocumentText,
-  HiSparkles,
 } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
 import { getMyAffiliate } from '@/lib/api/affiliate';
@@ -34,7 +33,13 @@ const baseMenuItems = [
   { href: `${ROUTES.DASHBOARD}/payments`, label: 'Payments', icon: HiCreditCard },
   { href: `${ROUTES.DASHBOARD}/installments`, label: 'Installments', icon: HiCalendar },
   { href: `${ROUTES.DASHBOARD}/settings`, label: 'Settings', icon: HiCog },
-  { href: `${ROUTES.DASHBOARD}/limiting-belief`, label: 'Limiting Belief', icon: HiSparkles },
+];
+
+const instructorMenuItems = [
+  { href: ROUTES.DASHBOARD, label: 'Overview', icon: HiHome },
+  { href: `${ROUTES.DASHBOARD}/my-courses`, label: 'Assigned Courses', icon: HiBookOpen },
+  { href: `${ROUTES.DASHBOARD}/live-classes/manage`, label: 'Live Classes', icon: HiVideoCamera },
+  { href: `${ROUTES.DASHBOARD}/settings`, label: 'Settings', icon: HiCog },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -81,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.role]);
 
   if (loading) {
     return (
@@ -96,13 +101,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  const menuItems = affiliateApproved
-    ? [
-        ...baseMenuItems.slice(0, 5),
-        { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
-        ...baseMenuItems.slice(5),
-      ]
-    : baseMenuItems;
+  const menuItems = user?.role === 'INSTRUCTOR'
+    ? instructorMenuItems
+    : affiliateApproved
+      ? [
+          ...baseMenuItems.slice(0, 5),
+          { href: `${ROUTES.DASHBOARD}/referrals`, label: 'Referrals', icon: HiShare },
+          ...baseMenuItems.slice(5),
+        ]
+      : baseMenuItems;
 
   const navContent = (
     <nav className="p-4 flex-1 overflow-y-auto">
@@ -158,8 +165,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 flex-1 min-w-0 justify-center lg:justify-start" aria-label="Dashboard">
               <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
                 <Image
-                  src="/sanskar-academy-logo.jpeg"
-                  alt="Sanskar Academy"
+                  src="/logo.png"
+                  alt="Genius Digi"
                   fill
                   className="object-contain"
                   sizes="40px"
@@ -206,8 +213,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 flex-1 min-w-0 justify-center" aria-label="Dashboard">
               <div className="relative w-9 h-9 flex-shrink-0">
                 <Image
-                  src="/sanskar-academy-logo.jpeg"
-                  alt="Sanskar Academy"
+                  src="/logo.png"
+                  alt="Genius Digi"
                   fill
                   className="object-contain rounded-none"
                   sizes="36px"

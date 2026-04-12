@@ -59,7 +59,7 @@ export interface CreateLiveClassPayload {
   title: string;
   description?: string;
   courseId?: string;
-  instructorId: string;
+  instructorId?: string;
   duration: number; // minutes
   meetingUrl?: string;
   meetingId?: string;
@@ -131,6 +131,33 @@ export const getMyAvailableLiveClasses = async (params?: {
       };
     }
     throw new Error('Failed to fetch available live classes');
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+/** Get live classes the current instructor/admin can manage */
+export const getMyManagedLiveClasses = async (params?: {
+  status?: string;
+  courseId?: string;
+  search?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<LiveClass>> => {
+  try {
+    const response = await apiClient.get<{ success: boolean; data: LiveClass[]; pagination: Pagination }>(
+      '/live-classes/me/manage',
+      { params }
+    );
+    const payload = response.data;
+    if (payload?.success) {
+      return {
+        data: payload.data ?? [],
+        pagination: payload.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+      };
+    }
+    throw new Error('Failed to fetch managed live classes');
   } catch (error) {
     throw new Error(handleApiError(error));
   }

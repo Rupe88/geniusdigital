@@ -82,7 +82,6 @@ const courseSchema = z.object({
 
 type CourseFormData = z.infer<typeof courseSchema> & {
   thumbnailFile?: File | null;
-  videoFile?: File | null;
   tags?: string[];
   skills?: string[];
 };
@@ -117,29 +116,6 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
     course?.thumbnail || null
   );
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-
-  const MAX_PROMO_VIDEOS = 5;
-  // Promo videos use file uploads only, but we still show any existing
-  // promo video URLs from the course so admins know something is already saved.
-  const initialPromoSlots = (): Array<{ url: string; file: File | null }> => {
-    const urls = course?.promoVideos?.length
-      ? [...course.promoVideos]
-      : course?.videoUrl
-        ? [course.videoUrl]
-        : [];
-    const slots = urls
-      .slice(0, MAX_PROMO_VIDEOS)
-      .map((url) => ({ url: url || '', file: null as File | null }));
-    while (slots.length < MAX_PROMO_VIDEOS) slots.push({ url: '', file: null });
-    return slots;
-  };
-  const [promoSlots, setPromoSlots] = useState<Array<{ url: string; file: File | null }>>(initialPromoSlots);
-
-  useEffect(() => {
-    // When course changes, refresh display of existing promo video URLs.
-    setPromoSlots(initialPromoSlots());
-  }, [course?.id, course?.promoVideos?.length, course?.videoUrl]);
 
   // Curriculum state
   const [curriculumChapters, setCurriculumChapters] = useState<any[]>([]);
@@ -390,20 +366,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         submitData.thumbnail = course.thumbnail;
       }
 
-      const builtSlots: Array<{ type: 'url'; url: string } | { type: 'file' }> = [];
-      promoSlots.slice(0, MAX_PROMO_VIDEOS).forEach((s) => {
-        if (s.file) {
-          builtSlots.push({ type: 'file' });
-        } else if (s.url?.trim()) {
-          builtSlots.push({ type: 'url', url: s.url.trim() });
-        }
-      });
-      const builtFiles = promoSlots.filter((s) => s.file).map((s) => s.file!);
-
-      if (builtSlots.length > 0) {
-        submitData.promoVideoSlots = builtSlots;
-        submitData.videoFiles = builtFiles;
-      } else if (data.videoUrl?.trim()) {
+      if (data.videoUrl?.trim()) {
         submitData.videoUrl = data.videoUrl.trim();
       }
 
@@ -669,56 +632,15 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                 Promo / preview video (optional)
               </p>
               <p className="text-xs text-[var(--muted-foreground)]">
-                Paste video URLs (YouTube, Vimeo, Google Drive e.g. https://drive.google.com/file/d/.../view) or upload files below.
+                Paste one video URL only (YouTube, Vimeo, Google Drive e.g. https://drive.google.com/file/d/.../view).
               </p>
-              {promoSlots.map((slot, index) => (
-                <div
-                  key={index}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4 space-y-2"
-                >
-                  <label className="text-sm font-medium text-[var(--foreground)]">
-                    Video {index + 1}
-                  </label>
-
-                  <Input
-                    placeholder="https://drive.google.com/file/d/.../view or YouTube/Vimeo link"
-                    value={slot.url}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setPromoSlots((prev) => {
-                        const next = [...prev];
-                        next[index] = { url: v, file: slot.file };
-                        return next;
-                      });
-                    }}
-                    helperText={slot.url ? 'URL saved. Upload a file below to replace.' : undefined}
-                  />
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-xs text-[var(--muted-foreground)]">Or upload file:</span>
-                    <input
-                      type="file"
-                      accept="video/mp4,video/webm,video/ogg,video/quicktime"
-                      className="block max-w-xs text-sm text-[var(--muted-foreground)] file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-[var(--primary-600)] file:text-white file:font-medium hover:file:bg-[var(--primary-700)]"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        setPromoSlots((prev) => {
-                          const next = [...prev];
-                          next[index] = { url: f ? '' : slot.url, file: f || null };
-                          return next;
-                        });
-                        e.target.value = '';
-                      }}
-                    />
-                  </div>
-
-                  {slot.file && (
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      Selected: {slot.file.name} ({(slot.file.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                </div>
-              ))}
+              <Input
+                label="Video URL"
+                {...register('videoUrl')}
+                error={errors.videoUrl?.message}
+                placeholder="https://drive.google.com/file/d/.../view or YouTube/Vimeo link"
+                helperText="Only one URL is used for the course preview video."
+              />
             </div>
 
             <Textarea

@@ -33,7 +33,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="text-sm text-gray-600">
               This may include your name, email, phone number, address, date of birth, payment
-              details (processed through third‑party gateways like eSewa), and any other information
+              details (processed through payment and banking partners as applicable), and any other information
               you choose to share with us.
             </p>
           </section>
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
               platform, such as:
             </p>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-              <li>Payment gateways (e.g. eSewa, banks, card processors)</li>
+              <li>Payment and banking partners (e.g. banks, card processors)</li>
               <li>Email and SMS providers</li>
               <li>Cloud hosting and storage providers</li>
             </ul>
