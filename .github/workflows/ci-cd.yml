@@ -49,13 +49,25 @@ jobs:
 
       - name: Configure SSH
         env:
+          # Same names as genius-digital-backend: prefer DEPLOY_SSH_KEY (paste the same PEM as the backend repo).
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
           set -euo pipefail
+          KEY_CONTENT="${DEPLOY_SSH_KEY:-}"
+          if [ -z "$KEY_CONTENT" ]; then KEY_CONTENT="${SSH_PRIVATE_KEY:-}"; fi
+          if [ -z "$KEY_CONTENT" ]; then
+            echo "::error::Set DEPLOY_SSH_KEY (recommended; same as backend) or SSH_PRIVATE_KEY"
+            exit 1
+          fi
+          if [ -z "${DEPLOY_HOST:-}" ]; then
+            echo "::error::Set DEPLOY_HOST (e.g. 64.227.182.187 — same droplet as backend)"
+            exit 1
+          fi
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          echo "$KEY_CONTENT" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           PORT="${DEPLOY_SSH_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
@@ -68,6 +80,10 @@ jobs:
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
           set -euo pipefail
+          if [ -z "${DEPLOY_HOST:-}" ] || [ -z "${DEPLOY_PATH:-}" ]; then
+            echo "::error::Set DEPLOY_HOST and DEPLOY_PATH in repository secrets"
+            exit 1
+          fi
           PORT="${DEPLOY_SSH_PORT:-22}"
           RSYNC_SSH="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p $PORT"
           rsync -avz --delete \

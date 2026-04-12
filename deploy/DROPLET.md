@@ -55,17 +55,52 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --build
 
 Workflow: `.github/workflows/ci-cd.yml` (lint + build on every PR/push; deploy only on `main` after a successful build, or via **Actions → Run workflow**).
 
-In the repo → **Settings → Secrets and variables → Actions**, add:
+Use the **same droplet and usually the same SSH key** as **genius-digital-backend** (`DEPLOYMENT.md` there). Each GitHub repo has its own secrets — copy the **values** from the backend repo into this frontend repo (or use **organization secrets** so both repos read the same names).
 
-| Secret            | Example                         |
-|-------------------|---------------------------------|
-| `SSH_PRIVATE_KEY` | Contents of the deploy private key |
-| `DEPLOY_HOST`     | Droplet IP or hostname          |
-| `DEPLOY_USER`     | `root` or deploy user           |
-| `DEPLOY_PATH`     | `/var/www/geniusdigital-frontend` |
-| `DEPLOY_SSH_PORT` | Optional; default `22`          |
+In **this** repo → **Settings → Secrets and variables → Actions** → **New repository secret**:
 
-Push to `main` runs deploy after CI; use **Actions → Deploy production → Run workflow** for manual runs.
+| Secret | Same as backend? | Example / notes |
+|--------|------------------|-----------------|
+| `DEPLOY_SSH_KEY` | Yes — **same PEM** as backend (`github_actions_deploy` private key) | Full key including `BEGIN` / `END` lines |
+| `DEPLOY_HOST` | Yes — same server | e.g. `64.227.182.187` |
+| `DEPLOY_USER` | Yes | e.g. `root` |
+| `DEPLOY_PATH` | **No** — frontend directory on the server | e.g. `/var/www/geniusdigital-frontend` (backend uses `/opt/genius-digital-backend`) |
+| `DEPLOY_SSH_PORT` | Optional | Default SSH `22` |
+
+If you already added `SSH_PRIVATE_KEY` instead of `DEPLOY_SSH_KEY`, the workflow still accepts it as a fallback.
+
+### Getting the private key text to paste into `DEPLOY_SSH_KEY`
+
+The backend repo does **not** document a special command — GitHub expects the **full private key file** (PEM), same one whose **public** half is in `~/.ssh/authorized_keys` on the droplet.
+
+**If you already generated keys next to the backend** (e.g. `github_actions_deploy` + `github_actions_deploy.pub`):
+
+On your **laptop** (path may differ):
+
+```bash
+cat /path/to/genius-digi-lms/backend/github_actions_deploy
+```
+
+Copy **everything** from `-----BEGIN OPENSSH PRIVATE KEY-----` through `-----END OPENSSH PRIVATE KEY-----` into the secret `DEPLOY_SSH_KEY` (one secret value, newlines preserved). GitHub accepts multiline secrets.
+
+**If you need to create a new key pair:**
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-to-droplet" -f ./github_actions_deploy -N ""
+```
+
+Then put the **public** key on the server (same user you use in `DEPLOY_USER`):
+
+```bash
+ssh-copy-id -i ./github_actions_deploy.pub root@YOUR_DROPLET_IP
+# or append the contents of github_actions_deploy.pub to ~/.ssh/authorized_keys on the droplet
+```
+
+Paste the contents of **`github_actions_deploy`** (private file, never the `.pub`) into `DEPLOY_SSH_KEY` in both backend and frontend repos.
+
+Do **not** commit private keys; keep `github_actions_deploy` out of git (add to `.gitignore`). If a key was ever committed, generate a new pair and rotate.
+
+Push to `main` runs deploy after CI; use **Actions → CI / CD → Run workflow** for manual runs.
 
 ## Firewall (optional)
 
