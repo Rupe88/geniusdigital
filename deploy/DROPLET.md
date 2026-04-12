@@ -13,17 +13,19 @@ sudo mkdir -p /var/www/geniusdigital-frontend
 sudo chown "$USER:$USER" /var/www/geniusdigital-frontend
 ```
 
-Copy the project here (first deploy: `git clone` or `rsync` from your machine). GitHub Actions will **rsync** on each deploy.
+Create the directory once; you do **not** need a full `git clone` on the droplet for normal CI deploys.
 
-**`.env.deploy` and CI:** The workflow does not upload `.env.deploy` (it is excluded from rsync). Instead, each deploy **writes** `${DEPLOY_PATH}/.env.deploy` on the server from repository **Secrets/Variables** `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL` (with defaults matching `.env.deploy.example` if unset). Override those in GitHub if your production URLs differ.
+**Speed:** Images are **built on GitHub Actions** (with layer cache) and pushed to **GHCR** (`ghcr.io/<owner>/<repo>`). The droplet only runs `docker compose pull` + `up` (typically **about 1–2 minutes**). The slow `npm ci` / `next build` no longer runs on the VPS.
 
-For **manual** deploys without Actions, create the file yourself:
+**`.env.deploy` and CI:** Each deploy **writes** `${DEPLOY_PATH}/.env.deploy`, including **`FRONTEND_IMAGE`** (the exact GHCR tag for that commit) plus `NEXT_PUBLIC_*` from repository Secrets/Variables.
+
+For **manual** deploys, set `FRONTEND_IMAGE` to a tag you have pushed (e.g. `ghcr.io/owner/geniusdigital:sha`) or build locally with `docker-compose.build.yml`.
 
 ```bash
 cd /var/www/geniusdigital-frontend
 cp .env.deploy.example .env.deploy
 chmod 600 .env.deploy
-nano .env.deploy   # set NEXT_PUBLIC_API_URL and NEXT_PUBLIC_APP_URL
+nano .env.deploy   # FRONTEND_IMAGE + NEXT_PUBLIC_*
 ```
 
 ## 3. DNS
@@ -50,14 +52,27 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## 5. First container start
 
+After a successful GitHub Actions deploy, `.env.deploy` already exists. **Manual** start (or emergency local build on the server):
+
 ```bash
 cd /var/www/geniusdigital-frontend
-docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --build
+# Production (pre-built image from GHCR):
+docker compose -f docker-compose.prod.yml --env-file .env.deploy pull
+docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --remove-orphans
+
+# Rare: build on the VPS (slow) — use docker-compose.build.yml instead of prod --build
+# docker compose -f docker-compose.build.yml --env-file .env.deploy up -d --build
 ```
 
 ## 6. GitHub Actions secrets
 
-Workflow: `.github/workflows/ci-cd.yml` (lint + build on every PR/push; deploy only on `main` after a successful build, or via **Actions → Run workflow**).
+Workflow: `.github/workflows/ci-cd.yml` — **lint** → **build & push Docker image to GHCR** → **deploy** (SSH: sync compose, write `.env.deploy`, `docker compose pull` + `up`). Pushes to `main` skip redundant `npm run build` in CI (the Docker build is the production build). PRs still run `npm run build` for verification.
+
+### GHCR (container registry)
+
+- The workflow publishes to **`ghcr.io/<lowercase owner>/<lowercase repo>`** (same name as your GitHub repo).
+- **Public package:** droplet does not need `docker login` for `docker pull`.
+- **Private package:** add repository secrets **`GHCR_READ_TOKEN`** (PAT with `read:packages`) and optional **`GHCR_USERNAME`** (GitHub username for that PAT). If unset, login uses `github.repository_owner`.
 
 Use the **same droplet and usually the same SSH key** as **genius-digital-backend** (`DEPLOYMENT.md` there). Each GitHub repo has its own secrets — copy the **values** from the backend repo into this frontend repo (or use **organization secrets** so both repos read the same names).
 

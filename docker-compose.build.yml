@@ -1,0 +1,20 @@
+# Local / emergency builds on the server (slow on small VPS).
+# docker compose -f docker-compose.build.yml --env-file .env.deploy up -d --build
+# Omit FRONTEND_IMAGE — this file defines build + image tag locally.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    image: geniusdigital-frontend:local
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
