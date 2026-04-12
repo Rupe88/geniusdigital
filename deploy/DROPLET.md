@@ -1,5 +1,9 @@
 # Droplet setup (Docker + nginx + TLS)
 
+**Default deploy path (recommended):** GitHub Actions **does not SSH** into the server. It pushes a container to **GHCR**; the droplet **pulls `:latest` on a cron**. See **[PULL-DEPLOY.md](./PULL-DEPLOY.md)** first.
+
+This page covers directory layout, nginx, and optional SSH troubleshooting.
+
 One-time steps on the server (Ubuntu). Adjust paths if you prefer another directory.
 
 ## 1. Install Docker
@@ -64,33 +68,33 @@ docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --remove-
 # docker compose -f docker-compose.build.yml --env-file .env.deploy up -d --build
 ```
 
-## 6. GitHub Actions secrets
+## 6. GitHub Actions
 
-Workflow: `.github/workflows/ci-cd.yml` — **lint** → **build & push Docker image to GHCR** → **deploy** (SSH: sync compose, write `.env.deploy`, `docker compose pull` + `up`). Pushes to `main` skip redundant `npm run build` in CI (the Docker build is the production build). PRs still run `npm run build` for verification.
+Workflow: `.github/workflows/ci-cd.yml` — **lint** → **build & push** to **GHCR** (`:sha` and `:latest`). Pushes to `main` skip redundant `npm run build` (Docker build is the production build). PRs still run `npm run build`.
+
+**Default rollout:** the droplet applies updates with a **cron** that runs `docker compose pull` (see **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**). **No SSH secrets are required** for a green pipeline.
 
 ### GHCR (container registry)
 
-- The workflow publishes to **`ghcr.io/<lowercase owner>/<lowercase repo>`** (same name as your GitHub repo).
-- **Public package:** droplet does not need `docker login` for `docker pull`.
-- **Private package:** add repository secrets **`GHCR_READ_TOKEN`** (PAT with `read:packages`) and optional **`GHCR_USERNAME`** (GitHub username for that PAT). If unset, login uses `github.repository_owner`.
+- Images: **`ghcr.io/<lowercase owner>/<lowercase repo>`** (matches your GitHub repo name).
+- **Public package:** droplet `docker pull` needs no login.
+- **Private package:** on the droplet, `docker login ghcr.io` once with a PAT (`read:packages`).
 
-Use the **same droplet and usually the same SSH key** as **genius-digital-backend** (`DEPLOYMENT.md` there). Each GitHub repo has its own secrets — copy the **values** from the backend repo into this frontend repo (or use **organization secrets** so both repos read the same names).
+### Optional: SSH deploy from Actions (off by default)
 
-Configure **either** repository **Secrets** or **Variables** (Settings → Secrets and variables → Actions). **Secrets override Variables** when both exist. Only the SSH private key must be a **Secret**.
+Inbound SSH from GitHub-hosted runners often fails (`banner exchange` timeouts). If you still want the workflow to rsync + `docker compose` over SSH, set repository **Variable** **`DEPLOY_USE_SSH`** to **`true`** and configure:
 
-| Name | Secret or Variable? | Same as backend? | Example / notes |
-|------|---------------------|------------------|-----------------|
-| `DEPLOY_SSH_KEY` | **Secret only** | Yes — same PEM as backend | Full private key (`BEGIN` … `END`). Never use Variables for keys. |
-| `DEPLOY_HOST` | Secret **or** Variable | Yes — same droplet | e.g. `64.227.182.187` |
-| `DEPLOY_USER` | Secret **or** Variable | Yes | Defaults to `root` if unset |
-| `DEPLOY_PATH` | Secret **or** Variable | **No** — frontend dir on server | Defaults to `/var/www/geniusdigital-frontend` if unset (backend uses `/opt/genius-digital-backend`) |
-| `DEPLOY_SSH_PORT` | Secret **or** Variable | Optional | Defaults to `22` |
+| Name | Secret or Variable? | Notes |
+|------|---------------------|--------|
+| `DEPLOY_SSH_KEY` | **Secret** | PEM for SSH |
+| `DEPLOY_HOST` | Secret or Variable | Droplet IP/hostname |
+| `DEPLOY_USER` | Optional | Default `root` |
+| `DEPLOY_PATH` | Optional | Default `/var/www/geniusdigital-frontend` |
+| `DEPLOY_SSH_PORT` | Optional | Default `22` |
+| `GHCR_READ_TOKEN` | Optional | For private GHCR when using SSH job |
+| `NEXT_PUBLIC_*` | Optional | Written into `.env.deploy` during SSH deploy |
 
-**Minimum required for deploy:** `DEPLOY_SSH_KEY` + `DEPLOY_HOST` (or rely on default path/user if your server matches the defaults above).
-
-**Production API / site URL (optional):** Set repository **Variables** (or Secrets) `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL` if they differ from the defaults (`https://api.geniusdigi.com/api` and `https://geniusshiksha.com`). These are written into `.env.deploy` on every deploy.
-
-If you already added `SSH_PRIVATE_KEY` instead of `DEPLOY_SSH_KEY`, the workflow still accepts it as a fallback.
+If you already added `SSH_PRIVATE_KEY`, the SSH job accepts it as a fallback to `DEPLOY_SSH_KEY`.
 
 ### Getting the private key text to paste into `DEPLOY_SSH_KEY`
 

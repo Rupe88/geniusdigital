@@ -1,7 +1,8 @@
 name: CI / CD
 
-# Fast path: image built on GitHub Actions → GHCR; droplet pull + restart only.
-# Deploy uses SSH retries + keepalives to survive transient "Connection reset" from busy sshd / network.
+# Default: build + push to GHCR. The droplet deploys by **pulling :latest** on a cron (see deploy/PULL-DEPLOY.md).
+# Inbound SSH from GitHub Actions is unreliable; we do not require it for a green pipeline.
+# Optional: set repo Variable DEPLOY_USE_SSH=true to run the legacy SSH/rsync deploy job.
 
 on:
   pull_request:
@@ -93,11 +94,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
+  # Always succeeds — documents pull-based deploy (no SSH from GitHub required).
+  droplet-rollout:
     needs: publish-image
     if: |
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Image published — apply on droplet via cron pull
+        run: |
+          echo "::notice::GHCR image (immutable tag): ${{ needs.publish-image.outputs.image_ref }}"
+          echo "::notice::CI also pushed :latest — droplet should use FRONTEND_IMAGE=...:latest in .env.deploy"
+          echo "::notice::Setup: deploy/PULL-DEPLOY.md (cron pull — no SSH from Actions)."
+
+  deploy-via-ssh:
+    needs: publish-image
+    if: |
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      vars.DEPLOY_USE_SSH == 'true'
     runs-on: ubuntu-latest
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
