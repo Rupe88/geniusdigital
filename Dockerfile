@@ -1,4 +1,4 @@
-# Next.js standalone — build context = repo root (Rupe88/sanskarvastu-frontend).
+# Next.js standalone — build context = frontend repo root (e.g. Rupe88/geniusdigital).
 # DigitalOcean App Platform: dockerfile_path Dockerfile, no source_dir.
 # syntax=docker/dockerfile:1
 
@@ -25,6 +25,8 @@ FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+RUN apk add --no-cache curl
+
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
@@ -37,5 +39,8 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["node", "server.js"]

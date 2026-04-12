@@ -1,5 +1,26 @@
 import type { NextConfig } from "next";
 
+/** next/image: allow backend media proxy host from NEXT_PUBLIC_API_URL when set. */
+function apiMediaRemotePatterns(): NonNullable<
+  NonNullable<NextConfig["images"]>["remotePatterns"]
+> {
+  try {
+    const raw = process.env.NEXT_PUBLIC_API_URL?.trim();
+    if (!raw) throw new Error("unset");
+    const u = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    const protocol = u.protocol === "http:" ? ("http" as const) : ("https" as const);
+    return [{ protocol, hostname: u.hostname, pathname: "/api/media/image" }];
+  } catch {
+    return [
+      {
+        protocol: "https",
+        hostname: "stingray-app-2-iy8as.ondigitalocean.app",
+        pathname: "/api/media/image",
+      },
+    ];
+  }
+}
+
 const nextConfig: NextConfig = {
   // Production Docker / smaller deploy bundle (DigitalOcean App Platform, etc.)
   output: "standalone",
@@ -10,12 +31,7 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
-      // Backend image proxy (course thumbnails from S3 in production)
-      {
-        protocol: 'https',
-        hostname: 'stingray-app-2-iy8as.ondigitalocean.app',
-        pathname: '/api/media/image',
-      },
+      ...apiMediaRemotePatterns(),
       // S3 storage (Kailesh Cloud / DataHub) – course thumbnails, events, gallery, etc.
       {
         protocol: 'https',

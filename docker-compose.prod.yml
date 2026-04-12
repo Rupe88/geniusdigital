@@ -1,0 +1,21 @@
+# Frontend only — Next.js on 127.0.0.1:3000; nginx on the host terminates TLS (see deploy/nginx/geniusshiksha.com.conf).
+# Run from this directory after copying .env.deploy:
+#   docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --build --remove-orphans
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    image: geniusdigital-frontend:latest
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      # Same as build — server-side route handlers and tooling read this at runtime
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
