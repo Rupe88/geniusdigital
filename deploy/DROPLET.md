@@ -13,7 +13,11 @@ sudo mkdir -p /var/www/geniusdigital-frontend
 sudo chown "$USER:$USER" /var/www/geniusdigital-frontend
 ```
 
-Copy the project here (first deploy: `git clone` or `rsync` from your machine). GitHub Actions will **rsync** on each deploy; **do not** commit `.env.deploy`.
+Copy the project here (first deploy: `git clone` or `rsync` from your machine). GitHub Actions will **rsync** on each deploy.
+
+**`.env.deploy` and CI:** The workflow does not upload `.env.deploy` (it is excluded from rsync). Instead, each deploy **writes** `${DEPLOY_PATH}/.env.deploy` on the server from repository **Secrets/Variables** `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL` (with defaults matching `.env.deploy.example` if unset). Override those in GitHub if your production URLs differ.
+
+For **manual** deploys without Actions, create the file yourself:
 
 ```bash
 cd /var/www/geniusdigital-frontend
@@ -68,6 +72,8 @@ Configure **either** repository **Secrets** or **Variables** (Settings → Secre
 | `DEPLOY_SSH_PORT` | Secret **or** Variable | Optional | Defaults to `22` |
 
 **Minimum required for deploy:** `DEPLOY_SSH_KEY` + `DEPLOY_HOST` (or rely on default path/user if your server matches the defaults above).
+
+**Production API / site URL (optional):** Set repository **Variables** (or Secrets) `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL` if they differ from the defaults (`https://api.geniusdigi.com/api` and `https://geniusshiksha.com`). These are written into `.env.deploy` on every deploy.
 
 If you already added `SSH_PRIVATE_KEY` instead of `DEPLOY_SSH_KEY`, the workflow still accepts it as a fallback.
 

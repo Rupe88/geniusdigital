@@ -7,6 +7,9 @@ name: CI / CD
 #   Repository secrets (Settings → Secrets and variables → Actions → Secrets), OR
 #   Repository variables (Settings → Secrets and variables → Actions → Variables)
 # Secrets take precedence when both are set. Key must stay in DEPLOY_SSH_KEY (secret).
+#
+# .env.deploy is NOT rsync'd (see exclude list). Each deploy writes it on the server from
+# NEXT_PUBLIC_* repository Secrets/Variables (defaults match .env.deploy.example).
 
 on:
   pull_request:
@@ -53,6 +56,9 @@ jobs:
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/var/www/geniusdigital-frontend' }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER || 'root' }}
       DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT || vars.DEPLOY_SSH_PORT }}
+      # Baked into the Docker build via compose; override in repo Secrets/Variables if needed.
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.geniusdigi.com/api' }}
+      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL || 'https://geniusshiksha.com' }}
 
     steps:
       - name: Checkout
@@ -98,6 +104,18 @@ jobs:
             --exclude .env.local \
             --exclude .env.deploy \
             ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+
+      # Rsync excludes .env.deploy — create it on the server so compose has build/runtime env.
+      - name: Write .env.deploy on droplet
+        run: |
+          set -euo pipefail
+          PORT="${DEPLOY_SSH_PORT:-22}"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p "$PORT" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "set -euo pipefail; umask 077; mkdir -p \"${DEPLOY_PATH}\"; tee \"${DEPLOY_PATH}/.env.deploy\" > /dev/null" <<EOF
+          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+          NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+          EOF
 
       - name: Build and restart containers
         run: |
