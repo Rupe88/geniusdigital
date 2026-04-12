@@ -57,15 +57,17 @@ Workflow: `.github/workflows/ci-cd.yml` (lint + build on every PR/push; deploy o
 
 Use the **same droplet and usually the same SSH key** as **genius-digital-backend** (`DEPLOYMENT.md` there). Each GitHub repo has its own secrets — copy the **values** from the backend repo into this frontend repo (or use **organization secrets** so both repos read the same names).
 
-In **this** repo → **Settings → Secrets and variables → Actions** → **New repository secret**:
+Configure **either** repository **Secrets** or **Variables** (Settings → Secrets and variables → Actions). **Secrets override Variables** when both exist. Only the SSH private key must be a **Secret**.
 
-| Secret | Same as backend? | Example / notes |
-|--------|------------------|-----------------|
-| `DEPLOY_SSH_KEY` | Yes — **same PEM** as backend (`github_actions_deploy` private key) | Full key including `BEGIN` / `END` lines |
-| `DEPLOY_HOST` | Yes — same server | e.g. `64.227.182.187` |
-| `DEPLOY_USER` | Yes | e.g. `root` |
-| `DEPLOY_PATH` | **No** — frontend directory on the server | e.g. `/var/www/geniusdigital-frontend` (backend uses `/opt/genius-digital-backend`) |
-| `DEPLOY_SSH_PORT` | Optional | Default SSH `22` |
+| Name | Secret or Variable? | Same as backend? | Example / notes |
+|------|---------------------|------------------|-----------------|
+| `DEPLOY_SSH_KEY` | **Secret only** | Yes — same PEM as backend | Full private key (`BEGIN` … `END`). Never use Variables for keys. |
+| `DEPLOY_HOST` | Secret **or** Variable | Yes — same droplet | e.g. `64.227.182.187` |
+| `DEPLOY_USER` | Secret **or** Variable | Yes | Defaults to `root` if unset |
+| `DEPLOY_PATH` | Secret **or** Variable | **No** — frontend dir on server | Defaults to `/var/www/geniusdigital-frontend` if unset (backend uses `/opt/genius-digital-backend`) |
+| `DEPLOY_SSH_PORT` | Secret **or** Variable | Optional | Defaults to `22` |
+
+**Minimum required for deploy:** `DEPLOY_SSH_KEY` + `DEPLOY_HOST` (or rely on default path/user if your server matches the defaults above).
 
 If you already added `SSH_PRIVATE_KEY` instead of `DEPLOY_SSH_KEY`, the workflow still accepts it as a fallback.
 

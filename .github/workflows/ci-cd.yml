@@ -2,6 +2,11 @@ name: CI / CD
 
 # Assumes this workflow lives at the frontend repo root. If the app is in a monorepo subfolder,
 # add defaults.run.working-directory and point DEPLOY_PATH/rsync at that directory.
+#
+# Deploy config (host, path, user) can live in EITHER:
+#   Repository secrets (Settings → Secrets and variables → Actions → Secrets), OR
+#   Repository variables (Settings → Secrets and variables → Actions → Variables)
+# Secrets take precedence when both are set. Key must stay in DEPLOY_SSH_KEY (secret).
 
 on:
   pull_request:
@@ -42,6 +47,12 @@ jobs:
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
+    env:
+      # Prefer secrets; fall back to repo Variables; then optional defaults (path/user only).
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/var/www/geniusdigital-frontend' }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER || 'root' }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT || vars.DEPLOY_SSH_PORT }}
 
     steps:
       - name: Checkout
@@ -49,21 +60,18 @@ jobs:
 
       - name: Configure SSH
         env:
-          # Same names as genius-digital-backend: prefer DEPLOY_SSH_KEY (paste the same PEM as the backend repo).
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
           set -euo pipefail
           KEY_CONTENT="${DEPLOY_SSH_KEY:-}"
           if [ -z "$KEY_CONTENT" ]; then KEY_CONTENT="${SSH_PRIVATE_KEY:-}"; fi
           if [ -z "$KEY_CONTENT" ]; then
-            echo "::error::Set DEPLOY_SSH_KEY (recommended; same as backend) or SSH_PRIVATE_KEY"
+            echo "::error::Set repository secret DEPLOY_SSH_KEY (or SSH_PRIVATE_KEY) — same PEM as genius-digital-backend"
             exit 1
           fi
           if [ -z "${DEPLOY_HOST:-}" ]; then
-            echo "::error::Set DEPLOY_HOST (e.g. 64.227.182.187 — same droplet as backend)"
+            echo "::error::Set DEPLOY_HOST as a repository Secret or Variable (e.g. 64.227.182.187)"
             exit 1
           fi
           mkdir -p ~/.ssh
@@ -73,15 +81,10 @@ jobs:
           ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Rsync to droplet
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
           set -euo pipefail
-          if [ -z "${DEPLOY_HOST:-}" ] || [ -z "${DEPLOY_PATH:-}" ]; then
-            echo "::error::Set DEPLOY_HOST and DEPLOY_PATH in repository secrets"
+          if [ -z "${DEPLOY_PATH:-}" ]; then
+            echo "::error::DEPLOY_PATH is empty — set repository Secret or Variable DEPLOY_PATH"
             exit 1
           fi
           PORT="${DEPLOY_SSH_PORT:-22}"
@@ -97,11 +100,6 @@ jobs:
             ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
 
       - name: Build and restart containers
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
           set -euo pipefail
           PORT="${DEPLOY_SSH_PORT:-22}"
