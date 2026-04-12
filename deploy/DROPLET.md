@@ -125,20 +125,45 @@ Do **not** commit private keys; keep `github_actions_deploy` out of git (add to 
 
 Push to `main` runs deploy after CI; use **Actions → CI / CD → Run workflow** for manual runs.
 
-## SSH: `Connection reset by peer` / `kex_exchange_identification`
+## SSH: timeouts, `Connection reset`, `Broken pipe`, `banner exchange`
 
-GitHub Actions uses a **new outbound IP every run**. If the droplet runs **fail2ban**, **ufw rate limits**, or **sshd** drops bursts (`MaxStartups`), the first SSH/rsync can be reset.
+GitHub Actions uses a **new outbound IP every run**. The droplet must allow **SSH (TCP 22 or your custom port) from the whole internet**, not a single IP.
 
-On the **droplet** (as root), consider:
+### 1. DigitalOcean Cloud Firewall (most common)
+
+In **DigitalOcean → Networking → Firewalls**:
+
+- Inbound: **SSH** — **Sources: All IPv4** and **All IPv6** (or `0.0.0.0/0` and `::/0`).
+- Ensure this firewall is **attached to the droplet**, or **detach** the firewall to test.
+
+If SSH is restricted to “your home IP only”, CI will **always** fail.
+
+### 2. UFW on the droplet
+
+```bash
+sudo ufw allow 22/tcp
+sudo ufw reload
+sudo ufw status
+```
+
+### 3. `fail2ban` / `MaxStartups`
+
+If `fail2ban` jails `sshd`, CI can be banned after a few attempts. Whitelist or relax `sshd`, or increase `findtime` / `maxretry`.
+
+On the droplet, optional:
 
 ```text
-# /etc/ssh/sshd_config — allow more parallel unauthenticated connections during CI
+# /etc/ssh/sshd_config
 MaxStartups 30:50:100
 ```
 
 Then: `sudo systemctl reload sshd`
 
-If you use **fail2ban** for `sshd`, whitelist GitHub Actions IP ranges (they change) **or** use a **VPN / fixed bastion** for deploys. The workflow already **retries** rsync/SSH up to 6 times with backoff.
+The workflow **retries** SSH/rsync with backoff and runs a **TCP preflight** so firewall issues fail fast with a clear message.
+
+### 4. IPv6 issues
+
+If DNS returns IPv6 but routing is broken, set repository **Variable** `DEPLOY_SSH_FORCE_IPV4` to `true`, or put the droplet’s **IPv4 address** in `DEPLOY_HOST`.
 
 ## Firewall (optional)
 

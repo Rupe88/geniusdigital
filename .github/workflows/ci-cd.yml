@@ -108,10 +108,27 @@ jobs:
       NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL || 'https://geniusshiksha.com' }}
       FRONTEND_IMAGE: ${{ needs.publish-image.outputs.image_ref }}
       GITHUB_OWNER: ${{ github.repository_owner }}
+      # Set repository Variable DEPLOY_SSH_FORCE_IPV4=true if IPv6/AAAA breaks SSH from GitHub.
+      DEPLOY_SSH_FORCE_IPV4: ${{ vars.DEPLOY_SSH_FORCE_IPV4 }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Preflight — TCP reachability to SSH port
+        run: |
+          set -euo pipefail
+          PORT="${DEPLOY_SSH_PORT:-22}"
+          echo "Checking TCP ${DEPLOY_HOST}:${PORT} from GitHub Actions (public runner)..."
+          if timeout 25 bash -c "echo >/dev/tcp/${DEPLOY_HOST}/${PORT}" 2>/dev/null; then
+            echo "TCP connect OK"
+          else
+            echo "::error::Cannot reach ${DEPLOY_HOST}:${PORT} (TCP) from this runner."
+            echo "::error::Fix: DigitalOcean → Networking → Firewalls — allow **Inbound SSH (22/tcp)** from **All IPv4 addresses** (0.0.0.0/0) and **All IPv6** (::/0), or detach the firewall from this droplet for testing."
+            echo "::error::On the droplet: sudo ufw allow 22/tcp && sudo ufw reload"
+            echo "::error::GitHub Actions uses a **new IP every run** — you cannot whitelist a single IP."
+            exit 1
+          fi
 
       - name: Configure SSH and deploy (retries; no fragile heredocs on the runner)
         env:
@@ -138,26 +155,31 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
 
           PORT="${DEPLOY_SSH_PORT:-22}"
-          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-          RSYNC_RSH="ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=accept-new \
-            -o ConnectTimeout=30 \
-            -o ConnectionAttempts=5 \
-            -o TCPKeepAlive=yes \
-            -o ServerAliveInterval=15 \
-            -o ServerAliveCountMax=8 \
-            -p $PORT"
-
-          SSH_BASE=(ssh -i ~/.ssh/deploy_key
+          # One TCP attempt per ssh invocation — retry() adds backoff (avoids sshd MaxStartups / fail2ban bursts).
+          SSH_OPTS=(-i ~/.ssh/deploy_key
             -o StrictHostKeyChecking=accept-new
-            -o ConnectTimeout=30
-            -o ConnectionAttempts=5
+            -o ConnectTimeout=60
+            -o ConnectionAttempts=1
             -o TCPKeepAlive=yes
-            -o ServerAliveInterval=15
+            -o ServerAliveInterval=20
             -o ServerAliveCountMax=8
-            -p "$PORT"
-            "${DEPLOY_USER}@${DEPLOY_HOST}")
+            -p "$PORT")
+          if [ "${DEPLOY_SSH_FORCE_IPV4:-}" = "true" ] || [ "${DEPLOY_SSH_FORCE_IPV4:-}" = "1" ]; then
+            SSH_OPTS=(-4 "${SSH_OPTS[@]}")
+            echo "Using IPv4 only (DEPLOY_SSH_FORCE_IPV4)"
+          fi
+
+          KEYSCAN_FLAGS=(-p "$PORT" -H "$DEPLOY_HOST")
+          if [ "${DEPLOY_SSH_FORCE_IPV4:-}" = "true" ] || [ "${DEPLOY_SSH_FORCE_IPV4:-}" = "1" ]; then
+            KEYSCAN_FLAGS=(-4 "${KEYSCAN_FLAGS[@]}")
+          fi
+          ssh-keyscan "${KEYSCAN_FLAGS[@]}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          printf -v RSYNC_RSH '%q ' ssh "${SSH_OPTS[@]}"
+          RSYNC_RSH="${RSYNC_RSH% }"
+
+          SSH_BASE=(ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}")
 
           retry() {
             local attempt=1 max=6 delay=6
