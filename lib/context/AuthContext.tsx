@@ -4,7 +4,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import axios from 'axios';
 import { User, LoginRequest, RegisterRequest, VerifyOtpRequest } from '@/lib/types/auth';
 import * as authApi from '@/lib/api/auth';
-import { shouldRefreshToken, getTimeUntilExpiry } from '@/lib/utils/tokenUtils';
+import { shouldRefreshToken } from '@/lib/utils/tokenUtils';
+import { isAuthRoutePath } from '@/lib/utils/authRoute';
 import { storageClearTokens, storageGet, storageSetTokens } from '@/lib/utils/safeStorage';
 
 interface AuthContextType {
@@ -66,14 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Skip token refresh if we're on auth pages (login, register, verify-otp, etc.)
     const pathname = window.location.pathname;
-    const isAuthPage =
-      pathname.includes('/login') ||
-      pathname.includes('/register') ||
-      pathname.includes('/verify-otp') ||
-      pathname.includes('/forgot-password') ||
-      pathname.includes('/reset-password');
-
-    if (isAuthPage) {
+    if (isAuthRoutePath(pathname)) {
       return; // Don't refresh tokens on auth pages
     }
 
@@ -143,15 +137,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Check if we're on an auth page - skip initialization on auth pages
       const pathname = window.location.pathname;
-      const isAuthPage =
-        pathname.includes('/login') ||
-        pathname.includes('/register') ||
-        pathname.includes('/verify-otp') ||
-        pathname.includes('/forgot-password') ||
-        pathname.includes('/reset-password');
 
       // On auth pages, just set loading to false without checking tokens
-      if (isAuthPage) {
+      if (isAuthRoutePath(pathname)) {
         setLoading(false);
         return;
       }

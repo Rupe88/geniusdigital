@@ -1,7 +1,7 @@
 
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { ApiError, ApiResponse } from '@/lib/types/api';
-import { shouldRefreshToken, isTokenExpired } from '@/lib/utils/tokenUtils';
+import { isAuthRoutePath } from '@/lib/utils/authRoute';
 import { storageClearTokens, storageGet, storageSetTokens } from '@/lib/utils/safeStorage';
 
 // Production backend URL (DigitalOcean) – used when frontend runs in production (non-localhost)
@@ -30,9 +30,7 @@ const getApiUrl = (): string => {
   return DEFAULT_DEV_API;
 };
 
-const API_URL = getApiUrl();
-
-/** Base URL for API (e.g. for OAuth redirects). Use when building full backend URLs. */
+/** Base URL for API (e.g. for OAuth redirects). Always call at use time — not frozen at module load. */
 export const getApiBaseUrl = (): string => getApiUrl();
 
 // Flag to prevent multiple simultaneous refresh requests
@@ -49,9 +47,9 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
   refreshSubscribers.push(callback);
 };
 
-// Create axios instance with different timeouts for different operations
+// Create axios instance — baseURL set per request so client always matches runtime host / env.
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -62,6 +60,8 @@ export const apiClient: AxiosInstance = axios.create({
 // Request interceptor - Add auth token and handle FormData
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.baseURL = getApiUrl();
+
     // If FormData is being sent, remove Content-Type to let browser set it with boundary
     if (config.data instanceof FormData) {
       if (config.headers) {
@@ -105,14 +105,8 @@ apiClient.interceptors.response.use(
 
     // Handle 401 Unauthorized - Token expired or invalid
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      // If we're already on an auth page, don't try to refresh
       const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-      const isAuthPage =
-        pathname.includes('/login') ||
-        pathname.includes('/register') ||
-        pathname.includes('/verify-otp') ||
-        pathname.includes('/forgot-password') ||
-        pathname.includes('/reset-password');
+      const isAuthPage = isAuthRoutePath(pathname);
 
       // If it's a 401 on the refresh-token endpoint itself, or on an auth page, logout
       if (originalRequest.url?.includes('/auth/refresh-token') || isAuthPage) {
@@ -140,12 +134,13 @@ apiClient.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          console.log(`Attempting to refresh token at: ${API_URL}/auth/refresh-token`);
+          const refreshUrl = `${getApiUrl()}/auth/refresh-token`;
+          console.log(`Attempting to refresh token at: ${refreshUrl}`);
 
           // Using axios directly to avoid interceptor issues, with explicit config.
           // Timeout so create/product etc. do not hang forever if refresh hangs.
           const response = await axios.post(
-            `${API_URL}/auth/refresh-token`,
+            refreshUrl,
             { refreshToken },
             { withCredentials: true, timeout: 15000 }
           );
@@ -185,10 +180,11 @@ apiClient.interceptors.response.use(
       } else {
         console.warn('No refresh token found in storage');
         handleLogout();
+        return Promise.reject(error);
       }
     }
 
-    // Default handle for other errors or if refresh logic skipped
+    // Retry after refresh failed above, or other 401 paths (e.g. _retry already true)
     if (error.response?.status === 401) {
       handleLogout();
     }
@@ -223,12 +219,7 @@ const handleLogout = () => {
     storageClearTokens();
 
     const pathname = window.location.pathname;
-    const isAuthPage =
-      pathname.includes('/login') ||
-      pathname.includes('/register') ||
-      pathname.includes('/verify-otp') ||
-      pathname.includes('/forgot-password') ||
-      pathname.includes('/reset-password');
+    const isAuthPage = isAuthRoutePath(pathname);
 
     if (!isAuthPage && isProtectedRoute(pathname)) {
       window.location.href = '/login';

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as cartApi from '@/lib/api/cart';
 import type { CartItem } from '@/lib/api/cart';
+import { useAuth } from '@/lib/context/AuthContext';
 
 interface CartContextType {
   items: CartItem[];
@@ -28,6 +29,7 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const { loading: authLoading } = useAuth();
 
   const refreshCart = useCallback(async () => {
     try {
@@ -42,8 +44,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
     refreshCart();
-  }, [refreshCart]);
+  }, [authLoading, refreshCart]);
 
   const addToCart = async (courseId: string, productId?: string) => {
     await cartApi.addToCart(courseId, productId);
