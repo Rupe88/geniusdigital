@@ -1,12 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import { HiHome, HiUsers, HiBookOpen, HiFolder, HiUserGroup, HiCreditCard, HiTag, HiShoppingBag, HiDocumentText, HiPhotograph, HiChat, HiCalendar, HiVideoCamera, HiChartBar, HiStar, HiMail, HiShieldCheck, HiCash, HiCurrencyDollar, HiTrendingUp, HiChevronDown, HiChevronRight, HiShare, HiExternalLink, HiLogout, HiQuestionMarkCircle } from 'react-icons/hi';
 import { ROUTES } from '@/lib/utils/constants';
+import { storageGet } from '@/lib/utils/safeStorage';
+
+function isAdminRole(role: string | undefined): boolean {
+  return String(role ?? '').toUpperCase() === 'ADMIN';
+}
 
 interface MenuItem {
   href: string;
@@ -100,8 +105,14 @@ const adminMenuCategories: MenuCategory[] = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { user, isAuthenticated, loading, logout, refreshUser } = useAuth();
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['Dashboard']));
+  /** One recovery attempt per /admin visit when tokens exist but user not hydrated yet */
+  const sessionRecoveryAttempted = useRef(false);
+
+  useEffect(() => {
+    sessionRecoveryAttempted.current = false;
+  }, [pathname]);
 
   const toggleCategory = (categoryLabel: string) => {
     setOpenCategories((prev) => (prev.has(categoryLabel) ? new Set() : new Set([categoryLabel])));
@@ -116,10 +127,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     if (loading) return;
-    if (!isAuthenticated || user?.role !== 'ADMIN') {
+
+    // After full-page navigation from /login, user can be briefly null while tokens exist — recover once
+    const token = typeof window !== 'undefined' ? storageGet('accessToken') : null;
+    if (token && !user && !sessionRecoveryAttempted.current) {
+      sessionRecoveryAttempted.current = true;
+      void refreshUser();
+      return;
+    }
+
+    if (!isAuthenticated || !isAdminRole(user?.role)) {
       router.replace('/login');
     }
-  }, [pathname, loading, isAuthenticated, user?.role, router]);
+  }, [pathname, loading, isAuthenticated, user, user?.role, router, refreshUser]);
 
   useEffect(() => {
     const activeCategory = adminMenuCategories.find((c) => isCategoryActive(c));
@@ -141,7 +161,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!isAuthenticated || user?.role !== 'ADMIN') {
+  if (!isAuthenticated || !isAdminRole(user?.role)) {
     return null;
   }
 

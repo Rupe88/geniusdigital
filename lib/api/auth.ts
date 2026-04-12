@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient, handleApiResponse, handleApiError } from './axios';
 import { API_ENDPOINTS } from '@/lib/utils/constants';
 import {
@@ -95,6 +96,10 @@ export const getMe = async (): Promise<User> => {
     const data = handleApiResponse<{ user: User }>(response);
     return data.user;
   } catch (error) {
+    // Let Axios errors through so AuthContext / interceptors can read status (401, etc.)
+    if (axios.isAxiosError(error)) {
+      throw error;
+    }
     throw new Error(handleApiError(error));
   }
 };
