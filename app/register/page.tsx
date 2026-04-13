@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { HiArrowLeft } from 'react-icons/hi';
@@ -13,8 +13,6 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { ROUTES } from '@/lib/utils/constants';
 import { getApiBaseUrl } from '@/lib/api/axios';
-import * as authApi from '@/lib/api/auth';
-import type { OtpChannel } from '@/lib/types/auth';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -34,7 +32,6 @@ const registerSchema = z.object({
       const prefix = normalized.slice(0, 2);
       return normalized.length === 10 && validPrefixes.includes(prefix);
     }, 'Please enter a valid 10-digit Nepal mobile (96, 97 or 98XXXXXXXX)'),
-  otpChannel: z.enum(['email', 'sms', 'both']).optional(),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -54,15 +51,8 @@ export default function RegisterPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
-  const [registeredPhone, setRegisteredPhone] = useState<string>('');
-  const [otpChannel, setOtpChannel] = useState<OtpChannel>('email');
-  const [smsAvailable, setSmsAvailable] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string>('');
-
-  useEffect(() => {
-    authApi.getOtpOptions().then((opts) => setSmsAvailable(opts.smsAvailable)).catch(() => setSmsAvailable(false));
-  }, []);
 
   const {
     register,
@@ -70,7 +60,6 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { otpChannel: 'email' },
   });
 
   const {
@@ -91,18 +80,15 @@ export default function RegisterPage() {
     try {
       setError('');
       setIsLoading(true);
-      const channel = (data.otpChannel || 'email') as OtpChannel;
       const phoneForApi = data.phone?.trim() ? normalizePhone(data.phone.trim()) : '';
       await registerUser({
         email: data.email,
         password: data.password,
         fullName: data.fullName,
         phone: phoneForApi,
-        otpChannel: channel,
+        otpChannel: 'email',
       });
       setRegisteredEmail(data.email);
-      setRegisteredPhone(phoneForApi);
-      setOtpChannel(channel);
       setShowOtpVerification(true);
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : 'An error occurred') || 'Registration failed. Please try again.');
@@ -127,13 +113,6 @@ export default function RegisterPage() {
     }
   };
 
-  const otpSentTo =
-    otpChannel === 'email'
-      ? 'your email'
-      : otpChannel === 'sms'
-        ? 'your mobile number (SMS)'
-        : 'your email and mobile number (SMS)';
-
   if (showOtpVerification) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-4 py-10">
@@ -150,7 +129,7 @@ export default function RegisterPage() {
             <h2 className="text-2xl font-semibold text-gray-900 text-center">Verify your account</h2>
           </div>
           <p className="text-sm text-gray-600 mb-4 text-center">
-            Enter the 6-digit code sent to {otpSentTo}.
+            Enter the 6-digit code sent to your email.
           </p>
 
           {error && (
@@ -187,7 +166,7 @@ export default function RegisterPage() {
                   setError('');
                   setResendMessage('');
                   setIsResending(true);
-                  await resendOtp(registeredEmail, otpChannel);
+                  await resendOtp(registeredEmail, 'email');
                   setResendMessage('New code sent.');
                 } catch (err: unknown) {
                   setError((err instanceof Error ? err.message : 'An error occurred') || 'Failed to resend.');
@@ -261,39 +240,6 @@ export default function RegisterPage() {
               />
             </div>
             {errors.phone?.message && <p className="mt-1 text-sm text-[var(--error)]">{errors.phone.message}</p>}
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-800">
-              Where would you like to receive your OTP code?
-            </label>
-            <div className="flex items-center gap-6 text-sm text-gray-700">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="radio"
-                  value="email"
-                  defaultChecked
-                  {...register('otpChannel')}
-                  className="h-4 w-4 text-[#c01e2e] focus:ring-[#c01e2e]"
-                />
-                Email
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="radio"
-                  value="sms"
-                  {...register('otpChannel')}
-                  className="h-4 w-4 text-[#c01e2e] focus:ring-[#c01e2e]"
-                  disabled={!smsAvailable}
-                />
-                Phone Number
-              </label>
-            </div>
-            {!smsAvailable ? (
-              <p className="mt-2 text-xs text-gray-500">SMS OTP is currently unavailable. Please use Email.</p>
-            ) : (
-              <p className="mt-2 text-xs text-gray-500">You can receive the code on your mobile number via SMS.</p>
-            )}
           </div>
 
           <Input
