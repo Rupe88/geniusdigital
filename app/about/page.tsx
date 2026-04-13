@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { FiMapPin, FiMail, FiPhone } from 'react-icons/fi';
 import { ROUTES } from '@/lib/utils/constants';
-
+//lol
 const categories = [
   'Vastu',
   'Numerology',
