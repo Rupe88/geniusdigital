@@ -21,7 +21,7 @@ services:
     http_port: 3000
     build_environment_variables:
       - key: NEXT_PUBLIC_API_URL
-        value: https://stingray-app-2-iy8as.ondigitalocean.app/api
+        value: https://api.geniusshiksha.com/api
     envs:
       - key: NODE_ENV
         value: production

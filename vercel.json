@@ -1,6 +1,6 @@
 {
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://stingray-app-2-iy8as.ondigitalocean.app/api"
+    "NEXT_PUBLIC_API_URL": "https://api.geniusshiksha.com/api"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",

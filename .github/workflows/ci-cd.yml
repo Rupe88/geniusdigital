@@ -1,8 +1,7 @@
 name: CI / CD
 
-# Default: build + push to GHCR. The droplet deploys by **pulling :latest** on a cron (see deploy/PULL-DEPLOY.md).
-# Inbound SSH from GitHub Actions is unreliable; we do not require it for a green pipeline.
-# Optional: set repo Variable DEPLOY_USE_SSH=true to run the legacy SSH/rsync deploy job.
+# Default: build + push to GHCR, then **SSH/rsync** to the droplet (compose pull + up).
+# If SSH from Actions fails (firewall), set repo Variable **SKIP_SSH_DEPLOY=true** — droplet can still pull :latest on cron (deploy/PULL-DEPLOY.md).
 
 on:
   pull_request:
@@ -52,7 +51,7 @@ jobs:
       contents: read
       packages: write
     env:
-      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.geniusdigi.com/api' }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api' }}
       NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL || 'https://geniusshiksha.com' }}
 
     outputs:
@@ -94,7 +93,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Always succeeds — documents pull-based deploy (no SSH from GitHub required).
+  # Complements SSH deploy: if you skip SSH (SKIP_SSH_DEPLOY), the droplet can still pull :latest on cron.
   droplet-rollout:
     needs: publish-image
     if: |
@@ -102,25 +101,26 @@ jobs:
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - name: Image published — apply on droplet via cron pull
+      - name: Image published — droplet rollout options
         run: |
           echo "::notice::GHCR image (immutable tag): ${{ needs.publish-image.outputs.image_ref }}"
           echo "::notice::CI also pushed :latest — droplet should use FRONTEND_IMAGE=...:latest in .env.deploy"
-          echo "::notice::Setup: deploy/PULL-DEPLOY.md (cron pull — no SSH from Actions)."
+          echo "::notice::Default: deploy-via-ssh pushes compose + .env.deploy and runs docker compose up."
+          echo "::notice::Fallback: deploy/PULL-DEPLOY.md (cron pull if SSH from Actions is blocked)."
 
   deploy-via-ssh:
     needs: publish-image
     if: |
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      vars.DEPLOY_USE_SSH == 'true'
+      vars.SKIP_SSH_DEPLOY != 'true'
     runs-on: ubuntu-latest
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH || '/var/www/geniusdigital-frontend' }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER || vars.DEPLOY_USER || 'root' }}
       DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT || vars.DEPLOY_SSH_PORT }}
-      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.geniusdigi.com/api' }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api' }}
       NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL || 'https://geniusshiksha.com' }}
       FRONTEND_IMAGE: ${{ needs.publish-image.outputs.image_ref }}
       GITHUB_OWNER: ${{ github.repository_owner }}

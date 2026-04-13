@@ -14,7 +14,7 @@ function apiMediaRemotePatterns(): NonNullable<
     return [
       {
         protocol: "https",
-        hostname: "stingray-app-2-iy8as.ondigitalocean.app",
+        hostname: "api.geniusshiksha.com",
         pathname: "/api/media/image",
       },
     ];
@@ -26,10 +26,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   turbopack: { root: process.cwd() },
   /**
-   * Netlify (HTTPS) → HTTP droplet: mixed content blocks `http://` API calls from the browser.
-   * Use a dedicated prefix so we do not shadow this app's own `app/api/*` routes.
-   * Netlify build env: BACKEND_HTTP_ORIGIN=http://DROPLET_IP
-   * NEXT_PUBLIC_API_URL=https://YOUR_SITE.netlify.app/backend-proxy/api
+   * Legacy: optional same-origin proxy (e.g. old Netlify → HTTP origin).
+   * Production uses HTTPS API directly — leave BACKEND_HTTP_ORIGIN unset.
    */
   async rewrites() {
     const origin = process.env.BACKEND_HTTP_ORIGIN?.trim();

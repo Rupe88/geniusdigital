@@ -1,6 +1,6 @@
 # Backend CORS for geniusshiksha.com
 
-The browser loads the app from **https://geniusshiksha.com** and calls the API (e.g. **https://api.example.com/api** or your droplet URL). The API must allow that origin.
+The browser loads the app from **https://geniusshiksha.com** and calls the API (e.g. **https://api.geniusshiksha.com/api**). The API must allow that origin.
 
 ## Required backend settings
 

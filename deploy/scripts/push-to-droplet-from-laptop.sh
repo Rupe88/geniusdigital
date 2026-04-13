@@ -16,7 +16,7 @@ DROPLET="${DROPLET:-root@64.227.182.187}"
 DEPLOY_PATH="${DEPLOY_PATH:-/var/www/geniusdigital-frontend}"
 SSH_KEY="${SSH_KEY:-./github_actions_deploy}"
 
-NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://api.geniusdigi.com/api}"
+NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://api.geniusshiksha.com/api}"
 NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL:-https://geniusshiksha.com}"
 FRONTEND_IMAGE="${FRONTEND_IMAGE:-ghcr.io/rupe88/geniusdigital:latest}"
 

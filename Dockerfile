@@ -16,7 +16,7 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 # Inlined at build time; DO build_environment_variables overrides ARG if set
-ARG NEXT_PUBLIC_API_URL=https://stingray-app-2-iy8as.ondigitalocean.app/api
+ARG NEXT_PUBLIC_API_URL=https://api.geniusshiksha.com/api
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 RUN npm run build

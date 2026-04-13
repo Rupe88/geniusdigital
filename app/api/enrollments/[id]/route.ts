@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api';
     const response = await fetch(`${backendUrl}/enrollments/${id}`, {
       headers: {
         'Authorization': request.headers.get('Authorization') || '',

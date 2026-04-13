@@ -218,8 +218,8 @@ import { ShareButton } from '@/components/referrals/ShareButton';
 
 ### **Backend Deployment:**
 ```bash
-# Your backend is already deployed at:
-# https://stingray-app-2-iy8as.ondigitalocean.app
+# Your backend is deployed at:
+# https://api.geniusshiksha.com (health: /health, API routes under /api)
 
 # If you need to redeploy:
 git add .
@@ -237,17 +237,17 @@ npm run start
 ### **Environment Variables:**
 ```env
 # Backend API URL
-NEXT_PUBLIC_API_URL=https://stingray-app-2-iy8as.ondigitalocean.app/api
+NEXT_PUBLIC_API_URL=https://api.geniusshiksha.com/api
 
 # Frontend URL
-NEXT_PUBLIC_FRONTEND_URL=https://your-frontend-domain.com
+NEXT_PUBLIC_APP_URL=https://geniusshiksha.com
 ```
 
 ---
 
 ## ✅ **Verification Checklist**
 
-- [ ] **Backend Running**: `https://stingray-app-2-iy8as.ondigitalocean.app/health`
+- [ ] **Backend Running**: `https://api.geniusshiksha.com/health`
 - [ ] **Frontend Running**: `http://localhost:3000`
 - [ ] **User Registration**: Create account successfully
 - [ ] **User Login**: Login works without buffering

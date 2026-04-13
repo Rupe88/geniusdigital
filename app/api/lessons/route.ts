@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       body = await request.formData();
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api';
     const response = await fetch(`${backendUrl}/lessons`, {
       method: 'POST',
       body: body,

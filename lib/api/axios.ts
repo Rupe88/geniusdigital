@@ -4,8 +4,8 @@ import { ApiError, ApiResponse } from '@/lib/types/api';
 import { isAuthRoutePath } from '@/lib/utils/authRoute';
 import { storageClearTokens, storageGet, storageSetTokens } from '@/lib/utils/safeStorage';
 
-// Production backend URL (DigitalOcean) – used when frontend runs in production (non-localhost)
-const PRODUCTION_API_URL = 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+// Production API base — used when the browser is not on localhost/LAN (NEXT_PUBLIC_API_URL unset)
+const PRODUCTION_API_URL = 'https://api.geniusshiksha.com/api';
 const DEFAULT_DEV_API = 'http://localhost:4000/api';
 
 // Use env first; then auto-detect local/LAN hosts to use local backend.

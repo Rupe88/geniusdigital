@@ -27,7 +27,7 @@ Create `.env.deploy` (use **`:latest`** so cron always pulls what CI just pushed
 # Image — must match your GHCR repo (lowercase), tag :latest
 FRONTEND_IMAGE=ghcr.io/rupe88/geniusdigital:latest
 
-NEXT_PUBLIC_API_URL=https://api.geniusdigi.com/api
+NEXT_PUBLIC_API_URL=https://api.geniusshiksha.com/api
 NEXT_PUBLIC_APP_URL=https://geniusshiksha.com
 ```
 
@@ -68,6 +68,6 @@ After each push to `main`, CI updates `:latest` on GHCR; within **~3 minutes** t
 
 Keep proxying to `127.0.0.1:3000` as in `deploy/nginx/geniusshiksha.com.conf`.
 
-## Optional: SSH deploy from Actions
+## Optional: disable SSH deploy from Actions
 
-If you fix SSH reliably, set repository **Variable** `DEPLOY_USE_SSH` to `true` to re-enable the SSH job in `.github/workflows/ci-cd.yml`. Default is **off**.
+The workflow runs **SSH/rsync** by default after each image push. If GitHub cannot reach your droplet’s SSH port, set repository **Variable** `SKIP_SSH_DEPLOY` to `true` and rely on cron pull above instead.

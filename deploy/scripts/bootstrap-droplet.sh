@@ -23,7 +23,7 @@ set -euo pipefail
 DEPLOY_PATH="${DEPLOY_PATH:-/var/www/geniusdigital-frontend}"
 GITHUB_REPO="${GITHUB_REPO:-Rupe88/geniusdigital}"
 GITHUB_REPO_BRANCH="${GITHUB_REPO_BRANCH:-main}"
-NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://api.geniusdigi.com/api}"
+NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://api.geniusshiksha.com/api}"
 NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL:-https://geniusshiksha.com}"
 
 # GHCR image = ghcr.io/<lowercase owner>/<lowercase repo>:latest (same as CI publish-image job)

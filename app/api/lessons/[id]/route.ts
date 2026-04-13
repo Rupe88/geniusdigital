@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api';
     const response = await fetch(`${backendUrl}/lessons/${id}`, {
       headers: {
         'Authorization': request.headers.get('Authorization') || '',
@@ -33,7 +33,7 @@ export async function PUT(
     const { id } = await params;
     const formData = await request.formData();
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api';
     const response = await fetch(`${backendUrl}/lessons/${id}`, {
       method: 'PUT',
       body: formData,
@@ -59,7 +59,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stingray-app-2-iy8as.ondigitalocean.app/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.geniusshiksha.com/api';
     const response = await fetch(`${backendUrl}/lessons/${id}`, {
       method: 'DELETE',
       headers: {
