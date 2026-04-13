@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
             </div>
             <div className="flex items-center gap-3 text-xl">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/pshambhupaswan"
                 aria-label="Facebook"
                 className="transition hover:text-white/70"
               >
@@ -118,27 +118,24 @@ export const Footer: React.FC = () => {
               <div className="flex items-start gap-2">
                 <FiMail className="mt-0.5 text-base" />
                 <a
-                  href="mailto:sanskaracademy555@gmail.com"
+                  href="mailto:pshambhu608@gmail.com"
                   className="transition hover:text-white"
                 >
-                  sanskaracademy555@gmail.com
+                  pshambhu608@gmail.com
                 </a>
               </div>
               <div className="flex items-start gap-2">
                 <FiPhone className="mt-0.5 text-base" />
                 <div className="space-y-1">
-                  <a href="tel:+9779705231255" className="transition hover:text-white">
-                    +977 9705231255
-                  </a>
-                  <a href="tel:+9779763694355" className="transition hover:text-white">
-                    +977 9763694355
+                  <a href="tel:+9779816798026" className="transition hover:text-white">
+                    +977 981-6798026
                   </a>
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <FiMapPin className="mt-0.5 text-base" />
                 <p>
-                  New baneshwor, thapagaun Kathmandu
+                  Kathmandu, Nepal
                 </p>
               </div>
             </div>
