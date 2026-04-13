@@ -4,50 +4,39 @@
 
 **On the DigitalOcean droplet (the Linux server), after you SSH in — not on your Mac/PC.**
 
-```bash
-# On YOUR LAPTOP — only this connects you to the server:
-ssh root@YOUR_DROPLET_IP
+This repository (**Rupe88/geniusdigital**) is the **Next.js app at the repo root** (there is no `frontend/` subfolder in the clone).
 
-# Everything below runs ON THE SERVER (you should see root@... prompt):
+### Recommended: GitHub Actions + GHCR (no full git clone on the server)
+
+CI is **`.github/workflows/ci-cd.yml`**: lint → build/push image to **GHCR** → **SSH** to the droplet → rsync `docker-compose.prod.yml` + `.env.deploy` → `docker compose pull && up`.
+
+- **Deploy directory on the server (default):** `/var/www/geniusdigital-frontend`
+- **One-time on the droplet:** install Docker, create the directory, configure **nginx + TLS**, open **SSH + HTTP/HTTPS** in the firewall (see below). You can seed the first run with:
+
+```bash
+sudo bash deploy/scripts/bootstrap-droplet.sh
+```
+
+(or download that script from `main` per the script header). That pulls `docker-compose.prod.yml` and starts the **GHCR** image; no `git clone` required for deploy.
+
+**GitHub:** set secrets **`DEPLOY_SSH_KEY`**, **`DEPLOY_HOST`**, and optionally **`DEPLOY_USER`** / **`DEPLOY_PATH`**. If the GHCR package is **private**, set **`GHCR_READ_TOKEN`** + **`GHCR_USERNAME`** (or rely on a cron pull — **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**).
+
+### Alternative: clone repo on the droplet and build there (slow on small VPS)
+
+```bash
+ssh root@YOUR_DROPLET_IP
 sudo mkdir -p /opt/geniusshiksha-app
 sudo git clone git@github.com:Rupe88/geniusdigital.git /opt/geniusshiksha-app
-cd /opt/geniusshiksha-app/frontend
+cd /opt/geniusshiksha-app
 cp .env.deploy.example .env.deploy && chmod 600 .env.deploy
 docker compose -f docker-compose.build.yml --env-file .env.deploy up -d --build --remove-orphans
 ```
 
-Or **one script** from the repo (still **on the droplet**, after the repo exists):  
-`bash frontend/deploy/scripts/bootstrap-geniusshiksha-app.sh`
-
-### If `git clone` fails (private repo, no credentials on the server)
-
-Copy the project from your laptop (run **on your PC**, in your local repo folder):
-
-```bash
-rsync -avz --delete \
-  -e "ssh -i /path/to/github_actions_deploy" \
-  --exclude node_modules --exclude frontend/node_modules --exclude backend/node_modules \
-  --exclude .next --exclude frontend/.next --exclude .git \
-  ./  root@YOUR_DROPLET_IP:/opt/geniusshiksha-app/
-```
-
-Then SSH in and finish the first deploy:
-
-```bash
-ssh root@YOUR_DROPLET_IP
-cd /opt/geniusshiksha-app/frontend
-cp -n .env.deploy.example .env.deploy && chmod 600 .env.deploy
-docker compose -f docker-compose.build.yml --env-file .env.deploy up -d --build --remove-orphans
-```
-
-**GitHub Actions** uses `git pull` on the server — add a **Deploy key** (read-only) on the repo and run  
-`bash frontend/deploy/scripts/droplet-init-git-for-pull.sh` on the droplet so `/opt/geniusshiksha-app` is a real clone that can `git fetch`.
+Or: **`bash deploy/scripts/bootstrap-geniusshiksha-app.sh`** (clones to `/opt/geniusshiksha-app` if missing).
 
 **Fast path:** **[ONE-COMMAND.md](./ONE-COMMAND.md)** (bootstrap + DNS + nginx).
 
-**Recommended (current):** Monorepo clone on the droplet at **`/opt/geniusshiksha-app`**, deploy with **`docker-compose.build.yml`** (build on server). CI/CD: **repository root** `.github/workflows/deploy-frontend.yml` (SSH on push to `main`). One-time: **`deploy/scripts/bootstrap-geniusshiksha-app.sh`** (or manual clone + `frontend/.env.deploy`).
-
-**Alternative:** GHCR image + cron pull — **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**. **DNS:** **[DNS.md](./DNS.md)**.
+**DNS:** **[DNS.md](./DNS.md)**.
 
 This page covers directory layout, nginx, and optional SSH troubleshooting.
 
@@ -59,21 +48,29 @@ Follow [Docker Engine install for Ubuntu](https://docs.docker.com/engine/install
 
 ## 2. App directory and env
 
-**Monorepo on droplet (SSH deploy from Actions):**
+**Default (CI/CD):** Actions rsyncs to **`/var/www/geniusdigital-frontend`** (override with repo variable **`DEPLOY_PATH`**). Ensure the directory exists and is writable by the SSH user:
+
+```bash
+sudo mkdir -p /var/www/geniusdigital-frontend
+sudo chown "$USER:$USER" /var/www/geniusdigital-frontend
+```
+
+First deploy can be **`sudo bash deploy/scripts/bootstrap-droplet.sh`** (downloads compose from GitHub, writes `.env.deploy` with **`FRONTEND_IMAGE`**, pulls GHCR). Or push to **`main`** after GitHub secrets are set — CI will populate the same path.
+
+**Optional — build on the droplet instead of GHCR:** clone the repo and use the repo root (not `frontend/`):
 
 ```bash
 sudo mkdir -p /opt/geniusshiksha-app
 sudo chown "$USER:$USER" /opt/geniusshiksha-app
-# Private repo: use deploy key or PAT — then:
-sudo git clone https://github.com/Rupe88/geniusdigital.git /opt/geniusshiksha-app
-cd /opt/geniusshiksha-app/frontend
+git clone https://github.com/Rupe88/geniusdigital.git /opt/geniusshiksha-app
+cd /opt/geniusshiksha-app
 cp .env.deploy.example .env.deploy && chmod 600 .env.deploy
 nano .env.deploy   # NEXT_PUBLIC_API_URL, NEXT_PUBLIC_APP_URL
 ```
 
-Or run **`bash deploy/scripts/bootstrap-geniusshiksha-app.sh`** from the repo (copies env and starts Docker).
+Or run **`bash deploy/scripts/bootstrap-geniusshiksha-app.sh`** from a clone.
 
-**GHCR path (optional):** use `/var/www/geniusdigital-frontend` with only `docker-compose.prod.yml` + `.env.deploy` containing **`FRONTEND_IMAGE`** — see **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**.
+**GHCR-only path (no clone):** **`docker-compose.prod.yml`** + **`.env.deploy`** with **`FRONTEND_IMAGE`** — see **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**.
 
 ## 3. DNS
 
@@ -99,40 +96,49 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## 5. First container start
 
-**Build on droplet (default for `deploy-frontend.yml`):**
+**Pre-built GHCR image (default CI path):**
 
 ```bash
-cd /opt/geniusshiksha-app/frontend
+cd /var/www/geniusdigital-frontend
+docker compose -f docker-compose.prod.yml --env-file .env.deploy pull
+docker compose -f docker-compose.prod.yml --env-file .env.deploy up -d --remove-orphans
+```
+
+(Usually you do not run this by hand — **`.github/workflows/ci-cd.yml`** does it after each push to **`main`**.)
+
+**Build on the droplet (emergency / no registry):**
+
+```bash
+cd /opt/geniusshiksha-app   # repo root; adjust path if you cloned elsewhere
 docker compose -f docker-compose.build.yml --env-file .env.deploy up -d --build --remove-orphans
 ```
 
-**Pre-built GHCR image:** use `docker-compose.prod.yml` + `FRONTEND_IMAGE` in `.env.deploy` — see **[PULL-DEPLOY.md](./PULL-DEPLOY.md)**.
+See **[PULL-DEPLOY.md](./PULL-DEPLOY.md)** for cron-based pull if SSH from Actions is blocked (`SKIP_SSH_DEPLOY=true`).
 
-## 6. GitHub Actions (monorepo root)
+## 6. GitHub Actions (this repo)
 
 | Workflow | What it does |
 |----------|----------------|
-| **`.github/workflows/deploy-frontend.yml`** | Lint + `next build` in CI; on push to **`main`**, SSH to droplet → `git pull` in **`/opt/geniusshiksha-app`** → `docker compose -f docker-compose.build.yml` in **`frontend/`**. |
+| **`.github/workflows/ci-cd.yml`** | Lint → Docker build + push to **GHCR** (`:sha` and `:latest`) → on **`main`**, SSH to droplet → rsync `docker-compose.prod.yml` + `.env.deploy` → `docker compose pull && up` in **`DEPLOY_PATH`** (default **`/var/www/geniusdigital-frontend`**). |
 
-**Repository secrets:** `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (same PEM as in `~/.ssh/authorized_keys` on the droplet).
+**Repository secrets (recommended):**
 
-**Repository name:** workflow runs only when `github.repository == 'Rupe88/geniusdigital'` — fork/adjust if needed.
+| Secret | Purpose |
+|--------|--------|
+| **`DEPLOY_SSH_KEY`** | Private key PEM (public half in droplet `~/.ssh/authorized_keys`) |
+| **`DEPLOY_HOST`** | Droplet **IPv4** (recommended) or DNS name |
+| **`DEPLOY_USER`** | Optional; default **`root`** |
+| **`DEPLOY_PATH`** | Optional; default **`/var/www/geniusdigital-frontend`** |
+| **`GHCR_READ_TOKEN`** | **Only if** the GHCR package is private — PAT with `read:packages` |
+| **`GHCR_USERNAME`** | GitHub username for `docker login` when using **`GHCR_READ_TOKEN`** |
 
-**Private GitHub repo:** the droplet must be able to `git pull` (deploy key, `git credential`, or cached HTTPS token).
+**Optional variables:** `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL` (defaults match geniusshiksha.com / api.geniusshiksha.com). **`DEPLOY_SSH_FORCE_IPV4`:** set to `true` if SSH fails over IPv6.
 
-### Nested workflow `frontend/.github/workflows/ci-cd.yml`
-
-Not used when the Git repo root is the monorepo (GitHub only loads **root** `.github/workflows/`). Use the root **`deploy-frontend.yml`** above. The nested file is only relevant if the default branch is a **frontend-only** repo layout.
-
-### GHCR (optional alternative)
-
-- Images: **`ghcr.io/<lowercase owner>/<lowercase repo>`**.
-- **Public package:** droplet `docker pull` needs no login.
-- **Private package:** `docker login ghcr.io` on the droplet with a PAT (`read:packages`).
+**GHCR visibility:** if the package is **public**, the droplet can `docker pull` without login. If **private**, use **`GHCR_READ_TOKEN`** in CI (or log in on the server once).
 
 ### Getting the private key for `DEPLOY_SSH_KEY`
 
-Use the **full PEM** whose public key is in `authorized_keys` on the droplet (e.g. `github_actions_deploy`). Do **not** commit private keys.
+Use the **full PEM** whose public key is in `authorized_keys` on the droplet. Do **not** commit private keys.
 
 ## SSH: timeouts, `Connection reset`, `Broken pipe`, `banner exchange`
 

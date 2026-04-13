@@ -13,7 +13,7 @@
 #
 #   3) Copy this script onto the server, or clone the repo first and run:
 #        cd /opt/geniusshiksha-app
-#        bash frontend/deploy/scripts/bootstrap-geniusshiksha-app.sh
+#        bash deploy/scripts/bootstrap-geniusshiksha-app.sh
 #
 #   Private repo: add a deploy key in GitHub repo → Settings → Deploy keys,
 #   or use:  git clone https://github.com/Rupe88/geniusdigital.git
@@ -31,7 +31,8 @@ if [ ! -d "${TARGET}/.git" ]; then
   git clone "$REPO" "$TARGET"
 fi
 
-cd "${TARGET}/frontend"
+# Repo root is the Next.js app (no frontend/ subfolder on Rupe88/geniusdigital).
+cd "${TARGET}"
 if [ ! -f .env.deploy ]; then
   cp .env.deploy.example .env.deploy
   chmod 600 .env.deploy
