@@ -29,7 +29,7 @@ export default function RootLayout({
                 <meta name="theme-color" content="#1877f2" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-title" content="Genius Digi" />
+                <meta name="apple-mobile-web-app-title" content="Genius Shiksha" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
                 <link rel="apple-touch-icon" href="/logo.png?v=4" />
                 <link rel="icon" href="/favicon.png?v=4" type="image/png" />

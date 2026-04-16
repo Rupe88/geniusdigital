@@ -61,7 +61,7 @@ export function PwaInstall() {
           <div className="text-left">
             <p className="text-xs text-gray-200/80">Install on this device</p>
             <p className="text-sm font-semibold">
-              {installPrompt ? 'Install Sanskar Academy' : 'Install app'}
+              {installPrompt ? 'Install Genius Shiksha' : 'Install app'}
             </p>
           </div>
         </button>
@@ -77,7 +77,7 @@ export function PwaInstall() {
       <Modal
         isOpen={showGuide}
         onClose={() => setShowGuide(false)}
-        title="How to install Sanskar Academy"
+        title="How to install Genius Shiksha"
         size="lg"
       >
         <div className="space-y-6 text-sm text-gray-700">
@@ -122,7 +122,7 @@ export function PwaInstall() {
               <h3 className="font-semibold text-gray-900">On Windows (Chrome or Edge)</h3>
               <ol className="mt-2 list-decimal space-y-1 pl-4">
                 <li>Open this site in <strong>Chrome</strong> or <strong>Microsoft Edge</strong>.</li>
-                <li>Look for the <strong>install icon</strong> (⊕ or computer with plus) in the address bar, or use the menu (⋮) → <strong>“Install Sanskar Academy”</strong> or <strong>“Apps” → “Install this site as an app”</strong>.</li>
+                <li>Look for the <strong>install icon</strong> (⊕ or computer with plus) in the address bar, or use the menu (⋮) → <strong>“Install Genius Shiksha”</strong> or <strong>“Apps” → “Install this site as an app”</strong>.</li>
                 <li>Click <strong>“Install”</strong>. The app will open in its own window like a desktop app.</li>
               </ol>
             </div>

@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { StorageImage } from '@/components/ui/StorageImage';
 import * as galleryApi from '@/lib/api/gallery';
 import { GalleryItem } from '@/lib/api/gallery';
 import { PaginatedResponse } from '@/lib/types/api';
@@ -142,7 +142,7 @@ export default function AdminGalleryPage() {
       <div className="mb-8 flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-[var(--foreground)]">Gallery</h1>
-          <p className="text-[var(--muted-foreground)] mt-2">Manage gallery images and videos</p>
+          <p className="text-[var(--muted-foreground)] mt-2">Manage gallery images</p>
         </div>
         <Link href="/admin/gallery/new">
           <Button variant="primary">
@@ -177,7 +177,7 @@ export default function AdminGalleryPage() {
             <Card key={item.id} padding="none" className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative aspect-video bg-gray-100">
                 {item.imageUrl ? (
-                  <Image
+                  <StorageImage
                     src={item.imageUrl}
                     alt={item.title || 'Gallery image'}
                     fill

@@ -148,7 +148,7 @@ export const Footer: React.FC = () => {
               <span className="mt-2 block h-0.5 w-16 bg-white/60" />
             </h4>
             <p className="text-gray-100/80">
-              Install Genius Digi on your phone or computer for quick access.
+              Install Genius Shiksha on your phone or computer for quick access.
             </p>
             <PwaInstall />
           </div>
