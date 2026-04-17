@@ -8,12 +8,12 @@ import ContentProtection from "@/components/ContentProtection";
 import { PwaInit } from "@/components/PwaInit";
 
 export const metadata: Metadata = {
-    title: "Genius Digital",
-    description: "Unlock your hidden potential to become your best version with Genius Digital.",
+    title: "Genius Shiksha",
+    description: "Unlock your hidden potential to become your best version with Genius Shiksha.",
     icons: {
-        icon: "/favicon.png?v=4",
-        shortcut: "/favicon.png?v=4",
-        apple: "/logo.png?v=4",
+        icon: "/logo.png?v=5",
+        shortcut: "/logo.png?v=5",
+        apple: "/logo.png?v=5",
     },
 };
 
@@ -25,15 +25,15 @@ export default function RootLayout({
     return (
         <html lang="en" data-scroll-behavior="smooth">
             <head>
-                <link rel="manifest" href="/manifest.webmanifest?v=4" />
+                <link rel="manifest" href="/manifest.webmanifest?v=5" />
                 <meta name="theme-color" content="#1877f2" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-title" content="Genius Shiksha" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-                <link rel="apple-touch-icon" href="/logo.png?v=4" />
-                <link rel="icon" href="/favicon.png?v=4" type="image/png" />
-                <link rel="shortcut icon" href="/favicon.png?v=4" type="image/png" />
+                <link rel="apple-touch-icon" href="/logo.png?v=5" />
+                <link rel="icon" href="/logo.png?v=5" type="image/png" />
+                <link rel="shortcut icon" href="/logo.png?v=5" type="image/png" />
             </head>
             <body
                 className="antialiased min-h-screen flex flex-col"

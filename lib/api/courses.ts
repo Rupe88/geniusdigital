@@ -144,6 +144,7 @@ export interface CreateCourseData {
   learningOutcomes?: string[];
   skills?: string[];
   instructorId?: string;
+  instructorIds?: string[];
   categoryId?: string;
   videoUrl?: string;
   /** Up to 5 promo videos: order-preserved slots (URLs and/or file placeholders). Backend expects files as multipart 'video'. */
@@ -168,6 +169,9 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
     // Add all fields to FormData
     formData.append('title', data.title.trim());
     if (data.instructorId?.trim()) formData.append('instructorId', data.instructorId.trim());
+    if (data.instructorIds && data.instructorIds.length > 0) {
+      formData.append('instructorIds', JSON.stringify(data.instructorIds));
+    }
     if (data.slug) formData.append('slug', data.slug.trim());
     if (data.description) formData.append('description', data.description);
     if (data.shortDescription) formData.append('shortDescription', data.shortDescription);
@@ -216,6 +220,7 @@ export const createCourse = async (data: CreateCourseData): Promise<Course> => {
       console.log('FormData being sent:', {
         title: data.title,
         instructorId: data.instructorId,
+        instructorIds: data.instructorIds,
         categoryId: data.categoryId || 'none',
         hasThumbnail: !!data.thumbnailFile,
         status: data.status,
@@ -348,6 +353,9 @@ export const updateCourse = async (id: string, data: Partial<CreateCourseData>):
     }
 
     if (data.instructorId) formData.append('instructorId', data.instructorId.trim());
+    if (data.instructorIds && data.instructorIds.length > 0) {
+      formData.append('instructorIds', JSON.stringify(data.instructorIds));
+    }
     if (data.categoryId !== undefined) formData.append('categoryId', data.categoryId || '');
 
     // Add thumbnail file if provided (only if it's a new file)

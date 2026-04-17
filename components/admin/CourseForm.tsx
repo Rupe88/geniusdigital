@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { FileUpload } from '@/components/ui/FileUpload';
@@ -26,7 +27,7 @@ const courseSchema = z.object({
   // Step 1 – title required; thumbnail optional (can add later when storage is stable)
   title: z.string().min(1, 'Title is required').max(255, 'Title must be less than 255 characters'),
   slug: z.string().optional(),
-  instructorId: z.string().uuid().optional().or(z.literal('')),
+  instructorIds: z.array(z.string().uuid('Invalid instructor selected')).min(1, 'Select at least one instructor'),
   categoryId: z.string().uuid().optional().or(z.literal('')),
 
   // Step 2
@@ -141,7 +142,12 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
       ? {
         title: course.title,
         slug: course.slug,
-        instructorId: course.instructorId,
+        instructorIds:
+          (Array.isArray(course.instructorIds) && course.instructorIds.length > 0
+            ? course.instructorIds
+            : course.instructorId
+              ? [course.instructorId]
+              : []),
         categoryId: course.categoryId || '',
         shortDescription: course.shortDescription || '',
         description: course.description || '',
@@ -173,7 +179,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
       : {
         title: '',
         slug: '',
-        instructorId: '',
+        instructorIds: [],
         categoryId: '',
         language: 'ne',
         skills: [],
@@ -195,6 +201,20 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
   const watchSkills = watch('skills');
   const watchLearningOutcomes = watch('learningOutcomes');
   const thumbnailUrlVal = watch('thumbnailUrl');
+  const selectedInstructorIds = watch('instructorIds') || [];
+
+  const instructorOptions = useMemo(
+    () =>
+      instructors.map((inst) => ({
+        id: inst.id,
+        label: inst.name,
+        subtitle: inst.email || inst.designation || undefined,
+        keywords: [inst.specialization, inst.slug, inst.email, inst.designation]
+          .filter(Boolean)
+          .join(' '),
+      })),
+    [instructors]
+  );
 
   // Live preview for thumbnail link (no file selected)
   useEffect(() => {
@@ -275,7 +295,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
     let fields: (keyof CourseFormData)[] = [];
 
     if (step === 1) {
-      fields = ['title', 'instructorId'];
+      fields = ['title', 'instructorIds'];
     } else if (step === 2) {
       // Only require price if course is not free
       const baseFields: (keyof CourseFormData)[] = ['shortDescription', 'description', 'level', 'duration', 'language', 'tags'];
@@ -326,14 +346,21 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
         throw new Error('Title is required');
       }
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (data.instructorId && data.instructorId.trim() && !uuidRegex.test(data.instructorId.trim())) {
+      const selectedInstructorIds = (data.instructorIds || [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean);
+      if (!selectedInstructorIds.length) {
+        throw new Error('Please select at least one instructor.');
+      }
+      if (selectedInstructorIds.some((id) => !uuidRegex.test(id))) {
         throw new Error('Invalid instructor selected.');
       }
 
       const submitData: CreateCourseData & { curriculumData?: { chapters: any[], lessons: any[] } } = {
         title: data.title.trim(),
         slug: data.slug?.trim() || undefined,
-        instructorId: data.instructorId?.trim() || undefined,
+        instructorId: selectedInstructorIds[0],
+        instructorIds: selectedInstructorIds,
         categoryId: data.categoryId && data.categoryId.trim() ? data.categoryId.trim() : undefined,
         shortDescription: data.shortDescription || undefined,
         description: data.description || undefined,
@@ -579,14 +606,18 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
               placeholder="course-slug"
             />
 
-            <Select
-              label="Instructor"
-              {...register('instructorId')}
-              error={errors.instructorId?.message}
-              options={[
-                { value: '', label: 'Select an instructor (optional)' },
-                ...instructors.map((inst) => ({ value: inst.id, label: inst.name })),
-              ]}
+            <SearchableMultiSelect
+              label="Instructors"
+              required
+              options={instructorOptions}
+              value={selectedInstructorIds}
+              onChange={(ids) =>
+                setValue('instructorIds', ids, { shouldValidate: true, shouldDirty: true })
+              }
+              searchPlaceholder="Search instructors by name, email, or designation"
+              emptyMessage="No instructors found."
+              helperText="Select one or more instructors. The first selected is treated as primary."
+              error={errors.instructorIds?.message}
             />
 
             <Select
@@ -881,7 +912,7 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
                 onClick={async (e) => {
                   e.preventDefault();
                   // Validate Steps 1 and 2 first
-                  const step1Valid = await trigger(['title', 'instructorId']);
+                  const step1Valid = await trigger(['title', 'instructorIds']);
                   if (!step1Valid) {
                     setCurrentStep(1);
                     return;
@@ -934,7 +965,14 @@ export const CourseForm: React.FC<CourseFormProps> = React.memo(({
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-[var(--muted-foreground)] uppercase font-semibold">Instructor</span>
                 <span className="text-sm font-medium text-[var(--foreground)]">
-                  {instructors.find(i => i.id === getValues('instructorId'))?.name || 'Not selected'}
+                  {(() => {
+                    const selected = getValues('instructorIds') || [];
+                    if (!selected.length) return 'Not selected';
+                    return instructors
+                      .filter((i) => selected.includes(i.id))
+                      .map((i) => i.name)
+                      .join(', ');
+                  })()}
                 </span>
               </div>
               <div className="flex flex-col gap-1">

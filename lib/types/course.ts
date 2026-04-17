@@ -90,9 +90,11 @@ export interface Course {
   tags?: string;
   learningOutcomes?: string[];
   skills?: string[];
-  instructorId: string;
+  instructorId?: string;
+  instructorIds?: string[];
   categoryId?: string;
   instructor?: Instructor;
+  instructors?: Instructor[];
   category?: Category;
   _count?: {
     enrollments?: number;
