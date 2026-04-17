@@ -3,8 +3,8 @@
 // - Never applies cache-first to cross-origin requests (API on another host)
 // - Admin/dashboard navigations are network-only (no broken offline fallback)
 
-const CACHE_NAME = 'genius-shiksha-cache-v1';
-const CORE_ASSETS = ['/', '/manifest.webmanifest?v=5', '/logo.png?v=5'];
+const CACHE_NAME = 'genius-shiksha-cache-v3';
+const CORE_ASSETS = ['/', '/manifest.webmanifest?v=7', '/favicon.ico', '/logo.png?v=7'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));

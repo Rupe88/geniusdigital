@@ -11,9 +11,12 @@ export const metadata: Metadata = {
     title: "Genius Shiksha",
     description: "Unlock your hidden potential to become your best version with Genius Shiksha.",
     icons: {
-        icon: "/logo.png?v=5",
-        shortcut: "/logo.png?v=5",
-        apple: "/logo.png?v=5",
+        icon: [
+            { url: "/favicon.ico", sizes: "any" },
+            { url: "/logo.png?v=7", type: "image/png" },
+        ],
+        shortcut: "/logo.png?v=7",
+        apple: "/logo.png?v=7",
     },
 };
 
@@ -25,15 +28,16 @@ export default function RootLayout({
     return (
         <html lang="en" data-scroll-behavior="smooth">
             <head>
-                <link rel="manifest" href="/manifest.webmanifest?v=5" />
+                <link rel="manifest" href="/manifest.webmanifest?v=7" />
                 <meta name="theme-color" content="#1877f2" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-title" content="Genius Shiksha" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-                <link rel="apple-touch-icon" href="/logo.png?v=5" />
-                <link rel="icon" href="/logo.png?v=5" type="image/png" />
-                <link rel="shortcut icon" href="/logo.png?v=5" type="image/png" />
+                <link rel="apple-touch-icon" href="/logo.png?v=7" />
+                <link rel="icon" href="/favicon.ico" sizes="any" />
+                <link rel="icon" href="/logo.png?v=7" type="image/png" />
+                <link rel="shortcut icon" href="/favicon.ico" />
             </head>
             <body
                 className="antialiased min-h-screen flex flex-col"
