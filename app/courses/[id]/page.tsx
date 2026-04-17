@@ -23,7 +23,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { getVideoStreamUrl, isSecureStreamPath, isOurS3Url } from '@/lib/api/media';
 import { ROUTES } from '@/lib/utils/constants';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiChevronRight, HiVideoCamera } from 'react-icons/hi';
+import { HiCheck, HiClock, HiUsers, HiPlay, HiDocument, HiChevronRight, HiVideoCamera, HiUser } from 'react-icons/hi';
 import { LessonTypeIcon } from '@/components/learn/LessonTypeIcon';
 import {
   FaFacebook,
@@ -567,6 +567,10 @@ export default function CourseDetailPage({
   const totalHours = Math.floor(totalVideoDuration / 3600);
   const totalMinutes = Math.floor((totalVideoDuration % 3600) / 60);
 
+  const displayInstructors = (Array.isArray(course.instructors) && course.instructors.length > 0)
+    ? course.instructors
+    : (course.instructor ? [course.instructor] : []);
+
   return (
     <div className="min-h-screen bg-[var(--muted)]">
       {/* Top Header / Breadcrumbs */}
@@ -842,40 +846,31 @@ export default function CourseDetailPage({
                 </div>
               )}
 
-              {activeTab === 'instructors' && course.instructor && (
+              {activeTab === 'instructors' && (
                 <div className="animate-fadeIn">
-                  <div className="flex flex-col md:flex-row gap-6 items-start">
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden flex-shrink-0">
-                      {course.instructor.image ? (
-                        <StorageImage
-                          src={course.instructor.image}
-                          alt={course.instructor.name}
-                          fill
-                          sizes="128px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-[var(--primary-700)] flex items-center justify-center text-white text-3xl font-semibold">
-                          {course.instructor.name[0]}
+                  {displayInstructors.length === 0 ? (
+                    <div className="text-center py-12 bg-[var(--muted)] rounded-lg">
+                      <p className="text-gray-500">Instructor details are not available for this course yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {displayInstructors.map((instructor) => (
+                        <div
+                          key={instructor.id}
+                          className="flex items-center gap-4 p-5 rounded-lg border border-gray-100 bg-[var(--muted)]"
+                        >
+                          <div className="w-14 h-14 rounded-full bg-[var(--primary-700)] flex items-center justify-center text-white flex-shrink-0">
+                            <HiUser className="w-7 h-7" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-2xl font-semibold text-gray-900 truncate">
+                              {instructor.name}
+                            </h3>
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <h3 className="text-2xl font-semibold text-gray-900">
-                          {course.instructor.name}
-                        </h3>
-                        {course.instructor.designation && (
-                          <p className="text-lg text-[var(--primary-700)] mt-1">
-                            {course.instructor.designation}
-                          </p>
-                        )}
-                      </div>
-                      <div className="prose max-w-none text-gray-700 leading-relaxed">
-                        {course.instructor.bio}
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
 
