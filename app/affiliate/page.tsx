@@ -20,6 +20,15 @@ const COUNTRY_OPTIONS = [
   { value: 'Other', label: 'Other' },
 ];
 
+/** Stored in `occultKnowledge` for API/DB compatibility — represents educational background. */
+const EDUCATION_BACKGROUND_OPTIONS = [
+  'Secondary / High school',
+  "Bachelor's degree",
+  "Master's or higher",
+  'Vocational / Diploma',
+  'Other',
+] as const;
+
 const CITY_OPTIONS = [
   { value: '', label: 'Select your city' },
   { value: 'Kathmandu', label: 'Kathmandu' },
@@ -270,14 +279,14 @@ export default function AffiliateApplicationPage() {
             </div>
           </section>
 
-          {/* Occult Knowledge */}
+          {/* Education (stored as occultKnowledge for legacy API field name) */}
           <section>
-            <h2 className={sectionHeadingClass}>Occult Knowledge</h2>
+            <h2 className={sectionHeadingClass}>Education</h2>
             <div className="space-y-4">
               <div>
-                <label className={`${labelClass} mb-2`}>Do you have any occult knowledge?</label>
+                <label className={`${labelClass} mb-2`}>What best describes your educational background?</label>
                 <div className="flex flex-wrap gap-4">
-                  {['Numerology', 'Astrology', 'Vaastu Shastra', 'Lal Kitab', 'Other'].map((opt) => (
+                  {EDUCATION_BACKGROUND_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
@@ -294,12 +303,12 @@ export default function AffiliateApplicationPage() {
               </div>
               {form.occultKnowledge === 'Other' && (
                 <div>
-                  <label className={labelClass}>Other</label>
+                  <label className={labelClass}>Please specify</label>
                   <textarea
                     name="occultOther"
                     value={form.occultOther}
                     onChange={handleChange}
-                    placeholder="Please specify any other occult knowledge you possess"
+                    placeholder="e.g. field of study, institution, or other details"
                     rows={3}
                     className={`${inputClass} resize-none`}
                   />

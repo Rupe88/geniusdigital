@@ -13,7 +13,9 @@ export interface AffiliateApplicationPayload {
   currentOccupation?: string;
   hasAffiliateExperience?: boolean;
   experienceDetails?: string;
+  /** Educational background (legacy API field name). */
   occultKnowledge?: string;
+  /** Extra detail when "Other" is selected. */
   occultOther?: string;
   whyJoin?: string;
 }
@@ -30,6 +32,7 @@ export interface AffiliateApplication {
   currentOccupation: string | null;
   hasAffiliateExperience: boolean;
   experienceDetails: string | null;
+  /** Educational background (legacy column name). */
   occultKnowledge: string | null;
   occultOther: string | null;
   whyJoin: string | null;
